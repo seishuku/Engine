@@ -58,7 +58,7 @@ Camera_t Camera;
 
 float Projection[16], ModelView[16], MVP[16];
 
-float Light0_Pos[4]={ 0.0f, 0.0f, 200.0f, 1.0f/256.0f };
+float Light0_Pos[4]={ 0.0f, 0.0f, 200.0f, 1.0f/512.0f };
 float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
 
 void Render(void);
@@ -345,8 +345,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch(wParam)
 			{
 				case MK_LBUTTON:
-					Camera.YawVelocity-=(float)delta.x/2000.0f;
-					Camera.PitchVelocity+=(float)delta.y/2000.0f;
+					Camera.Yaw-=(float)delta.x/2000.0f;
+					Camera.Pitch+=(float)delta.y/2000.0f;
 					break;
 
 				case MK_MBUTTON:
@@ -483,6 +483,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Render(void)
 {
+	for(int i=0;i<Level.NumMesh;i++)
+		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
+
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
 	UpdateAnimation(&Pinky, fTimeStep);
@@ -554,7 +557,6 @@ void Render(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
-		Font_Print(0.0f, (float)Height-16.0f, "%f", Camera.PitchVelocity);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }

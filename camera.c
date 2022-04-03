@@ -218,8 +218,8 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->Up[1]=Up[1];
 	Camera->Up[2]=Up[2];
 
-	Camera->PitchVelocity=0.0f;
-	Camera->YawVelocity=0.0f;
+	Camera->Pitch=0.0f;
+	Camera->Yaw=0.0f;
 
 	Camera->Radius=10.0f;
 
@@ -239,33 +239,10 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->key_down=0;
 }
 
-void QuatVec3Multiply(const float in[3], const float q[4], float *out)
-{
-	float xxzz=q[0]*q[0]-q[2]*q[2];
-	float wwyy=q[3]*q[3]-q[1]*q[1];
-	float xw2=q[0]*q[3]*2.0f;
-	float xy2=q[0]*q[1]*2.0f;
-	float xz2=q[0]*q[2]*2.0f;
-	float yw2=q[1]*q[3]*2.0f;
-	float yz2=q[1]*q[2]*2.0f;
-	float zw2=q[2]*q[3]*2.0f;
-	float res[3];
-
-	res[0]=(xxzz+wwyy)*in[0]+(xy2+zw2)*in[1]+(xz2-yw2)*in[2];
-	res[1]=(xy2-zw2)*in[0]+(q[1]*q[1]+q[3]*q[3]-q[0]*q[0]-q[2]*q[2])*in[1]+(yz2+xw2)*in[2];
-	res[2]=(xz2+yw2)*in[0]+(yz2-xw2)*in[1]+(wwyy-xxzz)*in[2];
-
-	memcpy(out, res, sizeof(float)*3);
-}
-
-
-static float PitchTrack=0.0f;
-
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
 	float speed=25.0f, m[16];
 	float QuatYaw[4], QuatPitch[4], QuatFinal[4];
-	float NewView[3];
 
 	Camera->Forward[0]=Camera->View[0]-Camera->Position[0];
 	Camera->Forward[1]=Camera->View[1]-Camera->Position[1];
@@ -294,47 +271,35 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 		Camera->Velocity[2]-=Time;
 
 	if(Camera->key_left)
-		Camera->YawVelocity+=Time*0.188f;
+		Camera->Yaw+=Time*0.188f;
 
 	if(Camera->key_right)
-		Camera->YawVelocity-=Time*0.188f;
+		Camera->Yaw-=Time*0.188f;
 
 	if(Camera->key_up)
-		Camera->PitchVelocity+=Time*0.188f;
+		Camera->Pitch+=Time*0.188f;
 
 	if(Camera->key_down)
-		Camera->PitchVelocity-=Time*0.188f;
+		Camera->Pitch-=Time*0.188f;
 
 	Camera->Velocity[0]*=0.91f;
 	Camera->Velocity[1]*=0.91f;
 	Camera->Velocity[2]*=0.91f;
 
-	Camera->YawVelocity*=0.91f;
-	Camera->PitchVelocity*=0.91f;
+	Camera->Yaw*=0.91f;
+	Camera->Pitch*=0.91f;
 
-	PitchTrack-=Camera->PitchVelocity;
-
-	if(PitchTrack>1.57f)
-		PitchTrack=1.57f;
-	else
-	{
-		if(PitchTrack<-1.57f)
-			PitchTrack=-1.57f;
-		else
-			QuatAngle(Camera->PitchVelocity, Camera->Right[0], Camera->Right[1], Camera->Right[2], QuatPitch);
-	}
-
-	QuatAngle(Camera->YawVelocity, Camera->Up[0], Camera->Up[1], Camera->Up[2], QuatYaw);
-
+	QuatAngle(Camera->Pitch, Camera->Right[0], Camera->Right[1], Camera->Right[2], QuatPitch);
+	QuatAngle(Camera->Yaw, Camera->Up[0], Camera->Up[1], Camera->Up[2], QuatYaw);
 	QuatMultiply(QuatPitch, QuatYaw, QuatFinal);
 
 	MatrixIdentity(m);
 	QuatMatrix(QuatFinal, m);
-	Matrix3x3MultVec3(Camera->Forward, m, NewView);
+	Matrix3x3MultVec3(Camera->Forward, m, Camera->Forward);
 
-	Camera->View[0]=Camera->Position[0]+NewView[0];
-	Camera->View[1]=Camera->Position[1]+NewView[1];
-	Camera->View[2]=Camera->Position[2]+NewView[2];
+	Camera->View[0]=Camera->Position[0]+Camera->Forward[0];
+	Camera->View[1]=Camera->Position[1]+Camera->Forward[1];
+	Camera->View[2]=Camera->Position[2]+Camera->Forward[2];
 
 	Camera->Position[0]+=Camera->Right[0]*speed*Camera->Velocity[0];
 	Camera->Position[1]+=Camera->Right[1]*speed*Camera->Velocity[0];

@@ -10,8 +10,8 @@ typedef struct
 	float Right[3];
 	float Velocity[3];
 
-	float PitchVelocity;
-	float YawVelocity;
+	float Pitch;
+	float Yaw;
 
 	float Radius;
 

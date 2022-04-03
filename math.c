@@ -157,6 +157,9 @@ void Cross(const float v0[3], const float v1[3], float *n)
 }
 
 // Quaternion functions
+//
+//	FIX ME: Are these quat functions all wrong???
+//
 void QuatAngle(const float angle, const float x, const float y, const float z, float *out)
 {
 	float s, v[3]={ x, y, z };
@@ -201,18 +204,22 @@ void QuatEuler(const float roll, const float pitch, const float yaw, float *out)
 
 void QuatMultiply(const float a[4], const float b[4], float *out)
 {
+	float res[4];
+
 	if(!out)
 		return;
 
-	out[0]=b[0]*a[0]-b[1]*a[1]-b[2]*a[2]-b[3]*a[3];
-	out[1]=b[0]*a[1]+b[1]*a[0]+b[2]*a[3]-b[3]*a[2];
-	out[2]=b[0]*a[2]-b[1]*a[3]+b[2]*a[0]+b[3]*a[1];
-	out[3]=b[0]*a[3]+b[1]*a[2]-b[2]*a[1]+b[3]*a[0];
+	res[0]=b[0]*a[0]-b[1]*a[1]-b[2]*a[2]-b[3]*a[3];
+	res[1]=b[0]*a[1]+b[1]*a[0]+b[2]*a[3]-b[3]*a[2];
+	res[2]=b[0]*a[2]-b[1]*a[3]+b[2]*a[0]+b[3]*a[1];
+	res[3]=b[0]*a[3]+b[1]*a[2]-b[2]*a[1]+b[3]*a[0];
 
-	//out[0]=a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1];
-	//out[1]=a[3]*b[1]+a[1]*b[3]+a[2]*b[0]-a[0]*b[2];
-	//out[2]=a[3]*b[2]+a[2]*b[3]+a[0]*b[1]-a[1]*b[0];
-	//out[3]=a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2];
+	//res[0]=a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1];
+	//res[1]=a[3]*b[1]+a[1]*b[3]+a[2]*b[0]-a[0]*b[2];
+	//res[2]=a[3]*b[2]+a[2]*b[3]+a[0]*b[1]-a[1]*b[0];
+	//res[3]=a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2];
+
+	memcpy(out, res, sizeof(float)*4);
 }
 
 void QuatMatrix(const float q[4], float *out)
