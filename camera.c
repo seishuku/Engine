@@ -8,9 +8,16 @@
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
+#ifdef WIN32
+#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
+#else
+#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
+#endif
+
+// Camera collision stuff
 int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radius, float *distance)
 {
-	*distance=Dot3(Normal, Center)-Dot3(Normal, Point);
+	*distance=Vec3_Dot(Normal, Center)-Vec3_Dot(Normal, Point);
 
 	if(fabsf(*distance)<radius)
 		return 1;
@@ -25,7 +32,7 @@ int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radiu
 
 float AngleBetweenVectors(float Vector1[3], float Vector2[3])
 {
-	return acosf(Dot3(Vector1, Vector2)/(sqrtf(Dot3(Vector1, Vector1))*sqrtf(Dot3(Vector2, Vector2))));
+	return acosf(Vec3_Dot(Vector1, Vector2)/(sqrtf(Vec3_Dot(Vector1, Vector1))*sqrtf(Vec3_Dot(Vector2, Vector2))));
 }
 
 int InsidePolygon(float Intersection[3], float Tri[3][3])
@@ -59,11 +66,11 @@ void ClosestPointOnLine(float A[3], float B[3], float Point[3], float *ClosestPo
 {
 	float Vector1[3]={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
 	float Vector2[3]={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
-	float d=Distance(A, B), t;
+	float d=Vec3_Distance(A, B), t;
 
-	Normalize3(Vector2);
+	Vec3_Normalize(Vector2);
 
-	t=Dot3(Vector1, Vector2);
+	t=Vec3_Dot(Vector1, Vector2);
 
 	if(t<=0.0f)
 	{
@@ -97,7 +104,7 @@ int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
 	{
 		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, Point);
 
-		distance=Distance(Point, Center);
+		distance=Vec3_Distance(Point, Center);
 
 		if(distance<radius)
 			return 1;
@@ -134,76 +141,60 @@ void GetCollisionOffset(float Normal[3], float radius, float distance, float *Of
 	Offset[2]=0.0f;
 }
 
-float Blend(int k, int t, int *knots, float v)
+void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace)
 {
-	float b;
+	unsigned short i;
+	int classification;
+	float distance=0.0f;
+	float v0[3], v1[3], n[3];
 
-	if(t==1)
+	for(i=0;i<NumFace;i++)
 	{
-		if((knots[k]<=v)&&(v<knots[k+1]))
-			b=1.0f;
-		else
-			b=0.0f;
-	}
-	else
-	{
-		if((knots[k+t-1]==knots[k])&&(knots[k+t]==knots[k+1]))
-			b=0.0f;
-		else
+		float Tri[3][3]=
 		{
-			if(knots[k+t-1]==knots[k])
-				b=(knots[k+t]-v)/(knots[k+t]-knots[k+1])*Blend(k+1, t-1, knots, v);
-			else
+			{ Vertex[3*Face[3*i+0]], Vertex[3*Face[3*i+0]+1], Vertex[3*Face[3*i+0]+2] },
+			{ Vertex[3*Face[3*i+1]], Vertex[3*Face[3*i+1]+1], Vertex[3*Face[3*i+1]+2] },
+			{ Vertex[3*Face[3*i+2]], Vertex[3*Face[3*i+2]+1], Vertex[3*Face[3*i+2]+2] }
+		};
+
+		v0[0]=Tri[1][0]-Tri[0][0];
+		v0[1]=Tri[1][1]-Tri[0][1];
+		v0[2]=Tri[1][2]-Tri[0][2];
+
+		v1[0]=Tri[2][0]-Tri[0][0];
+		v1[1]=Tri[2][1]-Tri[0][1];
+		v1[2]=Tri[2][2]-Tri[0][2];
+
+		n[0]=(v0[1]*v1[2]-v0[2]*v1[1]);
+		n[1]=(v0[2]*v1[0]-v0[0]*v1[2]);
+		n[2]=(v0[0]*v1[1]-v0[1]*v1[0]);
+
+		Vec3_Normalize(n);
+
+		classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
+
+		if(classification==1)
+		{
+			float Offset[3]={ n[0]*distance, n[1]*distance, n[2]*distance };
+			float Intersection[3]={ Camera->Position[0]-Offset[0], Camera->Position[1]-Offset[1], Camera->Position[2]-Offset[2] };
+
+			if(InsidePolygon(Intersection, Tri)||EdgeSphereCollision(Camera->Position, Tri, Camera->Radius*0.5f))
 			{
-				if(knots[k+t]==knots[k+1])
-					b=(v-knots[k])/(knots[k+t-1]-knots[k])*Blend(k, t-1, knots, v);
-				else
-					b=(v-knots[k])/(knots[k+t-1]-knots[k])*Blend(k, t-1, knots, v)+(knots[k+t]-v)/(knots[k+t]-knots[k+1])*Blend(k+1, t-1, knots, v);
+				GetCollisionOffset(n, Camera->Radius, distance, Offset);
+
+				Camera->Position[0]+=Offset[0];
+				Camera->Position[1]+=Offset[1];
+				Camera->Position[2]+=Offset[2];
+
+				Camera->View[0]+=Offset[0];
+				Camera->View[1]+=Offset[1];
+				Camera->View[2]+=Offset[2];
 			}
 		}
 	}
-
-	return b;
 }
 
-void CalculateKnots(int *knots, int n, int t)
-{
-	int i;
-	
-	for(i=0;i<=n+t;i++)
-	{
-		if(i<t)
-			knots[i]=0;
-		else
-		{
-			if((t<=i)&&(i<=n))
-				knots[i]=i-t+1;
-			else
-			{
-				if(i>n)
-					knots[i]=n-t+2;
-			}
-		}
-	}
-}
-
-void CalculatePoint(int *knots, int n, int t, float v, float *control, float *output)
-{
-	int k;
-	float b;
-
-	output[0]=output[1]=output[2]=0.0f;
-
-	for(k=0;k<=n;k++)
-	{
-		b=Blend(k, t, knots, v);
-
-		output[0]+=control[3*k]*b;
-		output[1]+=control[3*k+1]*b;
-		output[2]+=control[3*k+2]*b;
-	}
-}
-
+// Actual camera stuff
 void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 {
 	Camera->Position[0]=Position[0];
@@ -241,16 +232,16 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
-	float speed=25.0f, m[16];
-	float QuatYaw[4], QuatPitch[4], QuatFinal[4];
+	float speed=25.0f;
+	float QuatY[4], QuatP[4], m[16];
 
 	Camera->Forward[0]=Camera->View[0]-Camera->Position[0];
 	Camera->Forward[1]=Camera->View[1]-Camera->Position[1];
 	Camera->Forward[2]=Camera->View[2]-Camera->Position[2];
-	Normalize3(Camera->Forward);
+	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Up, Camera->Right);
-	Normalize3(Camera->Right);
+	Vec3_Normalize(Camera->Right);
 
 	if(Camera->key_d)
 		Camera->Velocity[0]+=Time;
@@ -289,13 +280,10 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 	Camera->Yaw*=0.91f;
 	Camera->Pitch*=0.91f;
 
-	QuatAngle(Camera->Pitch, Camera->Right[0], Camera->Right[1], Camera->Right[2], QuatPitch);
-	QuatAngle(Camera->Yaw, Camera->Up[0], Camera->Up[1], Camera->Up[2], QuatYaw);
-	QuatMultiply(QuatPitch, QuatYaw, QuatFinal);
-
-	MatrixIdentity(m);
-	QuatMatrix(QuatFinal, m);
-	Matrix3x3MultVec3(Camera->Forward, m, Camera->Forward);
+	QuatAngle(Camera->Pitch, Camera->Right[0], Camera->Right[1], Camera->Right[2], QuatP);
+	QuatAngle(Camera->Yaw, Camera->Up[0], Camera->Up[1], Camera->Up[2], QuatY);
+	QuatMultiply(QuatP, QuatY, QuatP);
+	QuatRotate(QuatP, Camera->Forward, Camera->Forward);
 
 	Camera->View[0]=Camera->Position[0]+Camera->Forward[0];
 	Camera->View[1]=Camera->Position[1]+Camera->Forward[1];
@@ -326,56 +314,74 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 	MatrixMult(m, out, out);
 }
 
-void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace)
+// Camera path track stuff
+float Blend(int k, int t, int *knots, float v)
 {
-	unsigned short i;
-	int classification;
-	float distance=0.0f;
-	float v0[3], v1[3], n[3];
+	float b;
 
-	for(i=0;i<NumFace;i++)
+	if(t==1)
 	{
-		float Tri[3][3]=
+		if((knots[k]<=v)&&(v<knots[k+1]))
+			b=1.0f;
+		else
+			b=0.0f;
+	}
+	else
+	{
+		if((knots[k+t-1]==knots[k])&&(knots[k+t]==knots[k+1]))
+			b=0.0f;
+		else
 		{
-			{ Vertex[3*Face[3*i+0]], Vertex[3*Face[3*i+0]+1], Vertex[3*Face[3*i+0]+2] },
-			{ Vertex[3*Face[3*i+1]], Vertex[3*Face[3*i+1]+1], Vertex[3*Face[3*i+1]+2] },
-			{ Vertex[3*Face[3*i+2]], Vertex[3*Face[3*i+2]+1], Vertex[3*Face[3*i+2]+2] }
-		};
-
-		v0[0]=Tri[1][0]-Tri[0][0];
-		v0[1]=Tri[1][1]-Tri[0][1];
-		v0[2]=Tri[1][2]-Tri[0][2];
-
-		v1[0]=Tri[2][0]-Tri[0][0];
-		v1[1]=Tri[2][1]-Tri[0][1];
-		v1[2]=Tri[2][2]-Tri[0][2];
-
-		n[0]=(v0[1]*v1[2]-v0[2]*v1[1]);
-		n[1]=(v0[2]*v1[0]-v0[0]*v1[2]);
-		n[2]=(v0[0]*v1[1]-v0[1]*v1[0]);
-
-		Normalize3(n);
-
-		classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
-
-		if(classification==1)
-		{
-			float Offset[3]={ n[0]*distance, n[1]*distance, n[2]*distance };
-			float Intersection[3]={ Camera->Position[0]-Offset[0], Camera->Position[1]-Offset[1], Camera->Position[2]-Offset[2] };
-
-			if(InsidePolygon(Intersection, Tri)||EdgeSphereCollision(Camera->Position, Tri, Camera->Radius*0.5f))
+			if(knots[k+t-1]==knots[k])
+				b=(knots[k+t]-v)/(knots[k+t]-knots[k+1])*Blend(k+1, t-1, knots, v);
+			else
 			{
-				GetCollisionOffset(n, Camera->Radius, distance, Offset);
-
-				Camera->Position[0]+=Offset[0];
-				Camera->Position[1]+=Offset[1];
-				Camera->Position[2]+=Offset[2];
-
-				Camera->View[0]+=Offset[0];
-				Camera->View[1]+=Offset[1];
-				Camera->View[2]+=Offset[2];
+				if(knots[k+t]==knots[k+1])
+					b=(v-knots[k])/(knots[k+t-1]-knots[k])*Blend(k, t-1, knots, v);
+				else
+					b=(v-knots[k])/(knots[k+t-1]-knots[k])*Blend(k, t-1, knots, v)+(knots[k+t]-v)/(knots[k+t]-knots[k+1])*Blend(k+1, t-1, knots, v);
 			}
 		}
+	}
+
+	return b;
+}
+
+void CalculateKnots(int *knots, int n, int t)
+{
+	int i;
+
+	for(i=0;i<=n+t;i++)
+	{
+		if(i<t)
+			knots[i]=0;
+		else
+		{
+			if((t<=i)&&(i<=n))
+				knots[i]=i-t+1;
+			else
+			{
+				if(i>n)
+					knots[i]=n-t+2;
+			}
+		}
+	}
+}
+
+void CalculatePoint(int *knots, int n, int t, float v, float *control, float *output)
+{
+	int k;
+	float b;
+
+	output[0]=output[1]=output[2]=0.0f;
+
+	for(k=0;k<=n;k++)
+	{
+		b=Blend(k, t, knots, v);
+
+		output[0]+=control[3*k]*b;
+		output[1]+=control[3*k+1]*b;
+		output[2]+=control[3*k+2]*b;
 	}
 }
 

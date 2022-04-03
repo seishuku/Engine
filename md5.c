@@ -22,16 +22,6 @@ typedef struct
 	float orient[4];
 } BaseFrame_Joint_t;
 
-void Quat_Inverse(float *q)
-{
-	float invNorm=1.0f/(q[0]*q[0]+q[1]*q[1]+q[2]*q[2]+q[3]*q[3]);
-
-	q[0]=-q[0]*invNorm;
-	q[1]=-q[1]*invNorm;
-	q[2]=-q[2]*invNorm;
-	q[3]=q[3]*invNorm;
-}
-
 void Quat_computeW(float *q)
 {
 	float t=1.0f-(q[0]*q[0])-(q[1]*q[1])-(q[2]*q[2]);
@@ -40,32 +30,6 @@ void Quat_computeW(float *q)
 		q[3]=0.0f;
 	else
 		q[3]=-sqrtf(t);
-}
-
-void Quat_normalize(float *q)
-{
-	/* Compute magnitude of the quaternion */
-	float mag=sqrtf((q[0]*q[0])+(q[1]*q[1])+(q[2]*q[2])+(q[3]*q[3]));
-
-	/* Check for bogus length, to protect against divide by zero */
-	if(mag>0.0f)
-	{
-		/* Normalize it */
-		float oneOverMag=1.0f/mag;
-
-		q[0]*=oneOverMag;
-		q[1]*=oneOverMag;
-		q[2]*=oneOverMag;
-		q[3]*=oneOverMag;
-	}
-}
-
-void Quat_multQuat(const float qa[4], const float qb[4], float *out)
-{
-	out[0]=(qa[0]*qb[3])+(qa[3]*qb[0])+(qa[1]*qb[2])-(qa[2]*qb[1]);
-	out[1]=(qa[1]*qb[3])+(qa[3]*qb[1])+(qa[2]*qb[0])-(qa[0]*qb[2]);
-	out[2]=(qa[2]*qb[3])+(qa[3]*qb[2])+(qa[0]*qb[1])-(qa[1]*qb[0]);
-	out[3]=(qa[3]*qb[3])-(qa[0]*qb[0])-(qa[1]*qb[1])-(qa[2]*qb[2]);
 }
 
 void Quat_multVec(const float q[4], const float v[3], float *out)
@@ -80,78 +44,14 @@ void Quat_rotatePoint(const float q[4], const float in[3], float *out)
 {
 	float tmp[4], inv[4]={ q[0], q[1], q[2], q[3] }, final[4];
 
-	Quat_Inverse(inv);
+	QuatInverse(inv);
 
 	Quat_multVec(q, in, tmp);
-	Quat_multQuat(tmp, inv, final);
+	QuatMultiply(tmp, inv, final);
 
 	out[0]=final[0];
 	out[1]=final[1];
 	out[2]=final[2];
-}
-
-void Quat_slerp(const float qa[4], const float qb[4], float *out, float t)
-{
-	// Check for out-of range parameter and return edge points if so
-	if(t<=0.0)
-	{
-		memcpy(out, qa, sizeof(float[4]));
-		return;
-	}
-
-	if(t>=1.0)
-	{
-		memcpy(out, qb, sizeof(float[4]));
-		return;
-	}
-
-	// Compute "cosine of angle between quaternions" using dot product
-	float cosOmega=(qa[0]*qb[0])+(qa[1]*qb[1])+(qa[2]*qb[2])+(qa[3]*qb[3]);
-
-	// If negative dot, use -q1.  Two quaternions q and -q represent the same rotation, but may produce different slerp.
-	// We chose q or -q to rotate using the acute angle.
-	float q1[4]={ qb[0], qb[1], qb[2], qb[3] };
-
-	if(cosOmega<0.0f)
-	{
-		q1[0]=-q1[0];
-		q1[1]=-q1[1];
-		q1[2]=-q1[2];
-		q1[3]=-q1[3];
-		cosOmega=-cosOmega;
-	}
-
-	// Compute interpolation fraction, checking for quaternions almost exactly the same
-	float k0, k1;
-
-	if(cosOmega>0.9999f)
-	{
-		// Very close - just use linear interpolation, which will protect againt a divide by zero
-
-		k0=1.0f-t;
-		k1=t;
-	}
-	else
-	{
-		// Compute the sin of the angle using the trig identity sin^2(omega) + cos^2(omega) = 1
-		float sinOmega=sqrtf(1.0f-(cosOmega*cosOmega));
-
-		// Compute the angle from its sine and cosine
-		float omega=atan2f(sinOmega, cosOmega);
-
-		// Compute inverse of denominator, so we only have to divide once
-		float oneOverSinOmega=1.0f/sinOmega;
-
-		// Compute interpolation parameters
-		k0=sinf((1.0f-t)*omega)*oneOverSinOmega;
-		k1=sinf(t*omega)*oneOverSinOmega;
-	}
-
-	// Interpolate and return new quaternion
-	out[0]=(k0*qa[0])+(k1*q1[0]);
-	out[1]=(k0*qa[1])+(k1*q1[1]);
-	out[2]=(k0*qa[2])+(k1*q1[2]);
-	out[3]=(k0*qa[3])+(k1*q1[3]);
 }
 
 int LoadMD5(MD5_Model_t *mdl, const char *filename)
@@ -342,15 +242,15 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 				s[0]=(uv1[1]*v0[0]-uv0[1]*v1[0])*r;
 				s[1]=(uv1[1]*v0[1]-uv0[1]*v1[1])*r;
 				s[2]=(uv1[1]*v0[2]-uv0[1]*v1[2])*r;
-				Normalize3(s);
+				Vec3_Normalize(s);
 
 				t[0]=(uv0[0]*v1[0]-uv1[0]*v0[0])*r;
 				t[1]=(uv0[0]*v1[1]-uv1[0]*v0[1])*r;
 				t[2]=(uv0[0]*v1[2]-uv1[0]*v0[2])*r;
-				Normalize3(t);
+				Vec3_Normalize(t);
 
 				Cross(v0, v1, n);
-				Normalize3(n);
+				Vec3_Normalize(n);
 
 				temptang[3*i1+0]+=s[0];		temptang[3*i1+1]+=s[1];		temptang[3*i1+2]+=s[2];
 				temptang[3*i2+0]+=s[0];		temptang[3*i2+1]+=s[1];		temptang[3*i2+2]+=s[2];
@@ -382,7 +282,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 					const MD5_Joint_t *joint=&mdl->baseSkel[weight->joint];
 					float temp[3], inv[4]={ joint->orient[0], joint->orient[1], joint->orient[2], joint->orient[3] };
 
-					Quat_Inverse(inv);
+					QuatInverse(inv);
 
 					Quat_rotatePoint(inv, &temptang[3*i], temp);
 
@@ -406,9 +306,9 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 
 			for(i=0;i<mesh->num_weights;i++)
 			{
-				Normalize3(mesh->weights[i].tangent);
-				Normalize3(mesh->weights[i].binormal);
-				Normalize3(mesh->weights[i].normal);
+				Vec3_Normalize(mesh->weights[i].tangent);
+				Vec3_Normalize(mesh->weights[i].binormal);
+				Vec3_Normalize(mesh->weights[i].normal);
 			}
 
 			FREE(temppos);
@@ -679,8 +579,8 @@ int LoadAnim(MD5_Anim_t *anim, const char *filename)
 					thisJoint->pos[2]+=parentJoint->pos[2];
 
 					// Concatenate rotations
-					Quat_multQuat(parentJoint->orient, animatedOrient, thisJoint->orient);
-					Normalize4(thisJoint->orient);
+					QuatMultiply(parentJoint->orient, animatedOrient, thisJoint->orient);
+					Vec4_Normalize(thisJoint->orient);
 				}
 			}
 		}
@@ -728,11 +628,10 @@ void InterpolateSkeletons(const MD5_Anim_t *Anim, const MD5_Joint_t *skelA, cons
 		// Copy parent index
 		out[i].parent=skelA[i].parent;
 
-		// Linear interpolation of joints
-		out[i].pos[0]=skelA[i].pos[0]+interp*(skelB[i].pos[0]-skelA[i].pos[0]);
-		out[i].pos[1]=skelA[i].pos[1]+interp*(skelB[i].pos[1]-skelA[i].pos[1]);
-		out[i].pos[2]=skelA[i].pos[2]+interp*(skelB[i].pos[2]-skelA[i].pos[2]);
+		// Liear interpolate position
+		Vec3_Lerp(skelA[i].pos, skelB[i].pos, interp, out[i].pos);
 
-		Quat_slerp(skelA[i].orient, skelB[i].orient, out[i].orient, interp);
+		// Spherical interpolate rotation
+		QuatSlerp(skelA[i].orient, skelB[i].orient, out[i].orient, interp);
 	}
 }

@@ -69,7 +69,7 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 		s[0]=(uv1[1]*v0[0]-uv0[1]*v1[0])*r;
 		s[1]=(uv1[1]*v0[1]-uv0[1]*v1[1])*r;
 		s[2]=(uv1[1]*v0[2]-uv0[1]*v1[2])*r;
-		Normalize3(s);
+		Vec3_Normalize(s);
 
 		Mesh->Tangent[3*i1+0]+=s[0];	Mesh->Tangent[3*i1+1]+=s[1];	Mesh->Tangent[3*i1+2]+=s[2];
 		Mesh->Tangent[3*i2+0]+=s[0];	Mesh->Tangent[3*i2+1]+=s[1];	Mesh->Tangent[3*i2+2]+=s[2];
@@ -78,14 +78,14 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 		t[0]=(uv0[0]*v1[0]-uv1[0]*v0[0])*r;
 		t[1]=(uv0[0]*v1[1]-uv1[0]*v0[1])*r;
 		t[2]=(uv0[0]*v1[2]-uv1[0]*v0[2])*r;
-		Normalize3(t);
+		Vec3_Normalize(t);
 
 		Mesh->Binormal[3*i1+0]-=t[0];	Mesh->Binormal[3*i1+1]-=t[1];	Mesh->Binormal[3*i1+2]-=t[2];
 		Mesh->Binormal[3*i2+0]-=t[0];	Mesh->Binormal[3*i2+1]-=t[1];	Mesh->Binormal[3*i2+2]-=t[2];
 		Mesh->Binormal[3*i3+0]-=t[0];	Mesh->Binormal[3*i3+1]-=t[1];	Mesh->Binormal[3*i3+2]-=t[2];
 
 		Cross(v0, v1, n);
-		Normalize3(n);
+		Vec3_Normalize(n);
 
 		Mesh->Normal[3*i1+0]+=n[0];		Mesh->Normal[3*i1+1]+=n[1];		Mesh->Normal[3*i1+2]+=n[2];
 		Mesh->Normal[3*i2+0]+=n[0];		Mesh->Normal[3*i2+1]+=n[1];		Mesh->Normal[3*i2+2]+=n[2];

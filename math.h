@@ -12,16 +12,28 @@ float fact(const int n);
 unsigned int NextPower2(unsigned int value);
 int ComputeLog(unsigned int value);
 
-float Dot3(const float a[3], const float b[3]);
-float Dot4(const float a[4], const float b[4]);
-float Distance(const float Vector1[3], const float Vector2[3]);
-void Normalize3(float *v);
-void Normalize4(float *v);
+float Vec2_Dot(const float a[2], const float b[2]);
+float Vec3_Dot(const float a[3], const float b[3]);
+float Vec4_Dot(const float a[4], const float b[4]);
+float Vec2_Distance(const float Vector1[2], const float Vector2[2]);
+float Vec3_Distance(const float Vector1[3], const float Vector2[3]);
+float Vec4_Distance(const float Vector1[4], const float Vector2[4]);
+void Vec2_Normalize(float *v);
+void Vec3_Normalize(float *v);
+void Vec4_Normalize(float *v);
 void Cross(const float v0[3], const float v1[3], float *n);
+void Lerp(const float a, const float b, const float t, float *out);
+void Vec2_Lerp(const float a[2], const float b[2], const float t, float *out);
+void Vec3_Lerp(const float a[3], const float b[3], const float t, float *out);
+void Vec4_Lerp(const float a[4], const float b[4], const float t, float *out);
 
 void QuatAngle(const float angle, const float x, const float y, const float z, float *out);
+void QuatAnglev(const float angle, const float v[3], float *out);
 void QuatEuler(const float roll, const float pitch, const float yaw, float *out);
 void QuatMultiply(const float a[4], const float b[4], float *out);
+void QuatInverse(float *q);
+void QuatRotate(const float q[4], const float v[3], float *out);
+void QuatSlerp(const float qa[4], const float qb[4], float *out, const float t);
 void QuatMatrix(const float in[4], float *out);
 
 void MatrixIdentity(float *out);
