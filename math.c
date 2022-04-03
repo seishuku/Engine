@@ -202,6 +202,11 @@ void Cross(const float v0[3], const float v1[3], float *n)
 	n[2]=v0[0]*v1[1]-v0[1]*v1[0];
 }
 
+void Lerp(const float a, const float b, const float t, float *out)
+{
+	*out=t*(b-a)+a;
+}
+
 void Vec2_Lerp(const float a[2], const float b[2], const float t, float *out)
 {
 	out[0]=t*(b[0]-a[0])+a[0];
@@ -237,17 +242,9 @@ void QuatAngle(const float angle, const float x, const float y, const float z, f
 	out[3]=cosf(angle*0.5f);
 }
 
-void QuatAnglev(const float angle, const float xyz[3], float *out)
+void QuatAnglev(const float angle, const float v[3], float *out)
 {
-	float v[3]={ xyz[0], xyz[1], xyz[2] };
-	float s=sinf(angle*0.5f);
-
-	Vec3_Normalize(v);
-
-	out[0]=s*v[0];
-	out[1]=s*v[1];
-	out[2]=s*v[2];
-	out[3]=cosf(angle*0.5f);
+	QuatAngle(angle, v[0], v[1], v[2], out);
 }
 
 void QuatEuler(const float roll, const float pitch, const float yaw, float *out)
@@ -542,6 +539,11 @@ void MatrixRotate(const float angle, const float x, const float y, const float z
 	MatrixMult(m, out, out);
 }
 
+void MatrixRotatev(const float angle, const float v[3], float *out)
+{
+	MatrixRotate(angle, v[0], v[1], v[2], out);
+}
+
 void MatrixTranslate(const float x, const float y, const float z, float *out)
 {
 	float m[16];
@@ -557,6 +559,11 @@ void MatrixTranslate(const float x, const float y, const float z, float *out)
 	MatrixMult(m, out, out);
 }
 
+void MatrixTranslatev(const float v[3], float *out)
+{
+	MatrixTranslate(v[0], v[1], v[2], out);
+}
+
 void MatrixScale(const float x, const float y, const float z, float *out)
 {
 	float m[16];
@@ -570,6 +577,11 @@ void MatrixScale(const float x, const float y, const float z, float *out)
 	m[12]=0.0f;	m[13]=0.0f;	m[14]=0.0f;	m[15]=1.0f;
 
 	MatrixMult(m, out, out);
+}
+
+void MatrixScalev(const float v[3], float *out)
+{
+	MatrixScale(v[0], v[1], v[2], out);
 }
 
 void Matrix4x4MultVec4(const float in[4], const float m[16], float *out)
