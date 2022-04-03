@@ -286,8 +286,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	//static POINT old;
-	//POINT pos, delta;
+	static POINT old;
+	POINT pos, delta;
 
 	switch(uMsg)
 	{
@@ -306,56 +306,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Height=HIWORD(lParam);
 			break;
 
-			//case WM_LBUTTONDOWN:
-			//case WM_MBUTTONDOWN:
-			//case WM_RBUTTONDOWN:
-			//	SetCapture(hWnd);
-			//	ShowCursor(FALSE);
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+			SetCapture(hWnd);
+			ShowCursor(FALSE);
 
-			//	GetCursorPos(&pos);
-			//	old.x=pos.x;
-			//	old.y=pos.y;
-			//	break;
+			GetCursorPos(&pos);
+			old.x=pos.x;
+			old.y=pos.y;
+			break;
 
-			//case WM_LBUTTONUP:
-			//case WM_MBUTTONUP:
-			//case WM_RBUTTONUP:
-			//	ShowCursor(TRUE);
-			//	ReleaseCapture();
-			//	break;
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+			ShowCursor(TRUE);
+			ReleaseCapture();
+			break;
 
-			//case WM_MOUSEMOVE:
-			//	GetCursorPos(&pos);
+		case WM_MOUSEMOVE:
+			GetCursorPos(&pos);
 
-			//	if(!wParam)
-			//	{
-			//		old.x=pos.x;
-			//		old.y=pos.y;
-			//		break;
-			//	}
+			if(!wParam)
+			{
+				old.x=pos.x;
+				old.y=pos.y;
+				break;
+			}
 
-			//	delta.x=pos.x-old.x;
-			//	delta.y=old.y-pos.y;
+			delta.x=pos.x-old.x;
+			delta.y=old.y-pos.y;
 
-			//	if(!delta.x&&!delta.y)
-			//		break;
+			if(!delta.x&&!delta.y)
+				break;
 
-			//	SetCursorPos(old.x, old.y);
+			SetCursorPos(old.x, old.y);
 
-			//	switch(wParam)
-			//	{
-			//		case MK_LBUTTON:
-			//			angleY-=(float)delta.x/500000;
-			//			angleZ+=(float)delta.y/500000;
-			//			break;
+			switch(wParam)
+			{
+				case MK_LBUTTON:
+					Camera.YawVelocity-=(float)delta.x/2000.0f;
+					Camera.PitchVelocity+=(float)delta.y/2000.0f;
+					break;
 
-			//		case MK_MBUTTON:
-			//			break;
+				case MK_MBUTTON:
+					break;
 
-			//		case MK_RBUTTON:
-			//			break;
-			//	}
-			//	break;
+				case MK_RBUTTON:
+					break;
+			}
+			break;
 
 		case WM_KEYDOWN:
 			Key[wParam]=1;
@@ -384,6 +384,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				case 'C':
 					Camera.key_c=1;
+					break;
+
+				case 'Q':
+					Camera.key_q=1;
+					break;
+
+				case 'E':
+					Camera.key_e=1;
+					break;
+
+				case VK_UP:
+					Camera.key_up=1;
+					break;
+
+				case VK_DOWN:
+					Camera.key_down=1;
+					break;
+
+				case VK_LEFT:
+					Camera.key_left=1;
+					break;
+
+				case VK_RIGHT:
+					Camera.key_right=1;
 					break;
 
 				case VK_ESCAPE:
@@ -424,6 +448,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Camera.key_c=0;
 					break;
 
+				case 'Q':
+					Camera.key_q=0;
+					break;
+
+				case 'E':
+					Camera.key_e=0;
+					break;
+
+				case VK_UP:
+					Camera.key_up=0;
+					break;
+
+				case VK_DOWN:
+					Camera.key_down=0;
+					break;
+
+				case VK_LEFT:
+					Camera.key_left=0;
+					break;
+
+				case VK_RIGHT:
+					Camera.key_right=0;
+					break;
+
 				default:
 					break;
 			}
@@ -450,6 +498,7 @@ void Render(void)
 	InfPerspective(90.0f, (float)Width/Height, 0.01f, 0, Projection);
 
 	// Set up model view matrix (translate and rotation)
+	MatrixIdentity(ModelView);
 	CameraUpdate(&Camera, fTimeStep, ModelView);
 
 	MatrixMult(ModelView, Projection, MVP);
@@ -505,6 +554,7 @@ void Render(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
+		Font_Print(0.0f, (float)Height-16.0f, "%f", Camera.PitchVelocity);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }

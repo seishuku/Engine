@@ -159,19 +159,16 @@ void Cross(const float v0[3], const float v1[3], float *n)
 // Quaternion functions
 void QuatAngle(const float angle, const float x, const float y, const float z, float *out)
 {
-	float a=angle, s, v[3]={ x, y, z };
+	float s, v[3]={ x, y, z };
 
 	if(!out)
 		return;
 
 	Normalize3(v);
 
-//	a*=0.017453292f;
-//	a*=0.5f;
+	s=sinf(angle);
 
-	s=sinf(a);
-
-	out[0]=cosf(a);
+	out[0]=cosf(angle);
 	out[1]=x*s;
 	out[2]=y*s;
 	out[3]=z*s;
@@ -343,6 +340,34 @@ void MatrixTranspose(const float in[16], float *out)
 	res[15]=in[15];
 
 	memcpy(out, res, sizeof(float)*16);
+}
+
+void MatrixRotate(const float angle, const float x, const float y, const float z, float *out)
+{
+	float m[16];
+	float c=cos(angle);
+	float s=sin(angle);
+
+	float temp[3]={ (1.0f-c)*x, (1.0f-c)*y, (1.0f-c)*z };
+
+	m[0]=c+temp[0]*x;
+	m[1]=temp[0]*y+s*z;
+	m[2]=temp[0]*z-s*y;
+	m[3]=0.0f;
+	m[4]=temp[1]*x-s*z;
+	m[5]=c+temp[1]*y;
+	m[6]=temp[1]*z+s*x;
+	m[7]=0.0f;
+	m[8]=temp[2]*x+s*y;
+	m[9]=temp[2]*y-s*x;
+	m[10]=c+temp[2]*z;
+	m[11]=0.0f;
+	m[12]=0.0f;
+	m[13]=0.0f;
+	m[14]=0.0f;
+	m[15]=1.0f;
+
+	MatrixMult(m, out, out);
 }
 
 void MatrixTranslate(const float x, const float y, const float z, float *out)

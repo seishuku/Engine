@@ -27,6 +27,7 @@ void QuatMatrix(const float in[4], float *out);
 void MatrixIdentity(float *out);
 void MatrixMult(const float a[16], const float b[16], float *out);
 void MatrixInverse(const float in[16], float *out);
+void MatrixRotate(const float angle, const float x, const float y, const float z, float *out);
 void MatrixTranspose(const float in[16], float *out);
 void MatrixTranslate(const float x, const float y, const float z, float *out);
 void MatrixScale(const float x, const float y, const float z, float *out);

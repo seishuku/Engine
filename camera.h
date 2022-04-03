@@ -4,18 +4,23 @@
 typedef struct
 {
 	float Position[3];
+	float Forward[3];
 	float View[3];
 	float Up[3];
 	float Right[3];
+	float Velocity[3];
 
-	float Pitch;
-	float Yaw;
+	float PitchVelocity;
+	float YawVelocity;
 
 	float Radius;
 
 	unsigned char key_w, key_s;
 	unsigned char key_a, key_d;
 	unsigned char key_v, key_c;
+	unsigned char key_q, key_e;
+	unsigned char key_up, key_down;
+	unsigned char key_left, key_right;
 } Camera_t;
 
 typedef struct
