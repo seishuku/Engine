@@ -8,12 +8,6 @@
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
-#ifdef WIN32
-#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
-#else
-#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
-#endif
-
 // Camera collision stuff
 int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radius, float *distance)
 {
@@ -210,7 +204,7 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->Up[2]=Up[2];
 
 	Camera->Pitch=0.0f;
-	Camera->Yaw=0.0f;
+	Camera->Yaw=PI;
 
 	Camera->Radius=10.0f;
 
@@ -230,14 +224,21 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->key_down=0;
 }
 
+float pitch=0.0f;
+
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
 	float speed=25.0f;
 	float QuatY[4], QuatP[4], m[16];
 
-	Camera->Forward[0]=Camera->View[0]-Camera->Position[0];
-	Camera->Forward[1]=Camera->View[1]-Camera->Position[1];
-	Camera->Forward[2]=Camera->View[2]-Camera->Position[2];
+	if(Camera->Pitch>1.56f)
+		Camera->Pitch=1.56f;
+	if(Camera->Pitch<-1.56f)
+		Camera->Pitch=-1.56f;
+
+	Camera->Forward[0]=sinf(Camera->Yaw)*cosf(Camera->Pitch);
+	Camera->Forward[1]=sinf(Camera->Pitch);
+	Camera->Forward[2]=cosf(Camera->Yaw)*cosf(Camera->Pitch);
 	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Up, Camera->Right);
@@ -262,53 +263,36 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 		Camera->Velocity[2]-=Time;
 
 	if(Camera->key_left)
-		Camera->Yaw+=Time*0.188f;
+		Camera->Yaw+=Time*1.5f;
 
 	if(Camera->key_right)
-		Camera->Yaw-=Time*0.188f;
+		Camera->Yaw-=Time*1.5f;
 
 	if(Camera->key_up)
-		Camera->Pitch+=Time*0.188f;
+		Camera->Pitch+=Time*1.5f;
 
 	if(Camera->key_down)
-		Camera->Pitch-=Time*0.188f;
+		Camera->Pitch-=Time*1.5f;
 
 	Camera->Velocity[0]*=0.91f;
 	Camera->Velocity[1]*=0.91f;
 	Camera->Velocity[2]*=0.91f;
 
-	Camera->Yaw*=0.91f;
-	Camera->Pitch*=0.91f;
-
-	QuatAngle(Camera->Pitch, Camera->Right[0], Camera->Right[1], Camera->Right[2], QuatP);
-	QuatAngle(Camera->Yaw, Camera->Up[0], Camera->Up[1], Camera->Up[2], QuatY);
-	QuatMultiply(QuatP, QuatY, QuatP);
-	QuatRotate(QuatP, Camera->Forward, Camera->Forward);
-
-	Camera->View[0]=Camera->Position[0]+Camera->Forward[0];
-	Camera->View[1]=Camera->Position[1]+Camera->Forward[1];
-	Camera->View[2]=Camera->Position[2]+Camera->Forward[2];
-
 	Camera->Position[0]+=Camera->Right[0]*speed*Camera->Velocity[0];
 	Camera->Position[1]+=Camera->Right[1]*speed*Camera->Velocity[0];
 	Camera->Position[2]+=Camera->Right[2]*speed*Camera->Velocity[0];
-	Camera->View[0]+=Camera->Right[0]*speed*Camera->Velocity[0];
-	Camera->View[1]+=Camera->Right[1]*speed*Camera->Velocity[0];
-	Camera->View[2]+=Camera->Right[2]*speed*Camera->Velocity[0];
 
 	Camera->Position[0]+=Camera->Up[0]*speed*Camera->Velocity[1];
 	Camera->Position[1]+=Camera->Up[1]*speed*Camera->Velocity[1];
 	Camera->Position[2]+=Camera->Up[2]*speed*Camera->Velocity[1];
-	Camera->View[0]+=Camera->Up[0]*speed*Camera->Velocity[1];
-	Camera->View[1]+=Camera->Up[1]*speed*Camera->Velocity[1];
-	Camera->View[2]+=Camera->Up[2]*speed*Camera->Velocity[1];
 
 	Camera->Position[0]+=Camera->Forward[0]*speed*Camera->Velocity[2];
 	Camera->Position[1]+=Camera->Forward[1]*speed*Camera->Velocity[2];
 	Camera->Position[2]+=Camera->Forward[2]*speed*Camera->Velocity[2];
-	Camera->View[0]+=Camera->Forward[0]*speed*Camera->Velocity[2];
-	Camera->View[1]+=Camera->Forward[1]*speed*Camera->Velocity[2];
-	Camera->View[2]+=Camera->Forward[2]*speed*Camera->Velocity[2];
+
+	Camera->View[0]=Camera->Position[0]+Camera->Forward[0];
+	Camera->View[1]=Camera->Position[1]+Camera->Forward[1];
+	Camera->View[2]=Camera->Position[2]+Camera->Forward[2];
 
 	LookAt(Camera->Position, Camera->View, Camera->Up, m);
 	MatrixMult(m, out, out);

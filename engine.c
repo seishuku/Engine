@@ -481,6 +481,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+extern float pitch;
+
 void Render(void)
 {
 	for(int i=0;i<Level.NumMesh;i++)
@@ -565,7 +567,7 @@ int Init(void)
 {
 	CameraInit(&Camera,
 		(float[3]) { 0.0f, 0.0f, 100.0f },	// Position
-		(float[3]) { 0.0f, 0.0f, -1.0f },	// Heading
+		(float[3]) { 0.0f, 0.0f, 1.0f },	// Heading
 		(float[3]) { 0.0f, 1.0f, 0.0f }		// Up
 	);
 

@@ -3,6 +3,10 @@
 
 #include <math.h>
 
+#ifndef PI
+#define PI 3.1415926f
+#endif
+
 float fsinf(const float v);
 float fcosf(const float v);
 float ftanf(const float x);
