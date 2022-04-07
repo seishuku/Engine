@@ -115,5 +115,11 @@
     <None Include="generic_v.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="distance_f.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="distance_v.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

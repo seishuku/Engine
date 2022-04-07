@@ -229,7 +229,7 @@ float pitch=0.0f;
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
 	float speed=25.0f;
-	float QuatY[4], QuatP[4], m[16];
+	float m[16];
 
 	if(Camera->Pitch>1.56f)
 		Camera->Pitch=1.56f;

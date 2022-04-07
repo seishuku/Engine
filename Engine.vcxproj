@@ -400,6 +400,8 @@
     <ClInclude Include="skybox_gl.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="distance_f.glsl" />
+    <None Include="distance_v.glsl" />
     <None Include="font_f.glsl" />
     <None Include="font_v.glsl" />
     <None Include="generic_f.glsl" />

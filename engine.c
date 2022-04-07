@@ -61,6 +61,8 @@ float Projection[16], ModelView[16], MVP[16];
 float Light0_Pos[4]={ 0.0f, 0.0f, 200.0f, 1.0f/512.0f };
 float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
 
+int DynWidth=1024, DynHeight=1024;
+
 void Render(void);
 int Init(void);
 GLuint CreateComputeProgram(char *Filename);
@@ -345,8 +347,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch(wParam)
 			{
 				case MK_LBUTTON:
-					Camera.Yaw-=(float)delta.x/2000.0f;
-					Camera.Pitch+=(float)delta.y/2000.0f;
+					Camera.Yaw-=(float)delta.x/500.0f;
+					Camera.Pitch+=(float)delta.y/500.0f;
 					break;
 
 				case MK_MBUTTON:
@@ -481,7 +483,67 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-extern float pitch;
+void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
+
+	glViewport(0, 0, DynWidth, DynHeight);
+	MatrixIdentity(Projection);
+	InfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, Projection);
+
+	for(int i=0;i<6;i++)
+	{
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture, 0, i);
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		MatrixIdentity(ModelView);
+
+		switch(i)
+		{
+			case 0:
+				LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
+				break;
+
+			case 1:
+				LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
+				break;
+
+			case 2:
+				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, ModelView);
+				break;
+
+			case 3:
+				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, ModelView);
+				break;
+
+			case 4:
+				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
+				break;
+
+			case 5:
+				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
+				break;
+		}
+
+		MatrixMult(ModelView, Projection, MVP);
+
+		// Select the shader program
+		glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
+
+		// Model view projection matrix for vertex to clipspace transform (vertex shader)
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_MVP], 1, GL_FALSE, MVP);
+
+		glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
+
+		// Render models
+		DrawModelMD5(&Hellknight.Model);
+		DrawModelMD5(&Fatty.Model);
+		DrawModelMD5(&Pinky.Model);
+		DrawModel3DS(&Level);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
 void Render(void)
 {
@@ -495,6 +557,8 @@ void Render(void)
 	Light0_Pos[0]=sinf(fTime)*150.0f;
 	Light0_Pos[2]=cosf(fTime)*150.0f;
 
+	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
+		
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	// Set viewport and calculate a projection matrix (perspective, with infinite z-far plane)
@@ -507,13 +571,6 @@ void Render(void)
 	CameraUpdate(&Camera, fTimeStep, ModelView);
 
 	MatrixMult(ModelView, Projection, MVP);
-
-	//glUseProgram(Objects[GLSL_SKYBOX_SHADER]);
-	//glUniformMatrix4fv(Objects[GLSL_SKYBOX_MVP], 1, GL_FALSE, MVP);
-
-	//glBindTextureUnit(0, Objects[TEXTURE_HDR_REFLECT]);
-
-	//DrawSkybox();
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
@@ -530,7 +587,7 @@ void Render(void)
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_MVP], 1, GL_FALSE, MVP);
 
 	// Bind correct textures per model
-	glBindTextureUnit(3, Objects[TEXTURE_HDR_REFLECT]);
+	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE0]);
 
 	// Render model
 	glBindTextureUnit(0, Objects[TEXTURE_HELLKNIGHT_BASE]);
@@ -565,6 +622,7 @@ void Render(void)
 
 int Init(void)
 {
+	// Set up camera structs
 	CameraInit(&Camera,
 		(float[3]) { 0.0f, 0.0f, 100.0f },	// Position
 		(float[3]) { 0.0f, 0.0f, 1.0f },	// Heading
@@ -590,8 +648,10 @@ int Init(void)
 
 	Objects[TEXTURE_HDR_REFLECT]=Image_Upload("rnl.tga", IMAGE_RGBE|IMAGE_MIPMAP);
 
+	// Build a VAO/VBO for the skybox
 	BuildSkyboxVBO();
 
+	// Load the "level" 3D Studio model
 	if(Load3DS(&Level, "level.3ds"))
 		BuildVBO3DS(&Level);
 	else
@@ -611,19 +671,45 @@ int Init(void)
 		return 0;
 
 	// Load shaders
+
+	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram("generic_v.glsl", "generic_f.glsl");
 
+	// General skybox shader
 	Objects[GLSL_SKYBOX_SHADER]=CreateShaderProgram("skybox_v.glsl", "skybox_f.glsl");
 	glUseProgram(Objects[GLSL_SKYBOX_SHADER]);
 	Objects[GLSL_SKYBOX_MVP]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "mvp");
 	Objects[GLSL_SKYBOX_TEXTURE]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "Texture");
 
+	// General lighting shader
 	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram("light_v.glsl", "light_f.glsl");
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 	Objects[GLSL_LIGHT_MVINV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvinv");
 	Objects[GLSL_LIGHT_MVP]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvp");
 	Objects[GLSL_LIGHT_LIGHT0_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Pos");
 	Objects[GLSL_LIGHT_LIGHT0_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Kd");
+
+	// Build program for generating depth cube map
+	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram("distance_v.glsl", "distance_f.glsl");
+	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
+	Objects[GLSL_DISTANCE_MVP]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mvp");
+	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
+
+	// Genereate texture and frame buffer for the depth cube map
+	glGenTextures(1, &Objects[TEXTURE_DISTANCE0]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, Objects[TEXTURE_DISTANCE0]);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	for(int i=0;i<6;i++)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT32, DynWidth, DynHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE0]);
+	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE0]);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE0], 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Set OpenGL states
 	glEnable(GL_DEPTH_TEST);
