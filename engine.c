@@ -709,6 +709,10 @@ int Init(void)
 	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE0]);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE0], 0);
 
+	// Disable drawing, we're only interested in depth information
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Set OpenGL states
