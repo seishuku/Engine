@@ -2,6 +2,7 @@
 #include <hidusage.h>
 #include <process.h>
 #include <intrin.h>
+#include <crtdbg.h>
 
 #pragma intrinsic(__rdtsc)
 
@@ -38,7 +39,7 @@ GLContext_t Context;
 
 char szAppName[]="OpenGL";
 
-int Width=1024, Height=1024;
+int Width=1280, Height=720;
 
 int Done=0, Key[256];
 
@@ -141,10 +142,38 @@ unsigned __int64 GetFrequency(void)
 	return (StopTicks-StartTicks)*TimeFreq/(TimeStop-TimeStart);
 }
 
-#include <crtdbg.h>   //for malloc and free
+GLuint VAO, VBO;
 
-BYTE _raw_message[64]={ 0, };
-POINT _client_center;
+#define NUM_SAMPLES 200
+float lines[3*NUM_SAMPLES+1]={ 0.5f, -0.75f, -1.0f };
+
+void UpdateLineChart(float time)
+{
+	float temp[3*NUM_SAMPLES+1];
+	float xPos=-0.75f;
+	float yPos=-0.75f;
+
+	lines[3*0+0]=1.0f+xPos;
+	lines[3*0+1]=(time*0.125f)+yPos;
+	lines[3*0+2]=-1.0f;
+
+	for(int i=0;i<NUM_SAMPLES;i++)
+	{
+		temp[3*(i)+0]=1.0f-((float)i/NUM_SAMPLES*0.5f)+xPos;
+		temp[3*(i)+1]=lines[3*(i)+1];
+		temp[3*(i)+2]=lines[3*(i)+2];
+	}
+
+	for(int i=0;i<NUM_SAMPLES-1;i++)
+	{
+		lines[3*(i+1)+0]=temp[3*(i)+0];
+		lines[3*(i+1)+1]=temp[3*(i)+1];
+		lines[3*(i+1)+2]=temp[3*(i)+2];
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES+1, lines, GL_STREAM_DRAW);
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
 {
@@ -212,13 +241,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glEnable(GL_DEBUG_OUTPUT);
 
-	GetWindowRect(Context.hWnd, &Rect);
-
-	_client_center.x=Rect.right/2-Rect.left/2;
-	_client_center.y=Rect.bottom/2-Rect.top/2;
-
-	SetCursorPos(_client_center.x, _client_center.y);
-
 	DBGPRINTF("\nStarting main loop.\n");
 	while(!Done)
 	{
@@ -242,6 +264,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			// Total screen time in seconds
 			fTimeStep=(float)(EndTime-StartTime)/Frequency;
+			// Total frame render in miliseconds
+			fFrameTime=(float)(EndFrameTime-StartTime)/(Frequency/1000);
 			// Running time
 			fTime+=fTimeStep;
 
@@ -251,13 +275,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// Average over 100 frames
 			if(Frames++>100)
 			{
-				// Total frame render in miliseconds
-				fFrameTime=(float)(EndFrameTime-StartTime)/(Frequency/1000);
-
 				fps=avgfps/Frames;
 				avgfps=0.0f;
 				Frames=0;
 			}
+
+			UpdateLineChart(fFrameTime);
 		}
 	}
 
@@ -612,6 +635,13 @@ void Render(void)
 
 	glActiveTexture(GL_TEXTURE0);
 
+	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
+
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_LINE_STRIP, 0, NUM_SAMPLES);
+
+	glBindVertexArray(0);
+
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
@@ -622,6 +652,16 @@ void Render(void)
 
 int Init(void)
 {
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES*2, NULL, GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(0);
+
 	// Set up camera structs
 	CameraInit(&Camera,
 		(float[3]) { 0.0f, 0.0f, 100.0f },	// Position
