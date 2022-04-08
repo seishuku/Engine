@@ -670,23 +670,23 @@ int Init(void)
 	);
 
 	// Load texture images
-	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("hellknight.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("hellknight_s.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("hellknight_n.tga", IMAGE_MIPMAP|IMAGE_NORMALIZE);
+	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("hellknight_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("hellknight_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_FATTY_BASE]=Image_Upload("fatty.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("fatty_s.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("fatty_n.tga", IMAGE_MIPMAP|IMAGE_NORMALIZE);
+	Objects[TEXTURE_FATTY_BASE]=Image_Upload("fatty.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("fatty_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("fatty_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_PINKY_BASE]=Image_Upload("pinky.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("pinky_s.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("pinky_n.tga", IMAGE_MIPMAP|IMAGE_NORMALIZE);
+	Objects[TEXTURE_PINKY_BASE]=Image_Upload("pinky.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_TILE_BASE]=Image_Upload("tile.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_TILE_SPECULAR]=Image_Upload("tile_s.tga", IMAGE_MIPMAP);
-	Objects[TEXTURE_TILE_NORMAL]=Image_Upload("tile_b.tga", IMAGE_MIPMAP|IMAGE_NORMALMAP);
+	Objects[TEXTURE_TILE_BASE]=Image_Upload("tile.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_TILE_SPECULAR]=Image_Upload("tile_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_TILE_NORMAL]=Image_Upload("tile_b.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
 
-	Objects[TEXTURE_HDR_REFLECT]=Image_Upload("rnl.tga", IMAGE_RGBE|IMAGE_MIPMAP);
+	Objects[TEXTURE_HDR_REFLECT]=Image_Upload("rnl.tga", IMAGE_RGBE|IMAGE_MIPMAP|IMAGE_TRILINEAR);
 
 	// Build a VAO/VBO for the skybox
 	BuildSkyboxVBO();

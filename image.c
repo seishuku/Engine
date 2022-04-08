@@ -823,7 +823,7 @@ unsigned int Image_Upload(char *Filename, unsigned long Flags)
 			if(Flags&IMAGE_MIPMAP)
 				_BuildMipmaps(&Image, Target);
 			else
-				glTexImage2D(Target, 0, GL_RGBA32F, Image.Width, Image.Height, 0, GL_RGB, GL_FLOAT, Image.Data);
+				glTexImage2D(Target, 0, GL_RGB16, Image.Width, Image.Height, 0, GL_RGB, GL_FLOAT, Image.Data);
 			break;
 
 		case 64:
