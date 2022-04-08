@@ -407,9 +407,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\distance_f.glsl" />
+    <None Include="shaders\distance_g.glsl" />
     <None Include="shaders\distance_v.glsl" />
-    <None Include="shaders\font_f.glsl" />
-    <None Include="shaders\font_v.glsl" />
     <None Include="shaders\generic_f.glsl" />
     <None Include="shaders\generic_v.glsl" />
     <None Include="shaders\light_f.glsl" />

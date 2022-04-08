@@ -94,12 +94,6 @@
     <None Include="shaders\distance_v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\font_f.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\font_v.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="shaders\generic_f.glsl">
       <Filter>Shaders</Filter>
     </None>
@@ -113,6 +107,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\md5_genverts_c.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\distance_g.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

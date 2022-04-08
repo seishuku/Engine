@@ -63,9 +63,17 @@ float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
 
 int DynWidth=1024, DynHeight=1024;
 
+typedef struct
+{
+	const char *Vertex;
+	const char *Fragment;
+	const char *Geometry;
+	const char *Compute;
+} ProgNames_t;
+
 void Render(void);
 int Init(void);
-GLuint CreateShaderProgram(const char *VertexFilename, const char *FragmentFilename, const char *GeometryFilename, const char *ComputeFilename);
+GLuint CreateShaderProgram(ProgNames_t Names);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -511,62 +519,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 {
+	float mvp[6][16];
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
 	glViewport(0, 0, DynWidth, DynHeight);
 	MatrixIdentity(Projection);
 	InfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, Projection);
 
-	for(int i=0;i<6;i++)
-	{
-		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture, 0, i);
-		glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
-		MatrixIdentity(ModelView);
+	MatrixIdentity(mvp[0]);
+	LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[0]);
+	MatrixMult(mvp[0], Projection, mvp[0]);
 
-		switch(i)
-		{
-			case 0:
-				LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
-				break;
+	MatrixIdentity(mvp[1]);
+	LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[1]);
+	MatrixMult(mvp[1], Projection, mvp[1]);
 
-			case 1:
-				LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
-				break;
+	MatrixIdentity(mvp[2]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, mvp[2]);
+	MatrixMult(mvp[2], Projection, mvp[2]);
 
-			case 2:
-				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, ModelView);
-				break;
+	MatrixIdentity(mvp[3]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, mvp[3]);
+	MatrixMult(mvp[3], Projection, mvp[3]);
 
-			case 3:
-				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, ModelView);
-				break;
+	MatrixIdentity(mvp[4]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[4]);
+	MatrixMult(mvp[4], Projection, mvp[4]);
 
-			case 4:
-				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
-				break;
+	MatrixIdentity(mvp[5]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[5]);
+	MatrixMult(mvp[5], Projection, mvp[5]);
 
-			case 5:
-				LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, ModelView);
-				break;
-		}
+	// Select the shader program
+	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 
-		MatrixMult(ModelView, Projection, MVP);
+	// Model view projection matrix for vertex to clipspace transform (vertex shader)
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_MVP], 6, GL_FALSE, (float *)mvp);
 
-		// Select the shader program
-		glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
+	glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
 
-		// Model view projection matrix for vertex to clipspace transform (vertex shader)
-		glUniformMatrix4fv(Objects[GLSL_DISTANCE_MVP], 1, GL_FALSE, MVP);
-
-		glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
-
-		// Render models
-		DrawModelMD5(&Hellknight.Model);
-		DrawModelMD5(&Fatty.Model);
-		DrawModelMD5(&Pinky.Model);
-		DrawModel3DS(&Level);
-	}
+	// Render models
+	DrawModelMD5(&Hellknight.Model);
+	DrawModelMD5(&Fatty.Model);
+	DrawModelMD5(&Pinky.Model);
+	DrawModel3DS(&Level);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -667,10 +665,19 @@ int Init(void)
 
 	// Set up camera structs
 	CameraInit(&Camera,
-		(float[3]) { 0.0f, 0.0f, 100.0f },	// Position
-		(float[3]) { 0.0f, 0.0f, 1.0f },	// Heading
-		(float[3]) { 0.0f, 1.0f, 0.0f }		// Up
-	);
+		(float[3])
+	{
+		0.0f, 0.0f, 100.0f
+	},	// Position
+		(float[3])
+	{
+		0.0f, 0.0f, 1.0f
+	},	// Heading
+			(float[3])
+		{
+			0.0f, 1.0f, 0.0f
+		}		// Up
+		);
 
 	// Load texture images
 	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
@@ -699,7 +706,7 @@ int Init(void)
 		return 0;
 
 	// Compile/link MD5 skinning compute program
-	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram(NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl");
+	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });
 
 	// Load MD5 model meshes
 	if(!LoadMD5Model("./assets/hellknight", &Hellknight))
@@ -714,10 +721,10 @@ int Init(void)
 	// Load shaders
 
 	// Generic debugging shader
-	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram("./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL);
+	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
 
 	// General lighting shader
-	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram("./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL, NULL);
+	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL, NULL });
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 	Objects[GLSL_LIGHT_MVINV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvinv");
 	Objects[GLSL_LIGHT_MVP]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvp");
@@ -725,7 +732,7 @@ int Init(void)
 	Objects[GLSL_LIGHT_LIGHT0_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Kd");
 
 	// Build program for generating depth cube map
-	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram("./shaders/distance_v.glsl", "./shaders/distance_f.glsl", NULL, NULL);
+	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/distance_v.glsl", "./shaders/distance_f.glsl", "./shaders/distance_g.glsl", NULL });
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 	Objects[GLSL_DISTANCE_MVP]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mvp");
 	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
@@ -760,17 +767,15 @@ int Init(void)
 int LoadShader(GLuint Shader, const char *Filename)
 {
 	FILE *stream=NULL;
-	char *buffer=NULL;
-	size_t length;
 
 	if((stream=fopen(Filename, "rb"))==NULL)
 		return 0;
 
 	fseek(stream, 0, SEEK_END);
-	length=ftell(stream);
+	size_t length=ftell(stream);
 	fseek(stream, 0, SEEK_SET);
 
-	buffer=(char *)malloc(length+1);
+	char *buffer=(char *)malloc(length+1);
 
 	if(buffer==NULL)
 		return 0;
@@ -788,7 +793,7 @@ int LoadShader(GLuint Shader, const char *Filename)
 
 void CompileAndAttachShader(GLuint Program, const char *Filename, GLuint Target)
 {
-	GLint _Status, LogLength;
+	GLint _Status=0, LogLength=0;
 	char *Log=NULL;
 
 	GLuint Shader=glCreateShader(Target);
@@ -817,25 +822,24 @@ void CompileAndAttachShader(GLuint Program, const char *Filename, GLuint Target)
 	glDeleteShader(Shader);
 }
 
-GLuint CreateShaderProgram(const char *VertexFilename, const char *FragmentFilename, const char *GeometryFilename, const char *ComputeFilename)
+GLuint CreateShaderProgram(ProgNames_t Names)
 {
-	GLuint Program;
-	GLint _Status, LogLength;
+	GLint _Status=0, LogLength=0;
 	GLchar *Log=NULL;
 
-	Program=glCreateProgram();
+	GLuint Program=glCreateProgram();
 
-	if(VertexFilename)
-		CompileAndAttachShader(Program, VertexFilename, GL_VERTEX_SHADER);
+	if(Names.Vertex)
+		CompileAndAttachShader(Program, Names.Vertex, GL_VERTEX_SHADER);
 
-	if(FragmentFilename)
-		CompileAndAttachShader(Program, FragmentFilename, GL_FRAGMENT_SHADER);
+	if(Names.Fragment)
+		CompileAndAttachShader(Program, Names.Fragment, GL_FRAGMENT_SHADER);
 
-	if(GeometryFilename)
-		CompileAndAttachShader(Program, GeometryFilename, GL_GEOMETRY_SHADER);
+	if(Names.Geometry)
+		CompileAndAttachShader(Program, Names.Geometry, GL_GEOMETRY_SHADER);
 
-	if(ComputeFilename)
-		CompileAndAttachShader(Program, ComputeFilename, GL_COMPUTE_SHADER);
+	if(Names.Compute)
+		CompileAndAttachShader(Program, Names.Compute, GL_COMPUTE_SHADER);
 
 	glLinkProgram(Program);
 	glGetProgramiv(Program, GL_LINK_STATUS, &_Status);
