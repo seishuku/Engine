@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <hidusage.h>
 #include <process.h>
 #include <intrin.h>
 #include <crtdbg.h>
@@ -59,15 +58,14 @@ Camera_t Camera;
 
 float Projection[16], ModelView[16], MVP[16];
 
-float Light0_Pos[4]={ 0.0f, 0.0f, 200.0f, 1.0f/512.0f };
+float Light0_Pos[4]={ 0.0f, 75.0f, 100.0f, 1.0f/512.0f };
 float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
 
 int DynWidth=1024, DynHeight=1024;
 
 void Render(void);
 int Init(void);
-GLuint CreateComputeProgram(char *Filename);
-GLuint CreateShaderProgram(char *VertexFilename, char *FragmentFilename);
+GLuint CreateShaderProgram(const char *VertexFilename, const char *FragmentFilename, const char *GeometryFilename, const char *ComputeFilename);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -145,18 +143,21 @@ unsigned __int64 GetFrequency(void)
 GLuint VAO, VBO;
 
 #define NUM_SAMPLES 200
-float lines[3*NUM_SAMPLES+1]={ 0.5f, -0.75f, -1.0f };
+float lines[3*NUM_SAMPLES+1];
 
-void UpdateLineChart(float time)
+void UpdateLineChart(float val)
 {
 	float temp[3*NUM_SAMPLES+1];
 	float xPos=-0.75f;
 	float yPos=-0.75f;
+	float scale=0.125f;
 
+	// Initial seed into the array
 	lines[3*0+0]=1.0f+xPos;
-	lines[3*0+1]=(time*0.125f)+yPos;
+	lines[3*0+1]=(val*scale)+yPos;
 	lines[3*0+2]=-1.0f;
 
+	// Propagate out into a temp array
 	for(int i=0;i<NUM_SAMPLES;i++)
 	{
 		temp[3*(i)+0]=1.0f-((float)i/NUM_SAMPLES*0.5f)+xPos;
@@ -164,6 +165,7 @@ void UpdateLineChart(float time)
 		temp[3*(i)+2]=lines[3*(i)+2];
 	}
 
+	// Shift the whole array over one, as to create the "continuous" effect
 	for(int i=0;i<NUM_SAMPLES-1;i++)
 	{
 		lines[3*(i+1)+0]=temp[3*(i)+0];
@@ -171,6 +173,7 @@ void UpdateLineChart(float time)
 		lines[3*(i+1)+2]=temp[3*(i)+2];
 	}
 
+	// Update the vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES+1, lines, GL_STREAM_DRAW);
 }
@@ -577,8 +580,8 @@ void Render(void)
 	UpdateAnimation(&Fatty, fTimeStep);
 	UpdateAnimation(&Pinky, fTimeStep);
 
-	Light0_Pos[0]=sinf(fTime)*150.0f;
-	Light0_Pos[2]=cosf(fTime)*150.0f;
+	Light0_Pos[0]=sinf(fTime)*75.0f;
+	Light0_Pos[2]=cosf(fTime)*75.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -670,59 +673,51 @@ int Init(void)
 	);
 
 	// Load texture images
-	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("hellknight_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("hellknight_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("./assets/hellknight_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("./assets/hellknight_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_FATTY_BASE]=Image_Upload("fatty.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("fatty_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("fatty_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_FATTY_BASE]=Image_Upload("./assets/fatty.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("./assets/fatty_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("./assets/fatty_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_PINKY_BASE]=Image_Upload("pinky.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_PINKY_BASE]=Image_Upload("./assets/pinky.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_TILE_BASE]=Image_Upload("tile.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_TILE_SPECULAR]=Image_Upload("tile_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_TILE_NORMAL]=Image_Upload("tile_b.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
-
-	Objects[TEXTURE_HDR_REFLECT]=Image_Upload("rnl.tga", IMAGE_RGBE|IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_TILE_BASE]=Image_Upload("./assets/tile.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_TILE_SPECULAR]=Image_Upload("./assets/tile_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_TILE_NORMAL]=Image_Upload("./assets/tile_b.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
 
 	// Build a VAO/VBO for the skybox
 	BuildSkyboxVBO();
 
 	// Load the "level" 3D Studio model
-	if(Load3DS(&Level, "level.3ds"))
+	if(Load3DS(&Level, "./assets/level.3ds"))
 		BuildVBO3DS(&Level);
 	else
 		return 0;
 
 	// Compile/link MD5 skinning compute program
-	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateComputeProgram("md5_genverts_c.glsl");
+	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram(NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl");
 
 	// Load MD5 model meshes
-	if(!LoadMD5Model("hellknight", &Hellknight))
+	if(!LoadMD5Model("./assets/hellknight", &Hellknight))
 		return 0;
 
-	if(!LoadMD5Model("fatty", &Fatty))
+	if(!LoadMD5Model("./assets/fatty", &Fatty))
 		return 0;
 
-	if(!LoadMD5Model("pinky", &Pinky))
+	if(!LoadMD5Model("./assets/pinky", &Pinky))
 		return 0;
 
 	// Load shaders
 
 	// Generic debugging shader
-	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram("generic_v.glsl", "generic_f.glsl");
-
-	// General skybox shader
-	Objects[GLSL_SKYBOX_SHADER]=CreateShaderProgram("skybox_v.glsl", "skybox_f.glsl");
-	glUseProgram(Objects[GLSL_SKYBOX_SHADER]);
-	Objects[GLSL_SKYBOX_MVP]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "mvp");
-	Objects[GLSL_SKYBOX_TEXTURE]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "Texture");
+	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram("./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL);
 
 	// General lighting shader
-	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram("light_v.glsl", "light_f.glsl");
+	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram("./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL, NULL);
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 	Objects[GLSL_LIGHT_MVINV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvinv");
 	Objects[GLSL_LIGHT_MVP]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvp");
@@ -730,7 +725,7 @@ int Init(void)
 	Objects[GLSL_LIGHT_LIGHT0_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Kd");
 
 	// Build program for generating depth cube map
-	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram("distance_v.glsl", "distance_f.glsl");
+	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram("./shaders/distance_v.glsl", "./shaders/distance_f.glsl", NULL, NULL);
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 	Objects[GLSL_DISTANCE_MVP]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mvp");
 	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
@@ -762,7 +757,7 @@ int Init(void)
 	return 1;
 }
 
-int LoadShader(GLuint Shader, char *Filename)
+int LoadShader(GLuint Shader, const char *Filename)
 {
 	FILE *stream=NULL;
 	char *buffer=NULL;
@@ -791,124 +786,56 @@ int LoadShader(GLuint Shader, char *Filename)
 	return 1;
 }
 
-GLuint CreateComputeProgram(char *Filename)
+void CompileAndAttachShader(GLuint Program, const char *Filename, GLuint Target)
 {
-	GLuint Program, Compute;
 	GLint _Status, LogLength;
 	char *Log=NULL;
 
-	Program=glCreateProgram();
+	GLuint Shader=glCreateShader(Target);
 
-	if(Filename)
+	if(LoadShader(Shader, Filename))
 	{
-		Compute=glCreateShader(GL_COMPUTE_SHADER);
+		glCompileShader(Shader);
+		glGetShaderiv(Shader, GL_COMPILE_STATUS, &_Status);
 
-		if(LoadShader(Compute, Filename))
+		if(!_Status)
 		{
-			glCompileShader(Compute);
-			glGetShaderiv(Compute, GL_COMPILE_STATUS, &_Status);
+			glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, &LogLength);
+			Log=(char *)malloc(LogLength);
 
-			if(!_Status)
+			if(Log)
 			{
-				glGetShaderiv(Compute, GL_INFO_LOG_LENGTH, &LogLength);
-				Log=(char *)malloc(LogLength);
-
-				if(Log)
-				{
-					glGetShaderInfoLog(Compute, LogLength, NULL, Log);
-					DBGPRINTF("%s - %s\n", Filename, Log);
-					FREE(Log);
-				}
+				glGetShaderInfoLog(Shader, LogLength, NULL, Log);
+				DBGPRINTF("%s - %s\n", Filename, Log);
+				FREE(Log);
 			}
-			else
-				glAttachShader(Program, Compute);
 		}
-
-		glDeleteShader(Compute);
+		else
+			glAttachShader(Program, Shader);
 	}
 
-	glLinkProgram(Program);
-	glGetProgramiv(Program, GL_LINK_STATUS, &_Status);
-
-	if(!_Status)
-	{
-		glGetProgramiv(Program, GL_INFO_LOG_LENGTH, &LogLength);
-		Log=(char *)malloc(LogLength);
-
-		if(Log)
-		{
-			glGetProgramInfoLog(Program, LogLength, NULL, Log);
-			DBGPRINTF("Link - %s\n", Log);
-			FREE(Log);
-		}
-	}
-
-	return Program;
+	glDeleteShader(Shader);
 }
 
-GLuint CreateShaderProgram(char *VertexFilename, char *FragmentFilename)
+GLuint CreateShaderProgram(const char *VertexFilename, const char *FragmentFilename, const char *GeometryFilename, const char *ComputeFilename)
 {
-	GLuint Program, Vertex, Fragment;
+	GLuint Program;
 	GLint _Status, LogLength;
-	char *Log=NULL;
+	GLchar *Log=NULL;
 
 	Program=glCreateProgram();
 
 	if(VertexFilename)
-	{
-		Vertex=glCreateShader(GL_VERTEX_SHADER);
-
-		if(LoadShader(Vertex, VertexFilename))
-		{
-			glCompileShader(Vertex);
-			glGetShaderiv(Vertex, GL_COMPILE_STATUS, &_Status);
-
-			if(!_Status)
-			{
-				glGetShaderiv(Vertex, GL_INFO_LOG_LENGTH, &LogLength);
-				Log=(char *)malloc(LogLength);
-
-				if(Log)
-				{
-					glGetShaderInfoLog(Vertex, LogLength, NULL, Log);
-					DBGPRINTF("%s - %s\n", VertexFilename, Log);
-					FREE(Log);
-				}
-			}
-			else
-				glAttachShader(Program, Vertex);
-		}
-
-		glDeleteShader(Vertex);
-	}
+		CompileAndAttachShader(Program, VertexFilename, GL_VERTEX_SHADER);
 
 	if(FragmentFilename)
-	{
-		Fragment=glCreateShader(GL_FRAGMENT_SHADER);
+		CompileAndAttachShader(Program, FragmentFilename, GL_FRAGMENT_SHADER);
 
-		if(LoadShader(Fragment, FragmentFilename))
-		{
-			glCompileShader(Fragment);
-			glGetShaderiv(Fragment, GL_COMPILE_STATUS, &_Status);
+	if(GeometryFilename)
+		CompileAndAttachShader(Program, GeometryFilename, GL_GEOMETRY_SHADER);
 
-			if(!_Status)
-			{
-				glGetShaderiv(Fragment, GL_INFO_LOG_LENGTH, &LogLength);
-				Log=(char *)malloc(LogLength);
-
-				if(Log)
-				{
-					glGetShaderInfoLog(Fragment, LogLength, NULL, Log);
-					DBGPRINTF("%s - %s\n", FragmentFilename, Log);
-					FREE(Log);
-				}
-			}
-			else
-				glAttachShader(Program, Fragment);
-		}
-
-		glDeleteShader(Fragment);
-	}
+	if(ComputeFilename)
+		CompileAndAttachShader(Program, ComputeFilename, GL_COMPUTE_SHADER);
 
 	glLinkProgram(Program);
 	glGetProgramiv(Program, GL_LINK_STATUS, &_Status);

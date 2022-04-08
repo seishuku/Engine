@@ -78,6 +78,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -403,17 +406,15 @@
     <ClInclude Include="skybox_gl.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="distance_f.glsl" />
-    <None Include="distance_v.glsl" />
-    <None Include="font_f.glsl" />
-    <None Include="font_v.glsl" />
-    <None Include="generic_f.glsl" />
-    <None Include="generic_v.glsl" />
-    <None Include="light_f.glsl" />
-    <None Include="light_v.glsl" />
-    <None Include="skybox_f.glsl" />
-    <None Include="skybox_v.glsl" />
-    <None Include="md5_genverts_c.glsl" />
+    <None Include="shaders\distance_f.glsl" />
+    <None Include="shaders\distance_v.glsl" />
+    <None Include="shaders\font_f.glsl" />
+    <None Include="shaders\font_v.glsl" />
+    <None Include="shaders\generic_f.glsl" />
+    <None Include="shaders\generic_v.glsl" />
+    <None Include="shaders\light_f.glsl" />
+    <None Include="shaders\light_v.glsl" />
+    <None Include="shaders\md5_genverts_c.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

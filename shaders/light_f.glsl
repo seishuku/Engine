@@ -19,17 +19,6 @@ uniform vec4 Light0_Kd;
 
 layout(location=0) out vec4 Output;
 
-int samples=20;
-
-vec3 sampleOffsetDirections[20]=vec3[]
-(
-   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
-   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
-   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
-   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
-   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
-);  
-
 void main()
 {
 	vec4 temp=2.0*texture(TexNormal, UV)-1.0;
@@ -50,13 +39,8 @@ void main()
 	// Attenuation = 1.0-(Light_Position*(1/Light_Radius))^2
 	float l0_atten=max(0.0, 1.0-length(l0*Light0_Pos.w));
 
-	float Shadow0=0.0;
-	float Radius0=length(l0)*Light0_Pos.w;
-	for(int i=0;i<samples;i++)
-	{
-		if((texture(TexDistance0, -l0+sampleOffsetDirections[i]*Radius0).x+0.01)>=Radius0)
-			Shadow0+=1.0/samples;
-	}
+	// Shadow map compare, divide the light distance by the radius to match the depth map distance space
+	float Shadow0=(texture(TexDistance0, -l0).x+0.01)>(length(l0)*Light0_Pos.w)?1.0:0.0;
 
 	e=normalize(e);
 	l0=normalize(l0);

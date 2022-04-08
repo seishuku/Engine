@@ -88,37 +88,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="light_f.glsl">
+    <None Include="shaders\distance_f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="light_v.glsl">
+    <None Include="shaders\distance_v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="font_f.glsl">
+    <None Include="shaders\font_f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="font_v.glsl">
+    <None Include="shaders\font_v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="md5_genverts_c.glsl">
+    <None Include="shaders\generic_f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="skybox_f.glsl">
+    <None Include="shaders\generic_v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="skybox_v.glsl">
+    <None Include="shaders\light_f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="generic_f.glsl">
+    <None Include="shaders\light_v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="generic_v.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="distance_f.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="distance_v.glsl">
+    <None Include="shaders\md5_genverts_c.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
