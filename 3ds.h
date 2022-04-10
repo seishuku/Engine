@@ -10,12 +10,14 @@ typedef struct
 	float Emission[3];
 	float Shininess;
 	char Texture[32];
+	unsigned int TexBaseID, TexNormalID, TexSpecularID;
 } Material3DS_t;
 
 typedef struct
 {
 	char Name[32];
 	char MaterialName[32];
+	int MaterialNumber;
 
 	unsigned short NumVertex;
 	float *Vertex, *UV, *Normal, *Tangent, *Binormal;

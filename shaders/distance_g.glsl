@@ -3,7 +3,8 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices=18) out;
 
-uniform mat4 mvp[6];
+uniform mat4 proj;
+uniform mat4 mv[6];
 
 layout(location=0) out vec4 vPosition;
 
@@ -16,7 +17,7 @@ void main()
         for(int j=0;j<3;j++)
         {
             vPosition=gl_in[j].gl_Position;
-            gl_Position=mvp[i]*vPosition;
+            gl_Position=proj*mv[i]*vPosition;
 
             EmitVertex();
         }

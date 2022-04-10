@@ -21,6 +21,10 @@ void DrawModel3DS(Model3DS_t *Model)
 {
 	for(int i=0;i<Model->NumMesh;i++)
 	{
+		glBindTextureUnit(0, Model->Material[Model->Mesh[i].MaterialNumber].TexBaseID);
+		glBindTextureUnit(1, Model->Material[Model->Mesh[i].MaterialNumber].TexSpecularID);
+		glBindTextureUnit(2, Model->Material[Model->Mesh[i].MaterialNumber].TexNormalID);
+
 		glBindVertexArray(Model->Mesh[i].VAO);
 		glDrawElements(GL_TRIANGLES, Model->Mesh[i].NumFace*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 	}

@@ -20,6 +20,8 @@
 #include "md5_gl.h"
 #include "skybox_gl.h"
 
+#define CAMERA_RECORDING 0
+
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
 #else
@@ -43,7 +45,7 @@ int Width=1280, Height=720;
 int Done=0, Key[256];
 
 unsigned __int64 Frequency, StartTime, EndTime, EndFrameTime;
-float avgfps=0.0f, fps=0.0f, fTimeStep, fFrameTime, fTime=0.0f;
+float avgfps=0.0f, fps=0.0f, fTimeStep=0.0f, fFrameTime=0.0f, fTime=0.0f;
 int Frames=0;
 
 unsigned int Objects[NUM_OBJECTS];
@@ -55,11 +57,26 @@ Model_t Fatty;
 Model_t Pinky;
 
 Camera_t Camera;
+CameraPath_t CameraPath;
 
-float Projection[16], ModelView[16], MVP[16];
+int Auto=0;
 
-float Light0_Pos[4]={ 0.0f, 75.0f, 100.0f, 1.0f/512.0f };
+float Projection[16], ModelView[16], ModelViewInv[16];
+
+float Light0_Pos[4]={ 0.0f, 50.0f, 200.0f, 1.0f/512.0f };
 float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
+
+float Light1_Pos[4]={ -800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
+float Light1_Kd[4]={ 0.75f, 0.75f, 1.0f, 1.0f };
+
+float Light2_Pos[4]={ 800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
+float Light2_Kd[4]={ 0.75f, 1.0f, 1.0f, 1.0f };
+
+float Light3_Pos[4]={ -800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
+float Light3_Kd[4]={ 0.75f, 1.0f, 0.75f, 1.0f };
+
+float Light4_Pos[4]={ 800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
+float Light4_Kd[4]={ 1.0f, 0.75f, 0.75f, 1.0f };
 
 int DynWidth=1024, DynHeight=1024;
 
@@ -151,24 +168,25 @@ unsigned __int64 GetFrequency(void)
 GLuint VAO, VBO;
 
 #define NUM_SAMPLES 200
-float lines[3*NUM_SAMPLES+1];
+float lines[3*NUM_SAMPLES+3];
 
-void UpdateLineChart(float val)
+void UpdateLineChart(const float val)
 {
 	float temp[3*NUM_SAMPLES+1];
-	float xPos=-0.75f;
-	float yPos=-0.75f;
-	float scale=0.125f;
+	float xPos=-2.5f;
+	float yPos=-0.9f;
+	float xScale=2.0f;
+	float yScale=0.0625f;
 
 	// Initial seed into the array
-	lines[3*0+0]=1.0f+xPos;
-	lines[3*0+1]=(val*scale)+yPos;
+	lines[3*0+0]=(1.0f+xPos)/xScale;
+	lines[3*0+1]=(val*yScale)+yPos;
 	lines[3*0+2]=-1.0f;
 
 	// Propagate out into a temp array
 	for(int i=0;i<NUM_SAMPLES;i++)
 	{
-		temp[3*(i)+0]=1.0f-((float)i/NUM_SAMPLES*0.5f)+xPos;
+		temp[3*(i)+0]=(1.0f-((float)i/NUM_SAMPLES*0.5f)+xPos)/xScale;
 		temp[3*(i)+1]=lines[3*(i)+1];
 		temp[3*(i)+2]=lines[3*(i)+2];
 	}
@@ -183,7 +201,7 @@ void UpdateLineChart(float val)
 
 	// Update the vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES+1, lines, GL_STREAM_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
@@ -294,6 +312,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			UpdateLineChart(fFrameTime);
 		}
 	}
+
+	CameraDeletePath(&CameraPath);
 
 	Free3DS(&Level);
 
@@ -446,6 +466,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Camera.key_right=1;
 					break;
 
+				case VK_SPACE:
+#if CAMERA_RECORDING
+				{	// Recording camera paths
+					FILE *stream=NULL;
+					stream=fopen("path.txt", "a");
+					if(!stream)
+						break;
+					fprintf(stream, "%0.3f %0.3f %0.3f %0.3f %0.3f %0.3f\n", Camera.Position[0], Camera.Position[1], Camera.Position[2], Camera.View[0], Camera.View[1], Camera.View[2]);
+					fclose(stream);
+				}
+#else
+					Auto^=1;
+#endif
+					break;
+
 				case VK_ESCAPE:
 					PostQuitMessage(0);
 					break;
@@ -519,51 +554,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 {
-	float mvp[6][16];
+	float proj[16], mv[6][16], local[16];
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
 	glViewport(0, 0, DynWidth, DynHeight);
-	MatrixIdentity(Projection);
-	InfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, Projection);
+	MatrixIdentity(proj);
+	InfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, proj);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	MatrixIdentity(mvp[0]);
-	LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[0]);
-	MatrixMult(mvp[0], Projection, mvp[0]);
+	MatrixIdentity(mv[0]);
+	LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[0]);
 
-	MatrixIdentity(mvp[1]);
-	LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[1]);
-	MatrixMult(mvp[1], Projection, mvp[1]);
+	MatrixIdentity(mv[1]);
+	LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[1]);
 
-	MatrixIdentity(mvp[2]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, mvp[2]);
-	MatrixMult(mvp[2], Projection, mvp[2]);
+	MatrixIdentity(mv[2]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, mv[2]);
 
-	MatrixIdentity(mvp[3]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, mvp[3]);
-	MatrixMult(mvp[3], Projection, mvp[3]);
+	MatrixIdentity(mv[3]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, mv[3]);
 
-	MatrixIdentity(mvp[4]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[4]);
-	MatrixMult(mvp[4], Projection, mvp[4]);
+	MatrixIdentity(mv[4]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[4]);
 
-	MatrixIdentity(mvp[5]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mvp[5]);
-	MatrixMult(mvp[5], Projection, mvp[5]);
+	MatrixIdentity(mv[5]);
+	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[5]);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 
-	// Model view projection matrix for vertex to clipspace transform (vertex shader)
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_MVP], 6, GL_FALSE, (float *)mvp);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_PROJ], 1, GL_FALSE, proj);
+
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_MV], 6, GL_FALSE, (float *)mv);
 
 	glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
 
 	// Render models
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Hellknight.Model);
+
+	MatrixIdentity(local);
+	MatrixTranslate(-100.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Fatty.Model);
+
+	MatrixIdentity(local);
+	MatrixTranslate(100.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Pinky.Model);
+
+	MatrixIdentity(local);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -571,8 +621,22 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 
 void Render(void)
 {
+	float local[16];
+	float min[3]={ 0.0f, };
+	float max[3]={ 0.0f, };
+
 	for(int i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
+
+	// Sphere -> BBox intersection testing
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	//Matrix4x4MultVec3(Hellknight.Anim.bboxes[Hellknight.frame].min, local, min);
+	//Matrix4x4MultVec3(Hellknight.Anim.bboxes[Hellknight.frame].max, local, max);
+	//int collide=SphereBBOXIntersection(Camera.Position, Camera.Radius, min, max);
+	////
 
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
@@ -592,9 +656,11 @@ void Render(void)
 
 	// Set up model view matrix (translate and rotation)
 	MatrixIdentity(ModelView);
-	CameraUpdate(&Camera, fTimeStep, ModelView);
 
-	MatrixMult(ModelView, Projection, MVP);
+	if(Auto)
+		CameraInterpolatePath(&CameraPath, &Camera, fTimeStep, ModelView);
+	else
+		CameraUpdate(&Camera, fTimeStep, ModelView);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
@@ -603,12 +669,23 @@ void Render(void)
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT0_POS], 1, Light0_Pos);
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT0_KD], 1, Light0_Kd);
 
-	// Inverse model view matrix for "eye" vector
-	MatrixInverse(ModelView, ModelView);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_MVINV], 1, GL_FALSE, ModelView);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT1_POS], 1, Light1_Pos);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT1_KD], 1, Light1_Kd);
 
-	// Model view projection matrix for vertex to clipspace transform (vertex shader)
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_MVP], 1, GL_FALSE, MVP);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT2_POS], 1, Light2_Pos);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT2_KD], 1, Light2_Kd);
+
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT3_POS], 1, Light3_Pos);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT3_KD], 1, Light3_Kd);
+
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_POS], 1, Light4_Pos);
+	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_KD], 1, Light4_Kd);
+
+	// Projection matrix
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_PROJ], 1, GL_FALSE, Projection);
+
+	// Global ModelView
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_MV], 1, GL_FALSE, ModelView);
 
 	// Bind correct textures per model
 	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE0]);
@@ -617,21 +694,37 @@ void Render(void)
 	glBindTextureUnit(0, Objects[TEXTURE_HELLKNIGHT_BASE]);
 	glBindTextureUnit(1, Objects[TEXTURE_HELLKNIGHT_SPECULAR]);
 	glBindTextureUnit(2, Objects[TEXTURE_HELLKNIGHT_NORMAL]);
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Hellknight.Model);
 
 	glBindTextureUnit(0, Objects[TEXTURE_FATTY_BASE]);
 	glBindTextureUnit(1, Objects[TEXTURE_FATTY_SPECULAR]);
 	glBindTextureUnit(2, Objects[TEXTURE_FATTY_NORMAL]);
+	MatrixIdentity(local);
+	MatrixTranslate(-100.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Fatty.Model);
 
+	MatrixIdentity(local);
+	MatrixTranslate(100.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	glBindTextureUnit(0, Objects[TEXTURE_PINKY_BASE]);
 	glBindTextureUnit(1, Objects[TEXTURE_PINKY_SPECULAR]);
 	glBindTextureUnit(2, Objects[TEXTURE_PINKY_NORMAL]);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModelMD5(&Pinky.Model);
 
-	glBindTextureUnit(0, Objects[TEXTURE_TILE_BASE]);
-	glBindTextureUnit(1, Objects[TEXTURE_TILE_SPECULAR]);
-	glBindTextureUnit(2, Objects[TEXTURE_TILE_NORMAL]);
+	MatrixIdentity(local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -647,8 +740,39 @@ void Render(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
-	glDisable(GL_BLEND);
+		//if(collide)
+		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
+		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+}
+
+int LoadMaterials3DS(Model3DS_t *Model)
+{
+	for(int i=0;i<Model->NumMaterial;i++)
+	{
+		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
+
+		for(char *p=Model->Material[i].Texture;*p;p++)
+			*p=*p>0x40&&*p<0x5b?*p|0x60:*p;
+
+		strncpy(nameNoExt, Model->Material[i].Texture, 256);
+		ptr=strstr(nameNoExt, ".");
+		strncpy(fileExt, ptr, 256);
+
+		if(!ptr)
+			continue;
+
+		ptr[0]='\0';
+
+		snprintf(buf, 256, "./assets/%s", Model->Material[i].Texture);
+		Model->Material[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+
+		snprintf(buf, 256, "./assets/%s_b%s", nameNoExt, fileExt);
+		Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_NORMALMAP|IMAGE_TRILINEAR);
+
+		snprintf(buf, 256, "./assets/%s_s%s", nameNoExt, fileExt);
+		Model->Material[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	}
 }
 
 int Init(void)
@@ -658,26 +782,21 @@ int Init(void)
 
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES*2, NULL, GL_DYNAMIC_DRAW);
+	memset(lines, 0, sizeof(float)*3*NUM_SAMPLES+3);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES+3, lines, GL_STREAM_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
 
+#if CAMERA_RECORDING
+	CameraInit(&Camera, (float[]) { 0.0f, 0.0f, 0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, (float[3]) { 0.0f, 1.0f, 0.0f });
+#else
+	if(!CameraLoadPath("path.txt", &CameraPath))
+		return 0;
+
 	// Set up camera structs
-	CameraInit(&Camera,
-		(float[3])
-	{
-		0.0f, 0.0f, 100.0f
-	},	// Position
-		(float[3])
-	{
-		0.0f, 0.0f, 1.0f
-	},	// Heading
-			(float[3])
-		{
-			0.0f, 1.0f, 0.0f
-		}		// Up
-		);
+	CameraInit(&Camera, CameraPath.Position, CameraPath.View, (float[3]) { 0.0f, 1.0f, 0.0f });
+#endif
 
 	// Load texture images
 	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
@@ -692,16 +811,15 @@ int Init(void)
 	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
 	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_TILE_BASE]=Image_Upload("./assets/tile.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_TILE_SPECULAR]=Image_Upload("./assets/tile_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_TILE_NORMAL]=Image_Upload("./assets/tile_b.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
-
 	// Build a VAO/VBO for the skybox
 	BuildSkyboxVBO();
 
 	// Load the "level" 3D Studio model
-	if(Load3DS(&Level, "./assets/level.3ds"))
+	if(Load3DS(&Level, "./assets/room.3ds"))
+	{
 		BuildVBO3DS(&Level);
+		LoadMaterials3DS(&Level);
+	}
 	else
 		return 0;
 
@@ -726,15 +844,27 @@ int Init(void)
 	// General lighting shader
 	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL, NULL });
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
+	Objects[GLSL_LIGHT_PROJ]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "proj");
 	Objects[GLSL_LIGHT_MVINV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvinv");
-	Objects[GLSL_LIGHT_MVP]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvp");
+	Objects[GLSL_LIGHT_MV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mv");
+	Objects[GLSL_LIGHT_LOCAL]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "local");
 	Objects[GLSL_LIGHT_LIGHT0_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Pos");
 	Objects[GLSL_LIGHT_LIGHT0_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Kd");
+	Objects[GLSL_LIGHT_LIGHT1_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light1_Pos");
+	Objects[GLSL_LIGHT_LIGHT1_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light1_Kd");
+	Objects[GLSL_LIGHT_LIGHT2_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light2_Pos");
+	Objects[GLSL_LIGHT_LIGHT2_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light2_Kd");
+	Objects[GLSL_LIGHT_LIGHT3_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light3_Pos");
+	Objects[GLSL_LIGHT_LIGHT3_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light3_Kd");
+	Objects[GLSL_LIGHT_LIGHT4_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Pos");
+	Objects[GLSL_LIGHT_LIGHT4_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Kd");
 
 	// Build program for generating depth cube map
 	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/distance_v.glsl", "./shaders/distance_f.glsl", "./shaders/distance_g.glsl", NULL });
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
-	Objects[GLSL_DISTANCE_MVP]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mvp");
+	Objects[GLSL_DISTANCE_PROJ]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "proj");
+	Objects[GLSL_DISTANCE_MV]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mv");
+	Objects[GLSL_DISTANCE_LOCAL]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "local");
 	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
 
 	// Genereate texture and frame buffer for the depth cube map

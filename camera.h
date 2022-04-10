@@ -37,7 +37,7 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 void CameraUpdate(Camera_t *Camera, float Time, float *out);
 void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace);
 int CameraLoadPath(char *filename, CameraPath_t *Path);
-void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep);
+void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep, float *out);
 void CameraDeletePath(CameraPath_t *Path);
 
 #endif

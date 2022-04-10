@@ -96,7 +96,7 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 int Load3DS(Model3DS_t *Model, char *Filename)
 {
 	FILE *Stream=NULL;
-	long i, Length;
+	long Length;
 	unsigned short ChunkID;
 	uint32_t ChunkLength;
 	uint32_t Temp;
@@ -177,7 +177,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 				fread(Model->Mesh[Model->NumMesh-1].Vertex, sizeof(float), 3*Model->Mesh[Model->NumMesh-1].NumVertex, Stream);
 
-				for(i=0;i<Model->Mesh[Model->NumMesh-1].NumVertex;i++)
+				for(int i=0;i<Model->Mesh[Model->NumMesh-1].NumVertex;i++)
 				{
 					float Temp=Model->Mesh[Model->NumMesh-1].Vertex[3*i+1];
 					Model->Mesh[Model->NumMesh-1].Vertex[3*i+1]=Model->Mesh[Model->NumMesh-1].Vertex[3*i+2];
@@ -202,7 +202,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 					return 0;
 				}
 
-				for(i=0;i<Model->Mesh[Model->NumMesh-1].NumFace;i++)
+				for(int i=0;i<Model->Mesh[Model->NumMesh-1].NumFace;i++)
 				{
 					fread(&Model->Mesh[Model->NumMesh-1].Face[3*i], sizeof(unsigned short), 3, Stream);
 					fread(&Temp, sizeof(unsigned short), 1, Stream);
@@ -387,7 +387,20 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 	fclose(Stream);
 
-	for(i=0;i<Model->NumMesh;i++)
+	// If there are materials, match them to their meshes with an index number
+	if(Model->Material)
+	{
+		for(int i=0;i<Model->NumMesh;i++)
+		{
+			for(int j=0;j<Model->NumMaterial;j++)
+			{
+				if(strcmp(Model->Mesh[i].MaterialName, Model->Material[j].Name)==0)
+					Model->Mesh[i].MaterialNumber=j;
+			}
+		}
+	}
+
+	for(int i=0;i<Model->NumMesh;i++)
 		CalculateTangent(&Model->Mesh[i]);
 
 	return 1;

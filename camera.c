@@ -135,6 +135,28 @@ void GetCollisionOffset(float Normal[3], float radius, float distance, float *Of
 	Offset[2]=0.0f;
 }
 
+int SphereBBOXIntersection(const float Center[3], const float Radius, const float BBMin[3], const float BBMax[3])
+{
+	float dmin=0.0f;
+	float R2=Radius*Radius;
+
+	for(int i=0;i<3;i++)
+	{
+		if(Center[i]<BBMin[i])
+			dmin+=(Center[i]-BBMin[i])*(Center[i]-BBMin[i]);
+		else
+		{
+			if(Center[i]>BBMax[i])
+				dmin+=(Center[i]-BBMax[i])*(Center[i]-BBMax[i]);
+		}
+	}
+
+	if(dmin<=R2)
+		return 1;
+
+	return 0;
+}
+
 void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace)
 {
 	unsigned short i;
@@ -224,12 +246,13 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->key_down=0;
 }
 
-float pitch=0.0f;
-
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
 	float speed=25.0f;
 	float m[16];
+
+	if(!out)
+		return;
 
 	if(Camera->Pitch>1.56f)
 		Camera->Pitch=1.56f;
@@ -437,8 +460,13 @@ int CameraLoadPath(char *filename, CameraPath_t *Path)
 	return 1;
 }
 
-void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep)
+void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep, float *out)
 {
+	float m[16];
+
+	if(!out)
+		return;
+
 	Path->Time+=TimeStep;
 
 	if(Path->Time>Path->EndTime)
@@ -446,10 +474,14 @@ void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep)
 
 	CalculatePoint(Path->Knots, Path->NumPoints-1, 3, Path->Time, Path->Position, Camera->Position);
 	CalculatePoint(Path->Knots, Path->NumPoints-1, 3, Path->Time, Path->View, Camera->View);
+
+	LookAt(Camera->Position, Camera->View, Camera->Up, m);
+	MatrixMult(m, out, out);
 }
 
 void CameraDeletePath(CameraPath_t *Path)
 {
 	FREE(Path->Position);
 	FREE(Path->View);
+	FREE(Path->Knots);
 }
