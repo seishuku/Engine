@@ -94,8 +94,21 @@ void main()
 	vec3 l3_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l3, r), 16.0)*dot(l3, n)*Base.a);
 	vec3 l4_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l4, r), 16.0)*dot(l4, n)*Base.a);
 
+	float outerCutOff=cos(radians(90.0));
+	float cutOff=cos(radians(22.5));
+	vec3 direction=vec3(0.0, -0.5, -0.5);
+	float spotExponent=64.0;
+
+	float spotEffect=dot(normalize(direction), -l0);
+
+	if(spotEffect<outerCutOff)
+		spotEffect=0.0;
+	else
+		spotEffect=pow(smoothstep(outerCutOff, cutOff, spotEffect), spotExponent);
+
 	// I=(base*diffuse+specular)*shadow*attenuation+volumelight
-	temp =vec4((Base.xyz*l0_diffuse+l0_specular*Specular)*Shadow0*l0_atten*(1.0-l0_volume.w)+(l0_volume.w*Light0_Kd.xyz), 1.0);
+	temp =vec4((Base.xyz*l0_diffuse+l0_specular*Specular)*Shadow0*l0_atten*(1.0-l0_volume.w)*spotEffect+(l0_volume.w*Light0_Kd.xyz), 1.0);
+
 	temp+=vec4((Base.xyz*l1_diffuse+l1_specular*Specular)*l1_atten*(1.0-l1_volume.w)+(l1_volume.w*Light1_Kd.xyz), 1.0);
 	temp+=vec4((Base.xyz*l2_diffuse+l2_specular*Specular)*l2_atten*(1.0-l2_volume.w)+(l2_volume.w*Light2_Kd.xyz), 1.0);
 	temp+=vec4((Base.xyz*l3_diffuse+l3_specular*Specular)*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz), 1.0);

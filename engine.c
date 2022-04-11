@@ -642,8 +642,8 @@ void Render(void)
 	UpdateAnimation(&Fatty, fTimeStep);
 	UpdateAnimation(&Pinky, fTimeStep);
 
-	Light0_Pos[0]=sinf(fTime)*75.0f;
-	Light0_Pos[2]=cosf(fTime)*75.0f;
+	Light0_Pos[0]=sinf(fTime)*150.0f;
+	Light0_Pos[2]=cosf(fTime)*150.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -746,7 +746,7 @@ void Render(void)
 	glEnable(GL_DEPTH_TEST);
 }
 
-int LoadMaterials3DS(Model3DS_t *Model)
+void LoadMaterials3DS(Model3DS_t *Model)
 {
 	for(int i=0;i<Model->NumMaterial;i++)
 	{
