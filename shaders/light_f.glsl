@@ -2,9 +2,7 @@
 
 in vec3 Position;
 in vec2 UV;
-in vec3 TangentX;
-in vec3 TangentY;
-in vec3 TangentZ;
+in mat3 Tangent;
 
 layout(binding=0) uniform sampler2D TexBase;
 layout(binding=1) uniform sampler2D TexSpecular;
@@ -32,8 +30,8 @@ void main()
 	vec4 temp=2.0*texture(TexNormal, UV)-1.0;
 	vec4 Base=texture2D(TexBase, UV);
 	vec3 Specular=texture(TexSpecular, UV).xyz;
-//	vec3 n=normalize(mat3(local)*vec3(TangentX.z, TangentY.z, TangentZ.z));
-	vec3 n=normalize(mat3(local)*vec3(dot(TangentX, temp.xyz), dot(TangentY, temp.xyz), dot(TangentZ, temp.xyz)));
+//	vec3 n=normalize(mat3(local)*Tangent[2]);
+	vec3 n=normalize(mat3(local)*Tangent*temp.xyz);
 	vec3 e=inverse(mv)[3].xyz-Position, r;
 
 	vec3 l0=Light0_Pos.xyz-Position;

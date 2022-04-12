@@ -52,6 +52,8 @@ unsigned int Objects[NUM_OBJECTS];
 
 Model3DS_t Level;
 
+Model3DS_t Cube;
+
 Model_t Hellknight;
 Model_t Fatty;
 Model_t Pinky;
@@ -616,6 +618,11 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+	DrawModel3DS(&Cube);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -642,8 +649,8 @@ void Render(void)
 	UpdateAnimation(&Fatty, fTimeStep);
 	UpdateAnimation(&Pinky, fTimeStep);
 
-	Light0_Pos[0]=sinf(fTime)*150.0f;
-	Light0_Pos[2]=cosf(fTime)*150.0f;
+	//Light0_Pos[0]=sinf(fTime)*150.0f;
+	//Light0_Pos[2]=cosf(fTime)*150.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -726,6 +733,11 @@ void Render(void)
 	MatrixIdentity(local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
+
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	DrawModel3DS(&Cube);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -820,6 +832,11 @@ int Init(void)
 		BuildVBO3DS(&Level);
 		LoadMaterials3DS(&Level);
 	}
+	else
+		return 0;
+
+	if(Load3DS(&Cube, "./assets/box.3ds"))
+		BuildVBO3DS(&Cube);
 	else
 		return 0;
 

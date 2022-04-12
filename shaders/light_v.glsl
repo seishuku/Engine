@@ -12,10 +12,7 @@ uniform mat4 local;
 
 out vec3 Position;
 out vec2 UV;
-out vec3 TangentX;
-out vec3 TangentY;
-out vec3 TangentZ;
-out vec3 Eye;
+out mat3 Tangent;
 
 void main()
 {
@@ -24,15 +21,5 @@ void main()
 	Position=(local*vec4(vPosition.xyz, 1.0)).xyz;
 	UV=vUV.xy;
 
-	TangentX.x=vTangent.x;
-	TangentX.y=vBinormal.x;
-	TangentX.z=vNormal.x;
-
-	TangentY.x=vTangent.y;
-	TangentY.y=vBinormal.y;
-	TangentY.z=vNormal.y;
-
-	TangentZ.x=vTangent.z;
-	TangentZ.y=vBinormal.z;
-	TangentZ.z=vNormal.z;
+	Tangent=mat3(vTangent.xyz, vBinormal.xyz, vNormal.xyz);
 }
