@@ -28,7 +28,7 @@
     <ClCompile Include="md5.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="quad.c">
+    <ClCompile Include="quad_gl.c">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="skybox_gl.c">
@@ -110,6 +110,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\distance_g.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\cube_f.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\cube_v.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -16,9 +16,9 @@ out mat3 Tangent;
 
 void main()
 {
-	gl_Position=proj*mv*local*vec4(vPosition.xyz, 1.0);
+	gl_Position=proj*mv*local*vPosition;
 
-	Position=(local*vec4(vPosition.xyz, 1.0)).xyz;
+	Position=(local*vPosition).xyz;
 	UV=vUV.xy;
 
 	Tangent=mat3(vTangent.xyz, vBinormal.xyz, vNormal.xyz);

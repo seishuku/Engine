@@ -225,8 +225,11 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->Up[1]=Up[1];
 	Camera->Up[2]=Up[2];
 
+	Cross(Camera->View, Camera->Up, Camera->Forward);
+
 	Camera->Pitch=0.0f;
 	Camera->Yaw=PI;
+	Camera->Roll=PI;
 
 	Camera->Radius=10.0f;
 
@@ -246,6 +249,42 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->key_down=0;
 }
 
+void CameraPitch(Camera_t *Camera, const float Angle)
+{
+	Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
+	Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
+	Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
+	Vec3_Normalize(Camera->Forward);
+
+	Cross(Camera->Forward, Camera->Right, Camera->Up);
+	Camera->Up[0]*=-1;
+	Camera->Up[1]*=-1;
+	Camera->Up[2]*=-1;
+}
+
+void CameraYaw(Camera_t *Camera, const float Angle)
+{
+	Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)-Camera->Right[0]*sinf(Angle);
+	Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)-Camera->Right[1]*sinf(Angle);
+	Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)-Camera->Right[2]*sinf(Angle);
+	Vec3_Normalize(Camera->Forward);
+
+	Cross(Camera->Forward, Camera->Up, Camera->Right);
+}
+
+void CameraRoll(Camera_t *Camera, const float Angle)
+{
+	Camera->Right[0]=Camera->Right[0]*cosf(Camera->Roll)+Camera->Up[0]*sinf(Camera->Roll);
+	Camera->Right[1]=Camera->Right[1]*cosf(Camera->Roll)+Camera->Up[1]*sinf(Camera->Roll);
+	Camera->Right[2]=Camera->Right[2]*cosf(Camera->Roll)+Camera->Up[2]*sinf(Camera->Roll);
+	Vec3_Normalize(Camera->Right);
+
+	Cross(Camera->Forward, Camera->Right, Camera->Up);
+	Camera->Up[0]*=-1;
+	Camera->Up[1]*=-1;
+	Camera->Up[2]*=-1;
+}
+
 void CameraUpdate(Camera_t *Camera, float Time, float *out)
 {
 	float speed=25.0f;
@@ -253,16 +292,6 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 
 	if(!out)
 		return;
-
-	if(Camera->Pitch>1.56f)
-		Camera->Pitch=1.56f;
-	if(Camera->Pitch<-1.56f)
-		Camera->Pitch=-1.56f;
-
-	Camera->Forward[0]=sinf(Camera->Yaw)*cosf(Camera->Pitch);
-	Camera->Forward[1]=sinf(Camera->Pitch);
-	Camera->Forward[2]=cosf(Camera->Yaw)*cosf(Camera->Pitch);
-	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Up, Camera->Right);
 	Vec3_Normalize(Camera->Right);
@@ -285,21 +314,40 @@ void CameraUpdate(Camera_t *Camera, float Time, float *out)
 	if(Camera->key_s)
 		Camera->Velocity[2]-=Time;
 
+	if(Camera->key_q)
+//		CameraRoll(Camera, Time*2.0f);
+		Camera->Roll+=Time*0.25f;
+
+	if(Camera->key_e)
+//		CameraRoll(Camera, -Time*2.0f);
+		Camera->Roll-=Time*0.25f;
+
 	if(Camera->key_left)
-		Camera->Yaw+=Time*1.5f;
+//		CameraYaw(Camera, Time*2.0f);
+		Camera->Yaw+=Time*0.25f;
 
 	if(Camera->key_right)
-		Camera->Yaw-=Time*1.5f;
+//		CameraYaw(Camera, -Time*2.0f);
+		Camera->Yaw-=Time*0.25f;
 
 	if(Camera->key_up)
-		Camera->Pitch+=Time*1.5f;
+//		CameraPitch(Camera, Time*2.0f);
+		Camera->Pitch+=Time*0.25f;
 
 	if(Camera->key_down)
-		Camera->Pitch-=Time*1.5f;
+//		CameraPitch(Camera, -Time*2.0f);
+		Camera->Pitch-=Time*0.25f;
 
 	Camera->Velocity[0]*=0.91f;
 	Camera->Velocity[1]*=0.91f;
 	Camera->Velocity[2]*=0.91f;
+	Camera->Pitch*=0.91f;
+	Camera->Yaw*=0.91f;
+	Camera->Roll*=0.91f;
+
+	CameraPitch(Camera, Camera->Pitch);
+	CameraYaw(Camera, Camera->Yaw);
+	CameraRoll(Camera, Camera->Roll);
 
 	Camera->Position[0]+=Camera->Right[0]*speed*Camera->Velocity[0];
 	Camera->Position[1]+=Camera->Right[1]*speed*Camera->Velocity[0];

@@ -403,8 +403,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch(wParam)
 			{
 				case MK_LBUTTON:
-					Camera.Yaw-=(float)delta.x/500.0f;
-					Camera.Pitch+=(float)delta.y/500.0f;
+					Camera.Yaw-=(float)delta.x/800.0f;
+					Camera.Pitch+=(float)delta.y/800.0f;
 					break;
 
 				case MK_MBUTTON:
@@ -618,10 +618,14 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
-	MatrixIdentity(local);
+/*	MatrixIdentity(local);
 	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModel3DS(&Cube);
+	DrawModel3DS(&Cube);*/
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, -75.0f, 100.0f, local);
+	//glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+	//DrawSkybox();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -629,13 +633,13 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 void Render(void)
 {
 	float local[16];
-	float min[3]={ 0.0f, };
-	float max[3]={ 0.0f, };
 
 	for(int i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
 	// Sphere -> BBox intersection testing
+	//float min[3]={ 0.0f, };
+	//float max[3]={ 0.0f, };
 	//MatrixIdentity(local);
 	//MatrixTranslate(0.0f, -100.0f, 0.0f, local);
 	//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
@@ -734,10 +738,25 @@ void Render(void)
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
+	glUseProgram(Objects[GLSL_CUBE_SHADER]);
+	glUniformMatrix4fv(Objects[GLSL_CUBE_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_CUBE_MV], 1, GL_FALSE, ModelView);
+	glUniform3fv(0, 1, Camera.Position);
+
+	glBindTextureUnit(0, Objects[TEXTURE_3DVOLUME]);
+
 	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	DrawModel3DS(&Cube);
+	MatrixTranslate(0.0f, -73.0f, 100.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_CUBE_LOCAL], 1, GL_FALSE, local);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//DrawModel3DS(&Cube);
+	glFrontFace(GL_CCW);
+	DrawSkybox();
+	glFrontFace(GL_CW);
+	DrawSkybox();
+	glDisable(GL_BLEND);
+	glFrontFace(GL_CCW);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -789,6 +808,41 @@ void LoadMaterials3DS(Model3DS_t *Model)
 
 int Init(void)
 {
+	BuildSkyboxVBO();
+
+	{
+		int size=64;
+		FILE *stream=NULL;
+
+		stream=fopen("./assets/vol.raw", "r");
+
+		if(!stream)
+			return 0;
+
+		GLubyte *volume=(GLubyte *)malloc(size*size*size);
+
+		if(!volume)
+		{
+			fclose(stream);
+			return 0;
+		}
+
+		fread(volume, 1, size*size*size, stream);
+		fclose(stream);
+
+		glGenTextures(1, &Objects[TEXTURE_3DVOLUME]);
+		glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_3DVOLUME]);
+
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, size, size, size, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
+
+		FREE(volume);
+	}
+
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
@@ -854,6 +908,13 @@ int Init(void)
 		return 0;
 
 	// Load shaders
+
+	Objects[GLSL_CUBE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/cube_v.glsl", "./shaders/cube_f.glsl", NULL, NULL });
+	glUseProgram(Objects[GLSL_CUBE_SHADER]);
+	Objects[GLSL_CUBE_PROJ]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "proj");
+	Objects[GLSL_CUBE_MVINV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mvinv");
+	Objects[GLSL_CUBE_MV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mv");
+	Objects[GLSL_CUBE_LOCAL]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "local");
 
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });

@@ -12,6 +12,7 @@ typedef struct
 
 	float Pitch;
 	float Yaw;
+	float Roll;
 
 	float Radius;
 

@@ -376,7 +376,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="quad.c" />
+    <ClCompile Include="quad_gl.c" />
     <ClCompile Include="skybox_gl.c" />
     <ClCompile Include="tga.c">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -406,6 +406,8 @@
     <ClInclude Include="skybox_gl.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\cube_f.glsl" />
+    <None Include="shaders\cube_v.glsl" />
     <None Include="shaders\distance_f.glsl" />
     <None Include="shaders\distance_g.glsl" />
     <None Include="shaders\distance_v.glsl" />

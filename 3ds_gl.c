@@ -53,23 +53,23 @@ void BuildVBO3DS(Model3DS_t *Model)
 		glBindBuffer(GL_ARRAY_BUFFER, Model->Mesh[i].VertID);
 
 		// Set vertex attribute pointer layouts
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*16, BUFFER_OFFSET(sizeof(float)*0));	//Vertex
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*0));	//Vertex
 		glEnableVertexAttribArray(0);
 
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float)*16, BUFFER_OFFSET(sizeof(float)*4));	//UV
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*4));	//UV
 		glEnableVertexAttribArray(1);
 
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float)*16, BUFFER_OFFSET(sizeof(float)*7));	//TANGENT
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4)));	//TANGENT
 		glEnableVertexAttribArray(2);
 
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(float)*16, BUFFER_OFFSET(sizeof(float)*10));	//BINORMAL
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4)));	//BINORMAL
 		glEnableVertexAttribArray(3);
 
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(float)*16, BUFFER_OFFSET(sizeof(float)*13));	//NORMAL
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4+4)));	//NORMAL
 		glEnableVertexAttribArray(4);
 
 		// Allocate a temp buffer in system memory
-		data=(float *)malloc(sizeof(float)*Model->Mesh[i].NumVertex*16);
+		data=(float *)malloc(sizeof(float)*Model->Mesh[i].NumVertex*20);
 
 		if(data==NULL)
 		{
@@ -92,19 +92,23 @@ void BuildVBO3DS(Model3DS_t *Model)
 			*fPtr++=Model->Mesh[i].UV[2*j+0];
 			*fPtr++=Model->Mesh[i].UV[2*j+1];
 			*fPtr++=0.0f; // Padding
+			*fPtr++=0.0f; // Padding
 			*fPtr++=Model->Mesh[i].Tangent[3*j+0];
 			*fPtr++=Model->Mesh[i].Tangent[3*j+1];
 			*fPtr++=Model->Mesh[i].Tangent[3*j+2];
+			*fPtr++=0.0f; // Padding
 			*fPtr++=Model->Mesh[i].Binormal[3*j+0];
 			*fPtr++=Model->Mesh[i].Binormal[3*j+1];
 			*fPtr++=Model->Mesh[i].Binormal[3*j+2];
+			*fPtr++=0.0f; // Padding
 			*fPtr++=Model->Mesh[i].Normal[3*j+0];
 			*fPtr++=Model->Mesh[i].Normal[3*j+1];
 			*fPtr++=Model->Mesh[i].Normal[3*j+2];
+			*fPtr++=0.0f; // Padding
 		}
 
 		// Upload to GPU memory and free host memory buffer
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*Model->Mesh[i].NumVertex*16, data, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*Model->Mesh[i].NumVertex*20, data, GL_STATIC_DRAW);
 		FREE(data);
 
 		// Generate element (index) buffer, copy data directly, no processing needed.

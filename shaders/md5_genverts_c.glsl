@@ -97,14 +97,18 @@ void main()
 
 		temp=Quat_rotatePoint(skeleton[Weights[j].joint].orient, Weights[j].pos.xyz);
 		FinalVertex[i].vertex+=(skeleton[Weights[j].joint].pos+temp)*Weights[j].bias;
+		FinalVertex[i].vertex.w=1.0;
 
 		temp=Quat_rotatePoint(skeleton[Weights[j].joint].orient, Weights[j].tangent.xyz);
 		FinalVertex[i].tangent+=temp*Weights[j].bias;
+		FinalVertex[i].tangent.w=0.0;
 
 		temp=Quat_rotatePoint(skeleton[Weights[j].joint].orient, Weights[j].binormal.xyz);
 		FinalVertex[i].binormal+=temp*Weights[j].bias;
+		FinalVertex[i].binormal.w=0.0;
 
 		temp=Quat_rotatePoint(skeleton[Weights[j].joint].orient, Weights[j].normal.xyz);
 		FinalVertex[i].normal+=temp*Weights[j].bias;
+		FinalVertex[i].normal.w=0.0;
 	}
 }
