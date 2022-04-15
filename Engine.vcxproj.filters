@@ -43,6 +43,9 @@
     <ClCompile Include="camera.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="win32.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3ds.h">

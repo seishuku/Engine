@@ -392,6 +392,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="win32.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3ds.h" />

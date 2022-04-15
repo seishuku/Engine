@@ -228,8 +228,8 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Cross(Camera->View, Camera->Up, Camera->Forward);
 
 	Camera->Pitch=0.0f;
-	Camera->Yaw=PI;
-	Camera->Roll=PI;
+	Camera->Yaw=0.0f;
+	Camera->Roll=0.0f;
 
 	Camera->Radius=10.0f;
 
