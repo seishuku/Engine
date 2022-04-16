@@ -251,9 +251,13 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 
 void CameraPitch(Camera_t *Camera, const float Angle)
 {
-	Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
-	Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
-	Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
+	float quat[4];
+
+	QuatAnglev(Angle, Camera->Right, quat);
+	QuatRotate(quat, Camera->Forward, Camera->Forward);
+	//Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
+	//Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
+	//Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Right, Camera->Up);
@@ -264,9 +268,13 @@ void CameraPitch(Camera_t *Camera, const float Angle)
 
 void CameraYaw(Camera_t *Camera, const float Angle)
 {
-	Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)-Camera->Right[0]*sinf(Angle);
-	Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)-Camera->Right[1]*sinf(Angle);
-	Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)-Camera->Right[2]*sinf(Angle);
+	float quat[4];
+
+	QuatAnglev(Angle, Camera->Up, quat);
+	QuatRotate(quat, Camera->Forward, Camera->Forward);
+	//Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)-Camera->Right[0]*sinf(Angle);
+	//Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)-Camera->Right[1]*sinf(Angle);
+	//Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)-Camera->Right[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Up, Camera->Right);
@@ -274,9 +282,13 @@ void CameraYaw(Camera_t *Camera, const float Angle)
 
 void CameraRoll(Camera_t *Camera, const float Angle)
 {
-	Camera->Right[0]=Camera->Right[0]*cosf(Camera->Roll)+Camera->Up[0]*sinf(Camera->Roll);
-	Camera->Right[1]=Camera->Right[1]*cosf(Camera->Roll)+Camera->Up[1]*sinf(Camera->Roll);
-	Camera->Right[2]=Camera->Right[2]*cosf(Camera->Roll)+Camera->Up[2]*sinf(Camera->Roll);
+	float quat[4];
+
+	QuatAnglev(-Angle, Camera->Forward, quat);
+	QuatRotate(quat, Camera->Right, Camera->Right);
+	//Camera->Right[0]=Camera->Right[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
+	//Camera->Right[1]=Camera->Right[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
+	//Camera->Right[2]=Camera->Right[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Right);
 
 	Cross(Camera->Forward, Camera->Right, Camera->Up);

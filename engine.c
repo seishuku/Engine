@@ -355,16 +355,14 @@ void Render(void)
 
 	MatrixIdentity(local);
 	MatrixTranslate(0.0f, -73.0f, 100.0f, local);
+//	MatrixRotate(PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_CUBE_LOCAL], 1, GL_FALSE, local);
+	glUniform3f(0, (float)Width, (float)Height, 90.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//DrawModel3DS(&Cube);
-	glFrontFace(GL_CCW);
-	DrawSkybox();
-	glFrontFace(GL_CW);
 	DrawSkybox();
 	glDisable(GL_BLEND);
-	glFrontFace(GL_CCW);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -424,15 +422,15 @@ int Init(void)
 	BuildSkyboxVBO();
 
 	{
-		int size=64;
+		unsigned long xsize=256, ysize=256, zsize=256;
 		FILE *stream=NULL;
 
-		stream=fopen("./assets/vol.raw", "r");
+		stream=fopen("./assets/bonsai_256x256x256_uint8.raw", "r");
 
 		if(!stream)
 			return 0;
 
-		GLubyte *volume=(GLubyte *)malloc(size*size*size);
+		GLubyte *volume=(GLubyte *)malloc(xsize*ysize*zsize);
 
 		if(!volume)
 		{
@@ -440,7 +438,7 @@ int Init(void)
 			return 0;
 		}
 
-		fread(volume, 1, size*size*size, stream);
+		fread(volume, 1, xsize*ysize*zsize, stream);
 		fclose(stream);
 
 		glGenTextures(1, &Objects[TEXTURE_3DVOLUME]);
@@ -451,7 +449,7 @@ int Init(void)
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, size, size, size, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
+		glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, xsize, ysize, zsize, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
 
 		FREE(volume);
 	}
