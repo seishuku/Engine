@@ -402,7 +402,7 @@ void _BuildMipmaps(Image_t *Image, unsigned int Target)
 				break;
 
 			case 8:
-//				glTexImage2D(Target, i, GL_INTENSITY8, Dst.Width, Dst.Height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, Dst.Data);
+				glTexImage2D(Target, i, GL_R8, Dst.Width, Dst.Height, 0, GL_RED, GL_UNSIGNED_BYTE, Dst.Data);
 				break;
 		}
 
@@ -617,9 +617,9 @@ void _AngularMapFace(Image_t *In, int Face, int Mipmap)
 			break;
 
 		case 8:
-//			Internal=GL_INTENSITY8;
-//			External=GL_LUMINANCE;
-//			Type=GL_UNSIGNED_BYTE;
+			Internal=GL_R8;
+			External=GL_RED;
+			Type=GL_UNSIGNED_BYTE;
 			break;
 
 		default:
@@ -862,10 +862,10 @@ unsigned int Image_Upload(char *Filename, unsigned long Flags)
 			break;
 
 		case 8:
-//			if(Flags&IMAGE_MIPMAP)
-//				_BuildMipmaps(&Image, Target);
-//			else
-//				glTexImage2D(Target, 0, GL_INTENSITY8, Image.Width, Image.Height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, Image.Data);
+			if(Flags&IMAGE_MIPMAP)
+				_BuildMipmaps(&Image, Target);
+			else
+				glTexImage2D(Target, 0, GL_R8, Image.Width, Image.Height, 0, GL_RED, GL_UNSIGNED_BYTE, Image.Data);
 			break;
 
 		default:

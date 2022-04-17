@@ -75,7 +75,6 @@ void main()
 	l3=normalize(l3);
 	l4=normalize(l4);
 
-	//reflect=normalize((2.0*dot(e, n))*n-e);
 	r=reflect(-e, n);
 
 	// Diffuse = Kd*(N.L)

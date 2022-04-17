@@ -30,7 +30,7 @@
 
 int Width=1280, Height=720;
 
-extern float fps, fFrameTime, fTimeStep;
+extern float fps, fFrameTime, fTimeStep, fTime;
 
 unsigned int Objects[NUM_OBJECTS];
 
@@ -230,20 +230,73 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Cube);*/
-	//MatrixIdentity(local);
-	//MatrixTranslate(0.0f, -75.0f, 100.0f, local);
-	//glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	//DrawSkybox();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+GLuint BeamVAO, BeamVBO, BeamEBO;
+
+void BuildBeamVBO(void)
+{
+	const float scale=100.0f;
+	const float corners[]=
+	{
+		-0.5f*scale, -0.5f*scale, +0.5f*scale, 1.0f,
+		+0.5f*scale, -0.5f*scale, +0.5f*scale, 1.0f,
+		+0.5f*scale, +0.5f*scale, +0.5f*scale, 1.0f,
+		-0.5f*scale, +0.5f*scale, +0.5f*scale, 1.0f,
+		-0.5f*scale, -0.5f*scale, -0.5f*scale, 1.0f,
+		+0.5f*scale, -0.5f*scale, -0.5f*scale, 1.0f,
+		+0.5f*scale, +0.5f*scale, -0.5f*scale, 1.0f,
+		-0.5f*scale, +0.5f*scale, -0.5f*scale, 1.0f
+	};
+
+	GLubyte tris[]=
+	{
+		0, 1, 2, 3, 0, 2,
+		7, 6, 5, 4, 7, 5,
+		0, 3, 7, 4, 0, 7,
+		1, 5, 6, 2, 1, 6,
+		0, 4, 5, 1, 0, 5,
+		3, 2, 6, 7, 3, 6
+	};
+
+	glGenVertexArrays(1, &BeamVAO);
+	glBindVertexArray(BeamVAO);
+
+	glGenBuffers(1, &BeamVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*8, corners, GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &BeamEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte)*36, tris, GL_STATIC_DRAW);
+}
+
+void DrawBeam(void)
+{
+	glFrontFace(GL_CW);
+	glBindVertexArray(BeamVAO);
+	glUniform1i(3, 0);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+	glUniform1i(3, 1);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glFrontFace(GL_CCW);
+}
+
+float pos[3];
 
 void Render(void)
 {
 	float local[16];
 
-	for(int i=0;i<Level.NumMesh;i++)
-		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
+//	for(int i=0;i<Level.NumMesh;i++)
+//		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
 	// Sphere -> BBox intersection testing
 	//float min[3]={ 0.0f, };
@@ -346,23 +399,43 @@ void Render(void)
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModel3DS(&Level);
 
-	glUseProgram(Objects[GLSL_CUBE_SHADER]);
-	glUniformMatrix4fv(Objects[GLSL_CUBE_PROJ], 1, GL_FALSE, Projection);
-	glUniformMatrix4fv(Objects[GLSL_CUBE_MV], 1, GL_FALSE, ModelView);
-	glUniform3fv(0, 1, Camera.Position);
-
-	glBindTextureUnit(0, Objects[TEXTURE_3DVOLUME]);
+	///// Beam stuff
+	glUseProgram(Objects[GLSL_BEAM_SHADER]);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_MV], 1, GL_FALSE, ModelView);
 
 	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -73.0f, 100.0f, local);
-//	MatrixRotate(PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_CUBE_LOCAL], 1, GL_FALSE, local);
-	glUniform3f(0, (float)Width, (float)Height, 90.0f);
+	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
+	
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//DrawModel3DS(&Cube);
-	DrawSkybox();
+//	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glUniform4f(0, 1.0f, 0.75f, 0.25f, 1.0f/5.0f);
+	glUniform3fv(1, 1, (float[]) { -10.0f, -10.0f, -10.0f });
+	glUniform3fv(2, 1, (float[]) { 10.0f, 10.0f, 10.0f });
+	DrawBeam();
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+	/////
+
+//	glUseProgram(Objects[GLSL_CUBE_SHADER]);
+//	glUniformMatrix4fv(Objects[GLSL_CUBE_PROJ], 1, GL_FALSE, Projection);
+//	glUniformMatrix4fv(Objects[GLSL_CUBE_MV], 1, GL_FALSE, ModelView);
+//	glUniform3fv(0, 1, Camera.Position);
+//
+//	glBindTextureUnit(0, Objects[TEXTURE_3DVOLUME]);
+//
+//	MatrixIdentity(local);
+//	MatrixTranslate(0.0f, -73.0f, 100.0f, local);
+////	MatrixRotate(PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+//	glUniformMatrix4fv(Objects[GLSL_CUBE_LOCAL], 1, GL_FALSE, local);
+//	glUniform3f(0, (float)Width, (float)Height, 90.0f);
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	//DrawModel3DS(&Cube);
+//	DrawSkybox();
+//	glDisable(GL_BLEND);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -419,40 +492,42 @@ int Init(void)
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glEnable(GL_DEBUG_OUTPUT);
 
+	BuildBeamVBO();
+
 	BuildSkyboxVBO();
 
-	{
-		unsigned long xsize=256, ysize=256, zsize=256;
-		FILE *stream=NULL;
+	//{
+	//	unsigned long xsize=256, ysize=256, zsize=256;
+	//	FILE *stream=NULL;
 
-		stream=fopen("./assets/bonsai_256x256x256_uint8.raw", "r");
+	//	stream=fopen("./assets/bonsai_256x256x256_uint8.raw", "r");
 
-		if(!stream)
-			return 0;
+	//	if(!stream)
+	//		return 0;
 
-		GLubyte *volume=(GLubyte *)malloc(xsize*ysize*zsize);
+	//	GLubyte *volume=(GLubyte *)malloc(xsize*ysize*zsize);
 
-		if(!volume)
-		{
-			fclose(stream);
-			return 0;
-		}
+	//	if(!volume)
+	//	{
+	//		fclose(stream);
+	//		return 0;
+	//	}
 
-		fread(volume, 1, xsize*ysize*zsize, stream);
-		fclose(stream);
+	//	fread(volume, 1, xsize*ysize*zsize, stream);
+	//	fclose(stream);
 
-		glGenTextures(1, &Objects[TEXTURE_3DVOLUME]);
-		glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_3DVOLUME]);
+	//	glGenTextures(1, &Objects[TEXTURE_3DVOLUME]);
+	//	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_3DVOLUME]);
 
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, xsize, ysize, zsize, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
+	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//	glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, xsize, ysize, zsize, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
 
-		FREE(volume);
-	}
+	//	FREE(volume);
+	//}
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -488,9 +563,6 @@ int Init(void)
 	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
 	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	// Build a VAO/VBO for the skybox
-	BuildSkyboxVBO();
-
 	// Load the "level" 3D Studio model
 	if(Load3DS(&Level, "./assets/room.3ds"))
 	{
@@ -520,10 +592,17 @@ int Init(void)
 
 	// Load shaders
 
+	// Laserbeam shader
+	Objects[GLSL_BEAM_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/beam_v.glsl", "./shaders/beam_f.glsl", NULL, NULL });
+	glUseProgram(Objects[GLSL_BEAM_SHADER]);
+	Objects[GLSL_BEAM_PROJ]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "proj");
+	Objects[GLSL_BEAM_MV]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "mv");
+	Objects[GLSL_BEAM_LOCAL]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "local");
+
+	// Raycast volume rendering
 	Objects[GLSL_CUBE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/cube_v.glsl", "./shaders/cube_f.glsl", NULL, NULL });
 	glUseProgram(Objects[GLSL_CUBE_SHADER]);
 	Objects[GLSL_CUBE_PROJ]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "proj");
-	Objects[GLSL_CUBE_MVINV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mvinv");
 	Objects[GLSL_CUBE_MV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mv");
 	Objects[GLSL_CUBE_LOCAL]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "local");
 
@@ -534,7 +613,6 @@ int Init(void)
 	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL, NULL });
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 	Objects[GLSL_LIGHT_PROJ]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "proj");
-	Objects[GLSL_LIGHT_MVINV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mvinv");
 	Objects[GLSL_LIGHT_MV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mv");
 	Objects[GLSL_LIGHT_LOCAL]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "local");
 	Objects[GLSL_LIGHT_LIGHT0_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Pos");

@@ -105,6 +105,21 @@ float Vec4_Dot(const float a[4], const float b[4])
 	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]);
 }
 
+float Vec2_Length(const float Vector[2])
+{
+	return sqrtf(Vec2_Dot(Vector, Vector));
+}
+
+float Vec3_Length(const float Vector[3])
+{
+	return sqrtf(Vec3_Dot(Vector, Vector));
+}
+
+float Vec4_Length(const float Vector[4])
+{
+	return sqrtf(Vec4_Dot(Vector, Vector));
+}
+
 float Vec2_Distance(const float Vector1[2], const float Vector2[2])
 {
 	const float Vector[2]=
@@ -113,7 +128,7 @@ float Vec2_Distance(const float Vector1[2], const float Vector2[2])
 		Vector2[1]-Vector1[1]
 	};
 
-	return (float)sqrt(Vec3_Dot(Vector, Vector));
+	return Vec2_Length(Vector);
 }
 
 float Vec3_Distance(const float Vector1[3], const float Vector2[3])
@@ -125,7 +140,7 @@ float Vec3_Distance(const float Vector1[3], const float Vector2[3])
 		Vector2[2]-Vector1[2]
 	};
 
-	return (float)sqrt(Vec3_Dot(Vector, Vector));
+	return Vec3_Length(Vector);
 }
 
 float Vec4_Distance(const float Vector1[4], const float Vector2[4])
@@ -138,7 +153,7 @@ float Vec4_Distance(const float Vector1[4], const float Vector2[4])
 		Vector2[3]-Vector1[3]
 	};
 
-	return (float)sqrt(Vec4_Dot(Vector, Vector));
+	return Vec4_Length(Vector);
 }
 
 void Vec2_Normalize(float *v)
@@ -146,7 +161,7 @@ void Vec2_Normalize(float *v)
 	if(!v)
 		return;
 
-	float mag=sqrtf(Vec2_Dot(v, v));
+	float mag=Vec2_Length(v);
 
 	if(mag)
 	{
@@ -162,7 +177,7 @@ void Vec3_Normalize(float *v)
 	if(!v)
 		return;
 
-	float mag=sqrtf(Vec3_Dot(v, v));
+	float mag=Vec3_Length(v);
 
 	if(mag)
 	{
@@ -179,7 +194,7 @@ void Vec4_Normalize(float *v)
 	if(!v)
 		return;
 
-	float mag=sqrtf(Vec4_Dot(v, v));
+	float mag=Vec4_Length(v);
 
 	if(mag)
 	{

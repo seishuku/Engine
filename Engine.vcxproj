@@ -410,6 +410,8 @@
     <ClInclude Include="skybox_gl.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\beam_f.glsl" />
+    <None Include="shaders\beam_v.glsl" />
     <None Include="shaders\cube_f.glsl" />
     <None Include="shaders\cube_v.glsl" />
     <None Include="shaders\distance_f.glsl" />
