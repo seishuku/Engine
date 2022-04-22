@@ -47,22 +47,22 @@ CameraPath_t CameraPath;
 
 extern int Auto;
 
-float Projection[16], ModelView[16], ModelViewInv[16];
+matrix Projection, ModelView, ModelViewInv;
 
-float Light0_Pos[4]={ 0.0f, 50.0f, 200.0f, 1.0f/512.0f };
-float Light0_Kd[4]={ 1.0f, 1.0f, 1.0f, 1.0f };
+vec4 Light0_Pos={ 0.0f, 50.0f, 200.0f, 1.0f/512.0f };
+vec4 Light0_Kd={ 1.0f, 1.0f, 1.0f, 1.0f };
 
-float Light1_Pos[4]={ -800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
-float Light1_Kd[4]={ 0.75f, 0.75f, 1.0f, 1.0f };
+vec4 Light1_Pos={ -800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
+vec4 Light1_Kd={ 0.75f, 0.75f, 1.0f, 1.0f };
 
-float Light2_Pos[4]={ 800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
-float Light2_Kd[4]={ 0.75f, 1.0f, 1.0f, 1.0f };
+vec4 Light2_Pos={ 800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
+vec4 Light2_Kd={ 0.75f, 1.0f, 1.0f, 1.0f };
 
-float Light3_Pos[4]={ -800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
-float Light3_Kd[4]={ 0.75f, 1.0f, 0.75f, 1.0f };
+vec4 Light3_Pos={ -800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
+vec4 Light3_Kd={ 0.75f, 1.0f, 0.75f, 1.0f };
 
-float Light4_Pos[4]={ 800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
-float Light4_Kd[4]={ 1.0f, 0.75f, 0.75f, 1.0f };
+vec4 Light4_Pos={ 800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
+vec4 Light4_Kd={ 1.0f, 0.75f, 0.75f, 1.0f };
 
 int DynWidth=1024, DynHeight=1024;
 
@@ -162,9 +162,9 @@ void UpdateLineChart(const float val)
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
 }
 
-void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
+void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 {
-	float proj[16], mv[6][16], local[16];
+	matrix proj, mv[6], local;
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
 	glViewport(0, 0, DynWidth, DynHeight);
@@ -174,22 +174,22 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	MatrixIdentity(mv[0]);
-	LookAt(pos, (float[]) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[0]);
+	LookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
 
 	MatrixIdentity(mv[1]);
-	LookAt(pos, (float[]) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[1]);
+	LookAt(pos, (vec3) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[1]);
 
 	MatrixIdentity(mv[2]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, mv[2]);
+	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, 1.0f }, mv[2]);
 
 	MatrixIdentity(mv[3]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (float[]) { 0.0f, 0.0f, -1.0f }, mv[3]);
+	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, -1.0f }, mv[3]);
 
 	MatrixIdentity(mv[4]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[4]);
+	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[4]);
 
 	MatrixIdentity(mv[5]);
-	LookAt(pos, (float[]) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (float[]) { 0.0f, -1.0f, 0.0f }, mv[5]);
+	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
@@ -235,65 +235,212 @@ void UpdateShadow(GLuint texture, GLuint buffer, float *pos)
 }
 
 GLuint BeamVAO, BeamVBO, BeamEBO;
+void set(const float axis[3], const float angle, const float translation[3], matrix out)
+{
+	float s=sinf(angle), c=cosf(angle), c1=1.0f-c;
+	float x=axis[0], y=axis[1], z=axis[2];
+	matrix m=
+	{
+		c+x*x*c1,		y*x*c1+z*s,		z*x*c1-y*s,		0.0f,
+		x*y*c1-z*s,		c+y*y*c1,		z*y*c1+x*s,		0.0f,
+		x*z*c1+y*s,		y*z*c1-x*s,		c+z*z*c1,		0.0f,
+		translation[0],	translation[1],	translation[2],	1.0f
+	};
+
+	MatrixMult(m, out, out);
+}
+
+void align(const float start[3], const float end[3], matrix out)
+{
+//	vec3 v={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
+	vec3 v={ start[0]-end[0], start[1]-end[1], start[2]-end[2] };
+	vec3 c;
+	vec3 u={ 0.0f, 0.0f, 1.0f };
+	Vec3_Normalize(v);
+	Cross(v, u, c);
+	float  d=Vec3_Dot(v, u);
+	float angle=acosf(d);
+
+	if(out)
+	{
+		MatrixTranslatev(start, out);
+		MatrixRotatev(angle, c, out);
+	}
+}
+
+float start[3]={ 0.0f, 100.0f, 0.0f };
+float end[3]={ 10.0f, -100.0f, 0.0f };
+const float radius=2.0f;
 
 void BuildBeamVBO(void)
 {
-	const float scale=100.0f;
-	const float corners[]=
-	{
-		-0.5f*scale, -0.5f*scale, +0.5f*scale, 1.0f,
-		+0.5f*scale, -0.5f*scale, +0.5f*scale, 1.0f,
-		+0.5f*scale, +0.5f*scale, +0.5f*scale, 1.0f,
-		-0.5f*scale, +0.5f*scale, +0.5f*scale, 1.0f,
-		-0.5f*scale, -0.5f*scale, -0.5f*scale, 1.0f,
-		+0.5f*scale, -0.5f*scale, -0.5f*scale, 1.0f,
-		+0.5f*scale, +0.5f*scale, -0.5f*scale, 1.0f,
-		-0.5f*scale, +0.5f*scale, -0.5f*scale, 1.0f
-	};
+	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
+	float length=Vec3_Length(vec);
+	int count=0;
 
-	GLubyte tris[]=
+	int segments=8;
+
+	// make segments an even number
+	if(segments%2!=0)
+		segments++;
+
+	float *verts=(float *)malloc(sizeof(float)*3*(segments/2+1)*segments*6);
+	float *vPtr=verts;
+
+	int jadj1=0, jadj2=1;
+	float zadj1=0.0f, zadj2=0.0f;
+
+	for(size_t jj=0; jj<segments/2+1; ++jj)
 	{
-		0, 1, 2, 3, 0, 2,
-		7, 6, 5, 4, 7, 5,
-		0, 3, 7, 4, 0, 7,
-		1, 5, 6, 2, 1, 6,
-		0, 4, 5, 1, 0, 5,
-		3, 2, 6, 7, 3, 6
-	};
+		if(jj==segments/4)
+		{
+			// Move to body
+			jadj2--;
+			zadj2+=length;
+		}
+		else if(jj==segments/4+1)
+		{
+			// Move to top cap
+			jadj1--;
+			zadj1+=length;
+		}
+
+		float phi1=(jj+jadj1)*2.0f*PI/segments, phi2=(jj+jadj2)*2.0f*PI/segments;
+		float r1=radius*sinf(phi1), r2=radius*sinf(phi2);
+		float z1=-radius*cosf(phi1)+zadj1, z2=-radius*cosf(phi2)+zadj2;
+
+		for(size_t ii=0; ii<segments; ++ii)
+		{
+			float theta1=ii*2.0f*PI/segments, theta2=(ii+1)*2.0f*PI/segments;
+
+			float a[3]={ r1*cosf(theta1), r1*sinf(theta1), z1 };
+			float b[3]={ r1*cosf(theta2), r1*sinf(theta2), z1 };
+			float c[3]={ r2*cosf(theta2), r2*sinf(theta2), z2 };
+			float d[3]={ r2*cosf(theta1), r2*sinf(theta1), z2 };
+
+			*vPtr++=a[0];
+			*vPtr++=a[1];
+			*vPtr++=a[2];
+			*vPtr++=b[0];
+			*vPtr++=b[1];
+			*vPtr++=b[2];
+			*vPtr++=c[0];
+			*vPtr++=c[1];
+			*vPtr++=c[2];
+			*vPtr++=d[0];
+			*vPtr++=d[1];
+			*vPtr++=d[2];
+			*vPtr++=a[0];
+			*vPtr++=a[1];
+			*vPtr++=a[2];
+			*vPtr++=c[0];
+			*vPtr++=c[1];
+			*vPtr++=c[2];
+			count++;
+		}
+	}
 
 	glGenVertexArrays(1, &BeamVAO);
 	glBindVertexArray(BeamVAO);
 
 	glGenBuffers(1, &BeamVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*8, corners, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*(segments/2+1)*segments*6, verts, GL_DYNAMIC_DRAW);
 
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
 
-	glGenBuffers(1, &BeamEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte)*36, tris, GL_STATIC_DRAW);
+	FREE(verts);
 }
 
 void DrawBeam(void)
 {
-	glFrontFace(GL_CW);
-	glBindVertexArray(BeamVAO);
-	glUniform1i(3, 0);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
-	glUniform1i(3, 1);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glFrontFace(GL_CCW);
-}
+	int segments=8;
+	matrix local;
+	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
+	float length=Vec3_Length(vec);
 
-float pos[3];
+	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
+	float *vPtr=(float *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+
+	int jadj1=0, jadj2=1;
+	float zadj1=0.0f, zadj2=0.0f;
+
+	for(size_t jj=0; jj<segments/2+1; ++jj)
+	{
+		if(jj==segments/4)
+		{
+			// Move to body
+			jadj2--;
+			zadj2+=length;
+		}
+		else if(jj==segments/4+1)
+		{
+			// Move to top cap
+			jadj1--;
+			zadj1+=length;
+		}
+
+		float phi1=(jj+jadj1)*2.0f*PI/segments, phi2=(jj+jadj2)*2.0f*PI/segments;
+		float r1=radius*sinf(phi1), r2=radius*sinf(phi2);
+		float z1=-radius*cosf(phi1)+zadj1, z2=-radius*cosf(phi2)+zadj2;
+
+		for(size_t ii=0; ii<segments; ++ii)
+		{
+			float theta1=ii*2.0f*PI/segments, theta2=(ii+1)*2.0f*PI/segments;
+
+			float a[3]={ r1*cosf(theta1), r1*sinf(theta1), z1 };
+			float b[3]={ r1*cosf(theta2), r1*sinf(theta2), z1 };
+			float c[3]={ r2*cosf(theta2), r2*sinf(theta2), z2 };
+			float d[3]={ r2*cosf(theta1), r2*sinf(theta1), z2 };
+
+			*vPtr++=a[0];
+			*vPtr++=a[1];
+			*vPtr++=a[2];
+			*vPtr++=b[0];
+			*vPtr++=b[1];
+			*vPtr++=b[2];
+			*vPtr++=c[0];
+			*vPtr++=c[1];
+			*vPtr++=c[2];
+			*vPtr++=d[0];
+			*vPtr++=d[1];
+			*vPtr++=d[2];
+			*vPtr++=a[0];
+			*vPtr++=a[1];
+			*vPtr++=a[2];
+			*vPtr++=c[0];
+			*vPtr++=c[1];
+			*vPtr++=c[2];
+		}
+	}
+
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+
+	glUseProgram(Objects[GLSL_BEAM_SHADER]);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_MV], 1, GL_FALSE, ModelView);
+
+	glUniform3fv(1, 1, (float[]) { 0.0f, 0.0f, 0.0f });
+	glUniform3fv(2, 1, (float[]) { 0.0f, 0.0f, length });
+
+	MatrixIdentity(local);
+	align(start, end, local);
+	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
+
+	glBindVertexArray(BeamVAO);
+	glUniform4f(0, 1.0f, 0.0f, 0.0f, 1.0f/radius);
+	glDrawArrays(GL_TRIANGLES, 0, (segments/2+1)*segments*6);
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glUniform4f(0, 999.0f, 999.0f, 999.0f, 1.0f/(radius*4));
+	//glDrawArrays(GL_TRIANGLES, 0, (segments/2+1)*segments*6);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
 void Render(void)
 {
-	float local[16];
+	matrix local;
 
 //	for(int i=0;i<Level.NumMesh;i++)
 //		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
@@ -316,6 +463,9 @@ void Render(void)
 
 	//Light0_Pos[0]=sinf(fTime)*150.0f;
 	//Light0_Pos[2]=cosf(fTime)*150.0f;
+
+	end[0]=sinf(fTime)*50.0f;
+	end[2]=cosf(fTime)*50.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -400,20 +550,9 @@ void Render(void)
 	DrawModel3DS(&Level);
 
 	///// Beam stuff
-	glUseProgram(Objects[GLSL_BEAM_SHADER]);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_PROJ], 1, GL_FALSE, Projection);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_MV], 1, GL_FALSE, ModelView);
-
-	MatrixIdentity(local);
-	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
-	
 	glEnable(GL_BLEND);
 //	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glUniform4f(0, 1.0f, 0.75f, 0.25f, 1.0f/5.0f);
-	glUniform3fv(1, 1, (float[]) { -10.0f, -10.0f, -10.0f });
-	glUniform3fv(2, 1, (float[]) { 10.0f, 10.0f, 10.0f });
 	DrawBeam();
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -665,6 +804,7 @@ void Destroy(void)
 {
 	CameraDeletePath(&CameraPath);
 
+	Free3DS(&Cube);
 	Free3DS(&Level);
 
 	DestroyMD5Model(&Hellknight);

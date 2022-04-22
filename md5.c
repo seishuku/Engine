@@ -42,7 +42,8 @@ void Quat_multVec(const float q[4], const float v[3], float *out)
 
 void Quat_rotatePoint(const float q[4], const float in[3], float *out)
 {
-	float tmp[4], inv[4]={ q[0], q[1], q[2], q[3] }, final[4];
+	float tmp[4], inv[4]={ q[0], q[1], q[2], q[3] };
+	vec4 final;
 
 	QuatInverse(inv);
 
@@ -280,7 +281,8 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 				{
 					MD5_Weight_t *weight=&mesh->weights[mesh->vertices[i].start+j];
 					const MD5_Joint_t *joint=&mdl->baseSkel[weight->joint];
-					float temp[3], inv[4]={ joint->orient[0], joint->orient[1], joint->orient[2], joint->orient[3] };
+					float temp[3];
+					vec4 inv={ joint->orient[0], joint->orient[1], joint->orient[2], joint->orient[3] };
 
 					QuatInverse(inv);
 
@@ -306,9 +308,9 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 
 			for(i=0;i<mesh->num_weights;i++)
 			{
-				Vec3_Normalize(mesh->weights[i].tangent);
-				Vec3_Normalize(mesh->weights[i].binormal);
-				Vec3_Normalize(mesh->weights[i].normal);
+				Vec4_Normalize(mesh->weights[i].tangent);
+				Vec4_Normalize(mesh->weights[i].binormal);
+				Vec4_Normalize(mesh->weights[i].normal);
 			}
 
 			FREE(temppos);
@@ -316,7 +318,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 			FREE(tempbinorm);
 			FREE(tempnorm);
 
-			mesh->vertexArray=(float *)malloc(sizeof(float)*mesh->num_verts*20);
+//			mesh->vertexArray=(float *)malloc(sizeof(float)*mesh->num_verts*20);
 
 			curr_mesh++;
 		}
@@ -349,8 +351,8 @@ void FreeMD5(MD5_Model_t *Model)
 			if(Model->meshes[i].weights)
 				FREE(Model->meshes[i].weights);
 
-			if(Model->meshes[i].vertexArray)
-				FREE(Model->meshes[i].vertexArray);
+			//if(Model->meshes[i].vertexArray)
+			//	FREE(Model->meshes[i].vertexArray);
 		}
 
 		FREE(Model->meshes);

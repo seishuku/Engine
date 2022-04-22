@@ -1,19 +1,21 @@
 #ifndef __MD5_H__
 #define __MD5_H__
 
+#include "math.h"
+
 // Joint
 typedef struct
 {
 	char name[64];
 	int parent;
-	float pos[3];
-	float orient[4];
+	vec3 pos;
+	vec4 orient;
 } MD5_Joint_t;
 
 // Vertex
 typedef struct
 {
-	float st[2];	// texture coordinates
+	vec2 st;	// texture coordinates
 	int start;		// start weight
 	int count;		// weight count
 } MD5_Vertex_t;
@@ -23,18 +25,18 @@ typedef struct
 {
 	int joint;			// joint for this weight
 	float bias;			// vertex weight
-	float pad[2];
-	float pos[4];		// vertex position (in joint space)
-	float tangent[4];	// tangent vector ("")
-	float binormal[4];	// binormal vector ("")
-	float normal[4];	// normal vector ("")
+	vec2 pad;
+	vec4 pos;		// vertex position (in joint space)
+	vec4 tangent;	// tangent vector ("")
+	vec4 binormal;	// binormal vector ("")
+	vec4 normal;	// normal vector ("")
 } MD5_Weight_t;
 
 // Bounding box
 typedef struct
 {
-	float min[3];
-	float max[3];
+	vec3 min;
+	vec3 max;
 } MD5_BBox_t;
 
 // MD5 mesh
@@ -51,7 +53,7 @@ typedef struct
 
 	char shader[256];
 
-	float *vertexArray;
+	//float *vertexArray;
 	unsigned long VAO;
 	unsigned long WeightID, VertID;
 	unsigned long FinalVertID, ElemID;

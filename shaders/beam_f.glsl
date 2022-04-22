@@ -61,8 +61,5 @@ void main(void)
 
     float factor=1.0-length(w+(sc*u)-(tc*v))*color.w;
 
-    if(i)
-        Output=vec4(1.0);
-    else
-        Output=vec4(color.xyz*factor, 1.0);
+    Output=vec4(color.xyz*factor, 1.0);
 }

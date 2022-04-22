@@ -24,11 +24,6 @@ int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radiu
 	return 0;
 }
 
-float AngleBetweenVectors(float Vector1[3], float Vector2[3])
-{
-	return acosf(Vec3_Dot(Vector1, Vector2)/(sqrtf(Vec3_Dot(Vector1, Vector1))*sqrtf(Vec3_Dot(Vector2, Vector2))));
-}
-
 int InsidePolygon(float Intersection[3], float Tri[3][3])
 {
 	float Angle=0.0f;
@@ -46,9 +41,9 @@ int InsidePolygon(float Intersection[3], float Tri[3][3])
 	C[1]=Tri[2][1]-Intersection[1];
 	C[2]=Tri[2][2]-Intersection[2];
 
-	Angle+=AngleBetweenVectors(A, B);
-	Angle+=AngleBetweenVectors(B, C);
-	Angle+=AngleBetweenVectors(C, A);
+	Angle+=Vec3_GetAngle(A, B);
+	Angle+=Vec3_GetAngle(B, C);
+	Angle+=Vec3_GetAngle(C, A);
 
 	if(Angle>=6.220353348f)
 		return 1;
@@ -56,10 +51,10 @@ int InsidePolygon(float Intersection[3], float Tri[3][3])
 	return 0;
 }
 
-void ClosestPointOnLine(float A[3], float B[3], float Point[3], float *ClosestPoint)
+void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 *ClosestPoint)
 {
-	float Vector1[3]={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
-	float Vector2[3]={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
+	vec3 Vector1={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
+	vec3 Vector2={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
 	float d=Vec3_Distance(A, B), t;
 
 	Vec3_Normalize(Vector2);
@@ -68,35 +63,37 @@ void ClosestPointOnLine(float A[3], float B[3], float Point[3], float *ClosestPo
 
 	if(t<=0.0f)
 	{
-		ClosestPoint[0]=A[0];
-		ClosestPoint[1]=A[1];
-		ClosestPoint[2]=A[2];
+		*ClosestPoint[0]=A[0];
+		*ClosestPoint[1]=A[1];
+		*ClosestPoint[2]=A[2];
 
 		return;
 	}
-
-	if(t>=d)
+	else if(t>=d)
 	{
-		ClosestPoint[0]=B[0];
-		ClosestPoint[1]=B[1];
-		ClosestPoint[2]=B[2];
+		*ClosestPoint[0]=B[0];
+		*ClosestPoint[1]=B[1];
+		*ClosestPoint[2]=B[2];
 
 		return;
 	}
-
-	ClosestPoint[0]=A[0]+(Vector2[0]*t);
-	ClosestPoint[1]=A[1]+(Vector2[1]*t);
-	ClosestPoint[2]=A[2]+(Vector2[2]*t);
+	else
+	{
+		*ClosestPoint[0]=A[0]+(Vector2[0]*t);
+		*ClosestPoint[1]=A[1]+(Vector2[1]*t);
+		*ClosestPoint[2]=A[2]+(Vector2[2]*t);
+	}
 }
 
 int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
 {
 	int i;
-	float Point[3], distance;
+	vec3 Point;
+	float distance;
 
 	for(i=0;i<3;i++)
 	{
-		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, Point);
+		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, &Point);
 
 		distance=Vec3_Distance(Point, Center);
 
@@ -107,35 +104,27 @@ int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
 	return 0;
 }
 
-void GetCollisionOffset(float Normal[3], float radius, float distance, float *Offset)
+void GetCollisionOffset(vec3 Normal, float radius, float distance, vec3 *Offset)
 {
 	if(distance>0.0f)
 	{
 		float distanceOver=radius-distance;
 
-		Offset[0]=Normal[0]*distanceOver;
-		Offset[1]=Normal[1]*distanceOver;
-		Offset[2]=Normal[2]*distanceOver;
-
-		return;
+		*Offset[0]=Normal[0]*distanceOver;
+		*Offset[1]=Normal[1]*distanceOver;
+		*Offset[2]=Normal[2]*distanceOver;
 	}
 	else
 	{
 		float distanceOver=radius+distance;
 
-		Offset[0]=Normal[0]*-distanceOver;
-		Offset[1]=Normal[1]*-distanceOver;
-		Offset[2]=Normal[2]*-distanceOver;
-
-		return;
+		*Offset[0]=Normal[0]*-distanceOver;
+		*Offset[1]=Normal[1]*-distanceOver;
+		*Offset[2]=Normal[2]*-distanceOver;
 	}
-
-	Offset[0]=0.0f;
-	Offset[1]=0.0f;
-	Offset[2]=0.0f;
 }
 
-int SphereBBOXIntersection(const float Center[3], const float Radius, const float BBMin[3], const float BBMax[3])
+int SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBMin, const vec3 BBMax)
 {
 	float dmin=0.0f;
 	float R2=Radius*Radius;
@@ -162,28 +151,21 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face,
 	unsigned short i;
 	int classification;
 	float distance=0.0f;
-	float v0[3], v1[3], n[3];
+	vec3 n;
 
 	for(i=0;i<NumFace;i++)
 	{
-		float Tri[3][3]=
+		vec3 Tri[3]=
 		{
 			{ Vertex[3*Face[3*i+0]], Vertex[3*Face[3*i+0]+1], Vertex[3*Face[3*i+0]+2] },
 			{ Vertex[3*Face[3*i+1]], Vertex[3*Face[3*i+1]+1], Vertex[3*Face[3*i+1]+2] },
 			{ Vertex[3*Face[3*i+2]], Vertex[3*Face[3*i+2]+1], Vertex[3*Face[3*i+2]+2] }
 		};
 
-		v0[0]=Tri[1][0]-Tri[0][0];
-		v0[1]=Tri[1][1]-Tri[0][1];
-		v0[2]=Tri[1][2]-Tri[0][2];
+		vec3 v0={ Tri[1][0]-Tri[0][0], Tri[1][1]-Tri[0][1], Tri[1][2]-Tri[0][2] };
+		vec3 v1={ Tri[2][0]-Tri[0][0], Tri[2][1]-Tri[0][1], Tri[2][2]-Tri[0][2] };
 
-		v1[0]=Tri[2][0]-Tri[0][0];
-		v1[1]=Tri[2][1]-Tri[0][1];
-		v1[2]=Tri[2][2]-Tri[0][2];
-
-		n[0]=(v0[1]*v1[2]-v0[2]*v1[1]);
-		n[1]=(v0[2]*v1[0]-v0[0]*v1[2]);
-		n[2]=(v0[0]*v1[1]-v0[1]*v1[0]);
+		Cross(v0, v1, n);
 
 		Vec3_Normalize(n);
 
@@ -191,12 +173,12 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face,
 
 		if(classification==1)
 		{
-			float Offset[3]={ n[0]*distance, n[1]*distance, n[2]*distance };
-			float Intersection[3]={ Camera->Position[0]-Offset[0], Camera->Position[1]-Offset[1], Camera->Position[2]-Offset[2] };
+			vec3 Offset={ n[0]*distance, n[1]*distance, n[2]*distance };
+			vec3 Intersection={ Camera->Position[0]-Offset[0], Camera->Position[1]-Offset[1], Camera->Position[2]-Offset[2] };
 
 			if(InsidePolygon(Intersection, Tri)||EdgeSphereCollision(Camera->Position, Tri, Camera->Radius*0.5f))
 			{
-				GetCollisionOffset(n, Camera->Radius, distance, Offset);
+				GetCollisionOffset(n, Camera->Radius, distance, &Offset);
 
 				Camera->Position[0]+=Offset[0];
 				Camera->Position[1]+=Offset[1];
@@ -211,7 +193,7 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face,
 }
 
 // Actual camera stuff
-void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
+void CameraInit(Camera_t *Camera, const vec3 Position, const vec3 View, const vec3 Up)
 {
 	Camera->Position[0]=Position[0];
 	Camera->Position[1]=Position[1];
@@ -226,6 +208,7 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 	Camera->Up[2]=Up[2];
 
 	Cross(Camera->View, Camera->Up, Camera->Forward);
+	Cross(Camera->Forward, Camera->Up, Camera->Right);
 
 	Camera->Pitch=0.0f;
 	Camera->Yaw=0.0f;
@@ -251,13 +234,10 @@ void CameraInit(Camera_t *Camera, float Position[3], float View[3], float Up[3])
 
 void CameraPitch(Camera_t *Camera, const float Angle)
 {
-	float quat[4];
+	vec4 quat;
 
 	QuatAnglev(Angle, Camera->Right, quat);
 	QuatRotate(quat, Camera->Forward, Camera->Forward);
-	//Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
-	//Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
-	//Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Right, Camera->Up);
@@ -268,13 +248,10 @@ void CameraPitch(Camera_t *Camera, const float Angle)
 
 void CameraYaw(Camera_t *Camera, const float Angle)
 {
-	float quat[4];
+	vec4 quat;
 
 	QuatAnglev(Angle, Camera->Up, quat);
 	QuatRotate(quat, Camera->Forward, Camera->Forward);
-	//Camera->Forward[0]=Camera->Forward[0]*cosf(Angle)-Camera->Right[0]*sinf(Angle);
-	//Camera->Forward[1]=Camera->Forward[1]*cosf(Angle)-Camera->Right[1]*sinf(Angle);
-	//Camera->Forward[2]=Camera->Forward[2]*cosf(Angle)-Camera->Right[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Forward);
 
 	Cross(Camera->Forward, Camera->Up, Camera->Right);
@@ -286,9 +263,6 @@ void CameraRoll(Camera_t *Camera, const float Angle)
 
 	QuatAnglev(-Angle, Camera->Forward, quat);
 	QuatRotate(quat, Camera->Right, Camera->Right);
-	//Camera->Right[0]=Camera->Right[0]*cosf(Angle)+Camera->Up[0]*sinf(Angle);
-	//Camera->Right[1]=Camera->Right[1]*cosf(Angle)+Camera->Up[1]*sinf(Angle);
-	//Camera->Right[2]=Camera->Right[2]*cosf(Angle)+Camera->Up[2]*sinf(Angle);
 	Vec3_Normalize(Camera->Right);
 
 	Cross(Camera->Forward, Camera->Right, Camera->Up);
@@ -297,7 +271,7 @@ void CameraRoll(Camera_t *Camera, const float Angle)
 	Camera->Up[2]*=-1;
 }
 
-void CameraUpdate(Camera_t *Camera, float Time, float *out)
+void CameraUpdate(Camera_t *Camera, float Time, matrix out)
 {
 	float speed=25.0f;
 	float m[16];
@@ -520,9 +494,9 @@ int CameraLoadPath(char *filename, CameraPath_t *Path)
 	return 1;
 }
 
-void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep, float *out)
+void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep, matrix out)
 {
-	float m[16];
+	matrix m;
 
 	if(!out)
 		return;

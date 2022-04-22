@@ -20,8 +20,9 @@ typedef unsigned int uint32_t;
 void CalculateTangent(Mesh3DS_t *Mesh)
 {
 	int i;
-	float v0[3], v1[3], uv0[2], uv1[2];
-	float s[3], t[3], n[3], r;
+	vec3 v0, v1, s, t, n;
+	vec2 uv0, uv1;
+	float r;
 
 	Mesh->Tangent=(float *)malloc(sizeof(float)*3*Mesh->NumVertex);
 

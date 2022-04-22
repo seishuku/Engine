@@ -1,13 +1,15 @@
 #ifndef __3DS_H__
 #define __3DS_H__
 
+#include "math.h"
+
 typedef struct
 {
 	char Name[32];
-	float Ambient[3];
-	float Diffuse[3];
-	float Specular[3];
-	float Emission[3];
+	vec3 Ambient;
+	vec3 Diffuse;
+	vec3 Specular;
+	vec3 Emission;
 	float Shininess;
 	char Texture[32];
 	unsigned int TexBaseID, TexNormalID, TexSpecularID;
