@@ -13,13 +13,11 @@ uniform mat4 local;
 layout(location=0) uniform vec4 color;
 layout(location=1) uniform vec3 start;
 layout(location=2) uniform vec3 end;
-layout(location=3) uniform bool i;
 
 layout(location=0) out vec4 Output;
 
 void main(void)
 {
-    const float radius=1.0;
     vec3 eye=(inverse(mv)[3]).xyz;
 
 	vec3 startp=(local*vec4(start, 1.0)).xyz;

@@ -235,183 +235,136 @@ void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 }
 
 GLuint BeamVAO, BeamVBO, BeamEBO;
-void set(const float axis[3], const float angle, const float translation[3], matrix out)
-{
-	float s=sinf(angle), c=cosf(angle), c1=1.0f-c;
-	float x=axis[0], y=axis[1], z=axis[2];
-	matrix m=
-	{
-		c+x*x*c1,		y*x*c1+z*s,		z*x*c1-y*s,		0.0f,
-		x*y*c1-z*s,		c+y*y*c1,		z*y*c1+x*s,		0.0f,
-		x*z*c1+y*s,		y*z*c1-x*s,		c+z*z*c1,		0.0f,
-		translation[0],	translation[1],	translation[2],	1.0f
-	};
-
-	MatrixMult(m, out, out);
-}
 
 void align(const float start[3], const float end[3], matrix out)
 {
-//	vec3 v={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
-	vec3 v={ start[0]-end[0], start[1]-end[1], start[2]-end[2] };
-	vec3 c;
-	vec3 u={ 0.0f, 0.0f, 1.0f };
-	Vec3_Normalize(v);
-	Cross(v, u, c);
-	float  d=Vec3_Dot(v, u);
-	float angle=acosf(d);
-
 	if(out)
 	{
-		MatrixTranslatev(start, out);
-		MatrixRotatev(angle, c, out);
+		vec3 direction={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
+		vec3 orientation={ 0.0f, 0.0f, -1.0f };
+		vec3 axis;
+
+		Vec3_Normalize(direction);
+		Cross(direction, orientation, axis);
+		Vec3_Normalize(axis);
+
+		float angle=acosf(Vec3_Dot(direction, orientation));
+
+		float s=sinf(angle);
+		float c=cosf(angle);
+		float c1=1.0f-c;
+
+		matrix m=
+		{
+			c+axis[0]*axis[0]*c1,			axis[1]*axis[0]*c1+axis[2]*s,	axis[2]*axis[0]*c1-axis[1]*s,	0.0f,
+			axis[0]*axis[1]*c1-axis[2]*s,	c+axis[1]*axis[1]*c1,			axis[2]*axis[1]*c1+axis[0]*s,	0.0f,
+			axis[0]*axis[2]*c1+axis[1]*s,	axis[1]*axis[2]*c1-axis[0]*s,	c+axis[2]*axis[2]*c1,			0.0f,
+			start[0],						start[1],						start[2],						1.0f
+		};
+
+		MatrixMult(m, out, out);
 	}
 }
 
-float start[3]={ 0.0f, 100.0f, 0.0f };
-float end[3]={ 10.0f, -100.0f, 0.0f };
-const float radius=2.0f;
+float start[3]={ -75.0f, -80.0f, -120.0f };
+float end[3]={ -75.0f, 90.0f, -120.0f };
+float start2[3]={ 75.0f, -80.0f, -120.0f };
+float end2[3]={ 75.0f, 90.0f, -120.0f };
+const float radius=5.0f;
+const int segments=16, rings=8;
 
 void BuildBeamVBO(void)
 {
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
 	float length=Vec3_Length(vec);
-	int count=0;
-
-	int segments=8;
-
-	// make segments an even number
-	if(segments%2!=0)
-		segments++;
-
-	float *verts=(float *)malloc(sizeof(float)*3*(segments/2+1)*segments*6);
-	float *vPtr=verts;
-
-	int jadj1=0, jadj2=1;
-	float zadj1=0.0f, zadj2=0.0f;
-
-	for(size_t jj=0; jj<segments/2+1; ++jj)
-	{
-		if(jj==segments/4)
-		{
-			// Move to body
-			jadj2--;
-			zadj2+=length;
-		}
-		else if(jj==segments/4+1)
-		{
-			// Move to top cap
-			jadj1--;
-			zadj1+=length;
-		}
-
-		float phi1=(jj+jadj1)*2.0f*PI/segments, phi2=(jj+jadj2)*2.0f*PI/segments;
-		float r1=radius*sinf(phi1), r2=radius*sinf(phi2);
-		float z1=-radius*cosf(phi1)+zadj1, z2=-radius*cosf(phi2)+zadj2;
-
-		for(size_t ii=0; ii<segments; ++ii)
-		{
-			float theta1=ii*2.0f*PI/segments, theta2=(ii+1)*2.0f*PI/segments;
-
-			float a[3]={ r1*cosf(theta1), r1*sinf(theta1), z1 };
-			float b[3]={ r1*cosf(theta2), r1*sinf(theta2), z1 };
-			float c[3]={ r2*cosf(theta2), r2*sinf(theta2), z2 };
-			float d[3]={ r2*cosf(theta1), r2*sinf(theta1), z2 };
-
-			*vPtr++=a[0];
-			*vPtr++=a[1];
-			*vPtr++=a[2];
-			*vPtr++=b[0];
-			*vPtr++=b[1];
-			*vPtr++=b[2];
-			*vPtr++=c[0];
-			*vPtr++=c[1];
-			*vPtr++=c[2];
-			*vPtr++=d[0];
-			*vPtr++=d[1];
-			*vPtr++=d[2];
-			*vPtr++=a[0];
-			*vPtr++=a[1];
-			*vPtr++=a[2];
-			*vPtr++=c[0];
-			*vPtr++=c[1];
-			*vPtr++=c[2];
-			count++;
-		}
-	}
+	unsigned short *tris=NULL;
+	vec4 *verts=NULL;
+	int vertexCount=(rings+1)*(segments+1);
+	int triangleCount=rings*segments*2;
 
 	glGenVertexArrays(1, &BeamVAO);
 	glBindVertexArray(BeamVAO);
 
 	glGenBuffers(1, &BeamVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*(segments/2+1)*segments*6, verts, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*vertexCount, NULL, GL_DYNAMIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
 
-	FREE(verts);
+	tris=(unsigned short *)malloc(sizeof(unsigned short)*3*triangleCount);
+
+	unsigned short *pTris=tris;
+	int count=0;
+
+	for(int i=0;i<rings;i++)
+	{
+		int k1=i*(segments+1);
+		int k2=k1+segments+1;
+
+		for(int j=0;j<segments;j++, k1++, k2++)
+		{
+			if(i!=0)
+			{
+				*pTris++=k1;
+				*pTris++=k2;
+				*pTris++=k1+1;
+				count++;
+			}
+
+			// k1+1 => k2 => k2+1
+			if(i!=(rings-1))
+			{
+				*pTris++=k1+1;
+				*pTris++=k2;
+				*pTris++=k2+1;
+				count++;
+			}
+		}
+	}
+
+	triangleCount=count;
+
+	glGenBuffers(1, &BeamEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*3*triangleCount, tris, GL_STATIC_DRAW);
+
+	FREE(tris);
 }
 
-void DrawBeam(void)
+void DrawBeam(vec3 start, vec3 end)
 {
-	int segments=8;
 	matrix local;
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
 	float length=Vec3_Length(vec);
+	int vertexCount=(rings+1)*(segments+1);
+	int triangleCount=rings*segments*2;
 
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	float *vPtr=(float *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	vec4 *vPtr=glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 
-	int jadj1=0, jadj2=1;
-	float zadj1=0.0f, zadj2=0.0f;
+	float sectorStep=2.0f*PI/segments;
+	float stackStep=PI/rings;
 
-	for(size_t jj=0; jj<segments/2+1; ++jj)
+	for(int i=0;i<=rings;i++)
 	{
-		if(jj==segments/4)
+		float stackAngle=0.5f*PI-i*stackStep;
+
+		float xy=radius*cosf(stackAngle);
+		float z=radius*sinf(stackAngle);
+
+		for(int j=0;j<=segments;j++)
 		{
-			// Move to body
-			jadj2--;
-			zadj2+=length;
-		}
-		else if(jj==segments/4+1)
-		{
-			// Move to top cap
-			jadj1--;
-			zadj1+=length;
-		}
+			float sectorAngle=j*sectorStep;
 
-		float phi1=(jj+jadj1)*2.0f*PI/segments, phi2=(jj+jadj2)*2.0f*PI/segments;
-		float r1=radius*sinf(phi1), r2=radius*sinf(phi2);
-		float z1=-radius*cosf(phi1)+zadj1, z2=-radius*cosf(phi2)+zadj2;
+			float x=xy*cosf(sectorAngle);
+			float y=xy*sinf(sectorAngle);
 
-		for(size_t ii=0; ii<segments; ++ii)
-		{
-			float theta1=ii*2.0f*PI/segments, theta2=(ii+1)*2.0f*PI/segments;
-
-			float a[3]={ r1*cosf(theta1), r1*sinf(theta1), z1 };
-			float b[3]={ r1*cosf(theta2), r1*sinf(theta2), z1 };
-			float c[3]={ r2*cosf(theta2), r2*sinf(theta2), z2 };
-			float d[3]={ r2*cosf(theta1), r2*sinf(theta1), z2 };
-
-			*vPtr++=a[0];
-			*vPtr++=a[1];
-			*vPtr++=a[2];
-			*vPtr++=b[0];
-			*vPtr++=b[1];
-			*vPtr++=b[2];
-			*vPtr++=c[0];
-			*vPtr++=c[1];
-			*vPtr++=c[2];
-			*vPtr++=d[0];
-			*vPtr++=d[1];
-			*vPtr++=d[2];
-			*vPtr++=a[0];
-			*vPtr++=a[1];
-			*vPtr++=a[2];
-			*vPtr++=c[0];
-			*vPtr++=c[1];
-			*vPtr++=c[2];
+			// This is just a sphere that gets stretched halfway through
+			if(i>rings/2)
+				Vec4_Set(*vPtr++, x, y, z, 1.0f);
+			else
+				Vec4_Set(*vPtr++, x, y, z+length, 1.0f);
 		}
 	}
 
@@ -421,20 +374,20 @@ void DrawBeam(void)
 	glUniformMatrix4fv(Objects[GLSL_BEAM_PROJ], 1, GL_FALSE, Projection);
 	glUniformMatrix4fv(Objects[GLSL_BEAM_MV], 1, GL_FALSE, ModelView);
 
-	glUniform3fv(1, 1, (float[]) { 0.0f, 0.0f, 0.0f });
-	glUniform3fv(2, 1, (float[]) { 0.0f, 0.0f, length });
-
 	MatrixIdentity(local);
 	align(start, end, local);
 	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
 
-	glBindVertexArray(BeamVAO);
 	glUniform4f(0, 1.0f, 0.0f, 0.0f, 1.0f/radius);
-	glDrawArrays(GL_TRIANGLES, 0, (segments/2+1)*segments*6);
+	glUniform3fv(1, 1, (vec3) { 0.0f, 0.0f, 0.0f });
+	glUniform3fv(2, 1, (vec3) { 0.0f, 0.0f, length });
+
+	glBindVertexArray(BeamVAO);
+	glDrawElements(GL_TRIANGLES, triangleCount*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glUniform4f(0, 999.0f, 999.0f, 999.0f, 1.0f/(radius*4));
-	//glDrawArrays(GL_TRIANGLES, 0, (segments/2+1)*segments*6);
+	//glDrawElements(GL_TRIANGLES, triangleCount*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
@@ -464,8 +417,8 @@ void Render(void)
 	//Light0_Pos[0]=sinf(fTime)*150.0f;
 	//Light0_Pos[2]=cosf(fTime)*150.0f;
 
-	end[0]=sinf(fTime)*50.0f;
-	end[2]=cosf(fTime)*50.0f;
+	//end[0]=sinf(fTime)*50.0f;
+	//end[2]=cosf(fTime)*50.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -502,6 +455,11 @@ void Render(void)
 
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_POS], 1, Light4_Pos);
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_KD], 1, Light4_Kd);
+
+	glUniform3fv(0, 1, start);
+	glUniform3fv(1, 1, end);
+	glUniform3fv(2, 1, start2);
+	glUniform3fv(3, 1, end2);
 
 	// Projection matrix
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_PROJ], 1, GL_FALSE, Projection);
@@ -551,10 +509,9 @@ void Render(void)
 
 	///// Beam stuff
 	glEnable(GL_BLEND);
-//	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	DrawBeam();
-	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_ONE, GL_ONE);
+	DrawBeam(start, end);
+	DrawBeam(start2, end2);
 	glDisable(GL_BLEND);
 	/////
 

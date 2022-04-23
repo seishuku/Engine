@@ -23,7 +23,25 @@ uniform vec4 Light3_Kd;
 uniform vec4 Light4_Pos;
 uniform vec4 Light4_Kd;
 
+layout(location=0) uniform vec3 Start1;
+layout(location=1) uniform vec3 End1;
+
+layout(location=2) uniform vec3 Start2;
+layout(location=3) uniform vec3 End2;
+
 layout(location=0) out vec4 Output;
+
+vec3 GetLineVector(vec3 pos, vec3 start, vec3 end)
+{
+	float len=length(start-pos);
+	return start+(end-start)*max(0.0, len/(length(end-pos)+len));
+}
+
+float ComputeFalloff(vec3 position, vec3 lightPosition)
+{
+    float d=distance(position, lightPosition);    
+    return 1.0/(d*d);
+}
 
 void main()
 {
@@ -114,6 +132,26 @@ void main()
 	temp+=vec4((Base.xyz*l2_diffuse+l2_specular*Specular)*l2_atten*(1.0-l2_volume.w)+(l2_volume.w*Light2_Kd.xyz), 1.0);
 	temp+=vec4((Base.xyz*l3_diffuse+l3_specular*Specular)*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz), 1.0);
 	temp+=vec4((Base.xyz*l4_diffuse+l4_specular*Specular)*l4_atten*(1.0-l4_volume.w)+(l4_volume.w*Light4_Kd.xyz), 1.0);
+
+	vec3 Line=GetLineVector(Position, Start1, End1);
+	vec3 LightPos=normalize(Line-Position);
+        
+	vec3 NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
+	vec3 RdotL=vec3(1.0, 0.1, 0.1)*max(0.0, pow(dot(r, LightPos), 16.0));
+
+	float falloff=ComputeFalloff(Position, Line)*500.0;
+
+	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
+
+	Line=GetLineVector(Position, Start2, End2);
+	LightPos=normalize(Line-Position);
+        
+	NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
+	RdotL=vec3(1.0, 0.1, 0.1)*max(0.0, pow(dot(r, LightPos), 16.0));
+
+	falloff=ComputeFalloff(Position, Line)*500.0;
+
+	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
 
 	Output=vec4(temp.xyz, 1.0);
 }

@@ -12,6 +12,34 @@ typedef float vec3[3];
 typedef float vec4[4];
 typedef float matrix[16];
 
+inline void Vec2_Set(vec2 a, float x, float y) { a[0]=x; a[1]=y; }
+inline void Vec2_Setv(vec2 a, vec2 b) { a[0]=b[0]; a[1]=b[1]; }
+inline void Vec2_Sets(vec2 a, float b) { a[0]=b; a[1]=b; }
+inline void  Vec3_Set(vec3 a, float x, float y, float z) { a[0]=(x); a[1]=(y); a[2]=(z); }
+inline void Vec3_Setv(vec3 a, vec3 b) { a[0]=b[0]; a[1]=b[1]; a[2]=b[2]; }
+inline void Vec3_Sets(vec3 a, float b) { a[0]=b; a[1]=b; a[2]=b; }
+inline void  Vec4_Set(vec4 a, float x, float y, float z, float w) { a[0]=(x); a[1]=(y); a[2]=(z); a[3]=(w); }
+inline void Vec4_Setv(vec4 a, vec4 b) { a[0]=b[0]; a[1]=b[1]; a[2]=b[2]; a[3]=b[3]; }
+inline void Vec4_Sets(vec4 a, float b) { a[0]=b; a[1]=b; a[2]=b; a[3]=b; }
+inline void  Vec2_Add(vec2 a, float x, float y) { a[0]+=x; a[1]+=y; }
+inline void Vec2_Addv(vec2 a, vec2 b) { a[0]+=b[0]; a[1]+=b[1]; }
+inline void Vec2_Adds(vec2 a, float b) { a[0]+=b; a[1]+=b; }
+inline void  Vec3_Add(vec3 a, float x, float y, float z) { a[0]+=x; a[1]+=y; a[2]+=z; }
+inline void Vec3_Addv(vec3 a, vec3 b) { a[0]+=b[0]; a[1]+=b[1]; a[2]+=b[2]; }
+inline void Vec3_Adds(vec3 a, float b) { a[0]+=b; a[1]+=b; a[2]+=b; }
+inline void  Vec4_Add(vec4 a, float x, float y, float z, float w) { a[0]+=x; a[1]+=y; a[2]+=z; a[3]+=w; }
+inline void Vec4_Addv(vec4 a, vec4 b) { a[0]+=b[0]; a[1]+=b[1]; a[2]+=b[2]; a[3]+=b[3]; }
+inline void Vec4_Adds(vec4 a, float b) { a[0]+=b; a[1]+=b; a[2]+=b; a[3]+=b; }
+inline void  Vec2_Mul(vec2 a, float x, float y) { a[0]*=x; a[1]*=y; }
+inline void Vec2_Mulv(vec2 a, vec2 b) { a[0]*=b[0]; a[1]*=b[1]; }
+inline void Vec2_Muls(vec2 a, float b) { a[0]*=b; a[1]*=b; }
+inline void  Vec3_Mul(vec3 a, float x, float y, float z) { a[0]*=x; a[1]*=y; a[2]*=z; }
+inline void Vec3_Mulv(vec3 a, vec3 b) { a[0]*=b[0]; a[1]*=b[1]; a[2]*=b[2]; }
+inline void Vec3_Muls(vec3 a, float b) { a[0]*=b; a[1]*=b; a[2]*=b; }
+inline void  Vec4_Mul(vec4 a, float x, float y, float z, float w) { a[0]*=x; a[1]*=y; a[2]*=z; a[3]*=w; }
+inline void Vec4_Mulv(vec4 a, vec4 b) { a[0]*=b[0]; a[1]*=b[1]; a[2]*=b[2]; a[3]*=b[3]; }
+inline void Vec4_Muls(vec4 a, float b) { a[0]*=b; a[1]*=b; a[2]*=b; a[3]*=b; }
+
 float fsinf(const float v);
 float fcosf(const float v);
 float ftanf(const float x);
