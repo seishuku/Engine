@@ -1,5 +1,6 @@
 #include "opengl.h"
 #include "3ds.h"
+#include "image.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,6 +17,36 @@
 #ifndef FREE
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
+
+void LoadMaterials3DS(Model3DS_t *Model)
+{
+	for(int i=0;i<Model->NumMaterial;i++)
+	{
+		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
+
+		for(char *p=Model->Material[i].Texture;*p;p++)
+			*p=*p>0x40&&*p<0x5b?*p|0x60:*p;
+
+		strncpy(nameNoExt, Model->Material[i].Texture, 256);
+		ptr=strstr(nameNoExt, ".");
+
+		if(ptr==NULL)
+			continue;
+
+		strncpy(fileExt, ptr, 256);
+
+		ptr[0]='\0';
+
+		snprintf(buf, 256, "./assets/%s", Model->Material[i].Texture);
+		Model->Material[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+
+		snprintf(buf, 256, "./assets/%s_b%s", nameNoExt, fileExt);
+		Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_NORMALMAP|IMAGE_TRILINEAR);
+
+		snprintf(buf, 256, "./assets/%s_s%s", nameNoExt, fileExt);
+		Model->Material[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	}
+}
 
 void DrawModel3DS(Model3DS_t *Model)
 {
@@ -44,32 +75,41 @@ void BuildVBO3DS(Model3DS_t *Model)
 		if(!Model->Mesh[i].NumVertex)
 			continue;
 
-		// Generate vertex array object and bind it
-		glGenVertexArrays(1, &Model->Mesh[i].VAO);
-		glBindVertexArray(Model->Mesh[i].VAO);
+		// Create vertex array object
+		glCreateVertexArrays(1, &Model->Mesh[i].VAO);
 
-		// Generate vertex buffer object and bind it
-		glGenBuffers(1, &Model->Mesh[i].VertID);
-		glBindBuffer(GL_ARRAY_BUFFER, Model->Mesh[i].VertID);
+		// Set vertex array attribute layouts, binding point and offsets
+		glVertexArrayAttribFormat(Model->Mesh[i].VAO, 0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*0);
+		glVertexArrayAttribBinding(Model->Mesh[i].VAO, 0, 0);
+		glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 0);
 
-		// Set vertex attribute pointer layouts
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*0));	//Vertex
-		glEnableVertexAttribArray(0);
+		glVertexArrayAttribFormat(Model->Mesh[i].VAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*4);
+		glVertexArrayAttribBinding(Model->Mesh[i].VAO, 1, 0);
+		glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 1);
 
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*4));	//UV
-		glEnableVertexAttribArray(1);
+		glVertexArrayAttribFormat(Model->Mesh[i].VAO, 2, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4));
+		glVertexArrayAttribBinding(Model->Mesh[i].VAO, 2, 0);
+		glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 2);
 
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4)));	//TANGENT
-		glEnableVertexAttribArray(2);
+		glVertexArrayAttribFormat(Model->Mesh[i].VAO, 3, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4+4));
+		glVertexArrayAttribBinding(Model->Mesh[i].VAO, 3, 0);
+		glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 3);
 
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4)));	//BINORMAL
-		glEnableVertexAttribArray(3);
+		glVertexArrayAttribFormat(Model->Mesh[i].VAO, 4, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4+4+4));
+		glVertexArrayAttribBinding(Model->Mesh[i].VAO, 4, 0);
+		glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 4);
 
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4+4)));	//NORMAL
-		glEnableVertexAttribArray(4);
+		// Create vertex buffer object
+		glCreateBuffers(1, &Model->Mesh[i].VertID);
 
-		// Allocate a temp buffer in system memory
-		data=(float *)malloc(sizeof(float)*Model->Mesh[i].NumVertex*20);
+		// Assign the vertex buffer to the vertex array on binding point 0, and set buffer stride
+		glVertexArrayVertexBuffer(Model->Mesh[i].VAO, 0, Model->Mesh[i].VertID, 0, sizeof(float)*20);
+
+		// Allocate vertex buffer data
+		glNamedBufferData(Model->Mesh[i].VertID, sizeof(float)*Model->Mesh[i].NumVertex*20, NULL, GL_STATIC_DRAW);
+
+		// Map data buffer and copy vertex data in the correct format
+		data=(float *)glMapNamedBuffer(Model->Mesh[i].VertID, GL_WRITE_ONLY);
 
 		if(data==NULL)
 		{
@@ -107,14 +147,13 @@ void BuildVBO3DS(Model3DS_t *Model)
 			*fPtr++=0.0f; // Padding
 		}
 
-		// Upload to GPU memory and free host memory buffer
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*Model->Mesh[i].NumVertex*20, data, GL_STATIC_DRAW);
-		FREE(data);
+		// Unmap the data pointer
+		glUnmapNamedBuffer(Model->Mesh[i].VertID);
 
-		// Generate element (index) buffer, copy data directly, no processing needed.
-		glGenBuffers(1, &Model->Mesh[i].ElemID);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Model->Mesh[i].ElemID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
+		// Create element (index) buffer, copy data directly, no processing needed.
+		glCreateBuffers(1, &Model->Mesh[i].ElemID);
+		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(unsigned short)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
+		glVertexArrayElementBuffer(Model->Mesh[i].VAO, Model->Mesh[i].ElemID);
 	}
 
 	glBindVertexArray(0);

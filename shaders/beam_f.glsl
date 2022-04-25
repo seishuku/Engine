@@ -38,8 +38,8 @@ void main(void)
     float sD=D;
     float tD=D;
 
-    float sN=(b*e-c*d);
-    float tN=(a*e-b*d);
+    float sN=b*e-c*d;
+    float tN=a*e-b*d;
 
     if(sN<0.0)
     {

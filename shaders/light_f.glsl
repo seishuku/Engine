@@ -139,17 +139,17 @@ void main()
 	vec3 NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
 	vec3 RdotL=vec3(1.0, 0.1, 0.1)*max(0.0, pow(dot(r, LightPos), 16.0));
 
-	float falloff=ComputeFalloff(Position, Line)*500.0;
+	float falloff=max(0.0, min(1.0, ComputeFalloff(Position, Line)*1000.0));
 
 	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
 
 	Line=GetLineVector(Position, Start2, End2);
 	LightPos=normalize(Line-Position);
         
-	NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
-	RdotL=vec3(1.0, 0.1, 0.1)*max(0.0, pow(dot(r, LightPos), 16.0));
+	NdotL=vec3(0.0, 0.0, 1.0)*max(0.0, dot(n, LightPos));
+	RdotL=vec3(0.1, 0.1, 1.1)*max(0.0, pow(dot(r, LightPos), 16.0));
 
-	falloff=ComputeFalloff(Position, Line)*500.0;
+	falloff=max(0.0, min(1.0, ComputeFalloff(Position, Line)*1000.0));
 
 	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
 

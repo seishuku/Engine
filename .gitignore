@@ -76,6 +76,8 @@ StyleCopReport.xml
 *.ilk
 *.meta
 *.obj
+# allow obj files in assets, those are models
+!assets/*.obj
 *.iobj
 *.pch
 *.pdb

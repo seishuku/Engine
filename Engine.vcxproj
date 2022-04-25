@@ -369,6 +369,8 @@
     <ClCompile Include="md5.c" />
     <ClCompile Include="md5_gl.c" />
     <ClCompile Include="noise.c" />
+    <ClCompile Include="obj.c" />
+    <ClCompile Include="obj_gl.c" />
     <ClCompile Include="opengl.c">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -403,6 +405,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3ds.h" />
+    <ClInclude Include="3ds_gl.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="gl_objects.h" />
@@ -410,6 +413,8 @@
     <ClInclude Include="math.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="md5_gl.h" />
+    <ClInclude Include="obj.h" />
+    <ClInclude Include="obj_gl.h" />
     <ClInclude Include="opengl.h" />
     <ClInclude Include="skybox_gl.h" />
   </ItemGroup>

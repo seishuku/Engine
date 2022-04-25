@@ -11,6 +11,8 @@
 #include "md5.h"
 #include "md5_gl.h"
 #include "skybox_gl.h"
+#include "obj.h"
+#include "obj_gl.h"
 
 #define CAMERA_RECORDING 0
 
@@ -34,9 +36,7 @@ extern float fps, fFrameTime, fTimeStep, fTime;
 
 unsigned int Objects[NUM_OBJECTS];
 
-Model3DS_t Level;
-
-Model3DS_t Cube;
+ModelOBJ_t Level;
 
 Model_t Hellknight;
 Model_t Fatty;
@@ -224,7 +224,7 @@ void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 
 	MatrixIdentity(local);
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModel3DS(&Level);
+	DrawModelOBJ(&Level);
 
 /*	MatrixIdentity(local);
 	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
@@ -275,10 +275,7 @@ const int segments=16, rings=8;
 
 void BuildBeamVBO(void)
 {
-	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
-	float length=Vec3_Length(vec);
 	unsigned short *tris=NULL;
-	vec4 *verts=NULL;
 	int vertexCount=(rings+1)*(segments+1);
 	int triangleCount=rings*segments*2;
 
@@ -307,8 +304,8 @@ void BuildBeamVBO(void)
 			if(i!=0)
 			{
 				*pTris++=k1;
-				*pTris++=k2;
 				*pTris++=k1+1;
+				*pTris++=k2;
 				count++;
 			}
 
@@ -316,8 +313,8 @@ void BuildBeamVBO(void)
 			if(i!=(rings-1))
 			{
 				*pTris++=k1+1;
-				*pTris++=k2;
 				*pTris++=k2+1;
+				*pTris++=k2;
 				count++;
 			}
 		}
@@ -332,7 +329,7 @@ void BuildBeamVBO(void)
 	FREE(tris);
 }
 
-void DrawBeam(vec3 start, vec3 end)
+void DrawBeam(vec3 start, vec3 end, vec3 color, float radius)
 {
 	matrix local;
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
@@ -378,7 +375,7 @@ void DrawBeam(vec3 start, vec3 end)
 	align(start, end, local);
 	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
 
-	glUniform4f(0, 1.0f, 0.0f, 0.0f, 1.0f/radius);
+	glUniform4f(0, color[0], color[1], color[2], 1.0f/radius);
 	glUniform3fv(1, 1, (vec3) { 0.0f, 0.0f, 0.0f });
 	glUniform3fv(2, 1, (vec3) { 0.0f, 0.0f, length });
 
@@ -416,9 +413,6 @@ void Render(void)
 
 	//Light0_Pos[0]=sinf(fTime)*150.0f;
 	//Light0_Pos[2]=cosf(fTime)*150.0f;
-
-	//end[0]=sinf(fTime)*50.0f;
-	//end[2]=cosf(fTime)*50.0f;
 
 	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
 		
@@ -505,33 +499,15 @@ void Render(void)
 
 	MatrixIdentity(local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	DrawModel3DS(&Level);
+	DrawModelOBJ(&Level);
 
 	///// Beam stuff
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	DrawBeam(start, end);
-	DrawBeam(start2, end2);
+	DrawBeam(start, end, (vec3) { 1.0f, 0.0f, 0.0f }, radius);
+	DrawBeam(start2, end2, (vec3) { 0.0f, 0.0f, 1.0f }, radius);
 	glDisable(GL_BLEND);
 	/////
-
-//	glUseProgram(Objects[GLSL_CUBE_SHADER]);
-//	glUniformMatrix4fv(Objects[GLSL_CUBE_PROJ], 1, GL_FALSE, Projection);
-//	glUniformMatrix4fv(Objects[GLSL_CUBE_MV], 1, GL_FALSE, ModelView);
-//	glUniform3fv(0, 1, Camera.Position);
-//
-//	glBindTextureUnit(0, Objects[TEXTURE_3DVOLUME]);
-//
-//	MatrixIdentity(local);
-//	MatrixTranslate(0.0f, -73.0f, 100.0f, local);
-////	MatrixRotate(PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-//	glUniformMatrix4fv(Objects[GLSL_CUBE_LOCAL], 1, GL_FALSE, local);
-//	glUniform3f(0, (float)Width, (float)Height, 90.0f);
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	//DrawModel3DS(&Cube);
-//	DrawSkybox();
-//	glDisable(GL_BLEND);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -552,35 +528,6 @@ void Render(void)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void LoadMaterials3DS(Model3DS_t *Model)
-{
-	for(int i=0;i<Model->NumMaterial;i++)
-	{
-		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
-
-		for(char *p=Model->Material[i].Texture;*p;p++)
-			*p=*p>0x40&&*p<0x5b?*p|0x60:*p;
-
-		strncpy(nameNoExt, Model->Material[i].Texture, 256);
-		ptr=strstr(nameNoExt, ".");
-		strncpy(fileExt, ptr, 256);
-
-		if(!ptr)
-			continue;
-
-		ptr[0]='\0';
-
-		snprintf(buf, 256, "./assets/%s", Model->Material[i].Texture);
-		Model->Material[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
-
-		snprintf(buf, 256, "./assets/%s_b%s", nameNoExt, fileExt);
-		Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_NORMALMAP|IMAGE_TRILINEAR);
-
-		snprintf(buf, 256, "./assets/%s_s%s", nameNoExt, fileExt);
-		Model->Material[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	}
-}
-
 int Init(void)
 {
 	glDebugMessageCallback(error_callback, NULL);
@@ -591,39 +538,6 @@ int Init(void)
 	BuildBeamVBO();
 
 	BuildSkyboxVBO();
-
-	//{
-	//	unsigned long xsize=256, ysize=256, zsize=256;
-	//	FILE *stream=NULL;
-
-	//	stream=fopen("./assets/bonsai_256x256x256_uint8.raw", "r");
-
-	//	if(!stream)
-	//		return 0;
-
-	//	GLubyte *volume=(GLubyte *)malloc(xsize*ysize*zsize);
-
-	//	if(!volume)
-	//	{
-	//		fclose(stream);
-	//		return 0;
-	//	}
-
-	//	fread(volume, 1, xsize*ysize*zsize, stream);
-	//	fclose(stream);
-
-	//	glGenTextures(1, &Objects[TEXTURE_3DVOLUME]);
-	//	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_3DVOLUME]);
-
-	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//	glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, xsize, ysize, zsize, 0, GL_RED, GL_UNSIGNED_BYTE, volume);
-
-	//	FREE(volume);
-	//}
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -660,16 +574,11 @@ int Init(void)
 	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
 	// Load the "level" 3D Studio model
-	if(Load3DS(&Level, "./assets/room.3ds"))
+	if(LoadOBJ(&Level, "./assets/room.obj"))
 	{
-		BuildVBO3DS(&Level);
-		LoadMaterials3DS(&Level);
+		BuildVBOOBJ(&Level);
+		LoadMaterialsOBJ(&Level);
 	}
-	else
-		return 0;
-
-	if(Load3DS(&Cube, "./assets/box.3ds"))
-		BuildVBO3DS(&Cube);
 	else
 		return 0;
 
@@ -761,8 +670,7 @@ void Destroy(void)
 {
 	CameraDeletePath(&CameraPath);
 
-	Free3DS(&Cube);
-	Free3DS(&Level);
+	FreeOBJ(&Level);
 
 	DestroyMD5Model(&Hellknight);
 	DestroyMD5Model(&Fatty);
