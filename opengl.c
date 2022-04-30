@@ -1,4 +1,5 @@
 #include "opengl.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -6,6 +7,10 @@
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
 #else
 #define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
+#endif
+
+#ifndef FREE
+#define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
 #ifdef __linux__
@@ -1943,4 +1948,100 @@ void DestroyContext(GLContext_t *Context)
 #endif
 
 	memset(Context, 0, sizeof(GLContext_t));
+}
+
+int LoadShader(GLuint Shader, const char *Filename)
+{
+	FILE *stream=NULL;
+
+	if((stream=fopen(Filename, "rb"))==NULL)
+		return 0;
+
+	fseek(stream, 0, SEEK_END);
+	size_t length=ftell(stream);
+	fseek(stream, 0, SEEK_SET);
+
+	char *buffer=(char *)malloc(length+1);
+
+	if(buffer==NULL)
+		return 0;
+
+	fread(buffer, 1, length, stream);
+	buffer[length]='\0';
+
+	glShaderSource(Shader, 1, (const char **)&buffer, NULL);
+
+	fclose(stream);
+	FREE(buffer);
+
+	return 1;
+}
+
+void CompileAndAttachShader(GLuint Program, const char *Filename, GLuint Target)
+{
+	GLint _Status=0, LogLength=0;
+	char *Log=NULL;
+
+	GLuint Shader=glCreateShader(Target);
+
+	if(LoadShader(Shader, Filename))
+	{
+		glCompileShader(Shader);
+		glGetShaderiv(Shader, GL_COMPILE_STATUS, &_Status);
+
+		if(!_Status)
+		{
+			glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, &LogLength);
+			Log=(char *)malloc(LogLength);
+
+			if(Log)
+			{
+				glGetShaderInfoLog(Shader, LogLength, NULL, Log);
+				DBGPRINTF("%s - %s\n", Filename, Log);
+				FREE(Log);
+			}
+		}
+		else
+			glAttachShader(Program, Shader);
+	}
+
+	glDeleteShader(Shader);
+}
+
+GLuint CreateShaderProgram(ProgNames_t Names)
+{
+	GLint _Status=0, LogLength=0;
+	GLchar *Log=NULL;
+
+	GLuint Program=glCreateProgram();
+
+	if(Names.Vertex)
+		CompileAndAttachShader(Program, Names.Vertex, GL_VERTEX_SHADER);
+
+	if(Names.Fragment)
+		CompileAndAttachShader(Program, Names.Fragment, GL_FRAGMENT_SHADER);
+
+	if(Names.Geometry)
+		CompileAndAttachShader(Program, Names.Geometry, GL_GEOMETRY_SHADER);
+
+	if(Names.Compute)
+		CompileAndAttachShader(Program, Names.Compute, GL_COMPUTE_SHADER);
+
+	glLinkProgram(Program);
+	glGetProgramiv(Program, GL_LINK_STATUS, &_Status);
+
+	if(!_Status)
+	{
+		glGetProgramiv(Program, GL_INFO_LOG_LENGTH, &LogLength);
+		Log=(char *)malloc(LogLength);
+
+		if(Log)
+		{
+			glGetProgramInfoLog(Program, LogLength, NULL, Log);
+			DBGPRINTF("Link - %s\n", Log);
+			FREE(Log);
+		}
+	}
+
+	return Program;
 }

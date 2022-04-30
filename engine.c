@@ -13,6 +13,7 @@
 #include "skybox_gl.h"
 #include "obj.h"
 #include "obj_gl.h"
+#include "beam_gl.h"
 
 #define CAMERA_RECORDING 0
 
@@ -64,17 +65,15 @@ vec4 Light3_Kd={ 0.75f, 1.0f, 0.75f, 1.0f };
 vec4 Light4_Pos={ 800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
 vec4 Light4_Kd={ 1.0f, 0.75f, 0.75f, 1.0f };
 
+float BeamStart0[3]={ -75.0f, -80.0f, -120.0f };
+float BeamEnd0[3]={ -75.0f, 90.0f, -120.0f };
+
+float BeamStart1[3]={ 75.0f, -80.0f, -120.0f };
+float BeamEnd1[3]={ 75.0f, 90.0f, -120.0f };
+
+const float radius=5.0f;
+
 int DynWidth=1024, DynHeight=1024;
-
-typedef struct
-{
-	const char *Vertex;
-	const char *Fragment;
-	const char *Geometry;
-	const char *Compute;
-} ProgNames_t;
-
-GLuint CreateShaderProgram(ProgNames_t Names);
 
 void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_data)
 {
@@ -169,27 +168,27 @@ void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 
 	glViewport(0, 0, DynWidth, DynHeight);
 	MatrixIdentity(proj);
-	InfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, proj);
+	MatrixInfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, proj);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	MatrixIdentity(mv[0]);
-	LookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
+	MatrixLookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
 
 	MatrixIdentity(mv[1]);
-	LookAt(pos, (vec3) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[1]);
+	MatrixLookAt(pos, (vec3) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[1]);
 
 	MatrixIdentity(mv[2]);
-	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, 1.0f }, mv[2]);
+	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, 1.0f }, mv[2]);
 
 	MatrixIdentity(mv[3]);
-	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, -1.0f }, mv[3]);
+	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, -1.0f }, mv[3]);
 
 	MatrixIdentity(mv[4]);
-	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[4]);
+	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[4]);
 
 	MatrixIdentity(mv[5]);
-	LookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
+	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
@@ -226,174 +225,15 @@ void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 	DrawModelOBJ(&Level);
 
-/*	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -100.0f, 100.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModel3DS(&Cube);*/
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-GLuint BeamVAO, BeamVBO, BeamEBO;
-
-void align(const float start[3], const float end[3], matrix out)
-{
-	if(out)
-	{
-		vec3 direction={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
-		vec3 orientation={ 0.0f, 0.0f, -1.0f };
-		vec3 axis;
-
-		Vec3_Normalize(direction);
-		Cross(direction, orientation, axis);
-		Vec3_Normalize(axis);
-
-		float angle=acosf(Vec3_Dot(direction, orientation));
-
-		float s=sinf(angle);
-		float c=cosf(angle);
-		float c1=1.0f-c;
-
-		matrix m=
-		{
-			c+axis[0]*axis[0]*c1,			axis[1]*axis[0]*c1+axis[2]*s,	axis[2]*axis[0]*c1-axis[1]*s,	0.0f,
-			axis[0]*axis[1]*c1-axis[2]*s,	c+axis[1]*axis[1]*c1,			axis[2]*axis[1]*c1+axis[0]*s,	0.0f,
-			axis[0]*axis[2]*c1+axis[1]*s,	axis[1]*axis[2]*c1-axis[0]*s,	c+axis[2]*axis[2]*c1,			0.0f,
-			start[0],						start[1],						start[2],						1.0f
-		};
-
-		MatrixMult(m, out, out);
-	}
-}
-
-float start[3]={ -75.0f, -80.0f, -120.0f };
-float end[3]={ -75.0f, 90.0f, -120.0f };
-float start2[3]={ 75.0f, -80.0f, -120.0f };
-float end2[3]={ 75.0f, 90.0f, -120.0f };
-const float radius=5.0f;
-const int segments=16, rings=8;
-
-void BuildBeamVBO(void)
-{
-	unsigned short *tris=NULL;
-	int vertexCount=(rings+1)*(segments+1);
-	int triangleCount=rings*segments*2;
-
-	glGenVertexArrays(1, &BeamVAO);
-	glBindVertexArray(BeamVAO);
-
-	glGenBuffers(1, &BeamVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*vertexCount, NULL, GL_DYNAMIC_DRAW);
-
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(0);
-
-	tris=(unsigned short *)malloc(sizeof(unsigned short)*3*triangleCount);
-
-	unsigned short *pTris=tris;
-	int count=0;
-
-	for(int i=0;i<rings;i++)
-	{
-		int k1=i*(segments+1);
-		int k2=k1+segments+1;
-
-		for(int j=0;j<segments;j++, k1++, k2++)
-		{
-			if(i!=0)
-			{
-				*pTris++=k1;
-				*pTris++=k1+1;
-				*pTris++=k2;
-				count++;
-			}
-
-			// k1+1 => k2 => k2+1
-			if(i!=(rings-1))
-			{
-				*pTris++=k1+1;
-				*pTris++=k2+1;
-				*pTris++=k2;
-				count++;
-			}
-		}
-	}
-
-	triangleCount=count;
-
-	glGenBuffers(1, &BeamEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*3*triangleCount, tris, GL_STATIC_DRAW);
-
-	FREE(tris);
-}
-
-void DrawBeam(vec3 start, vec3 end, vec3 color, float radius)
-{
-	matrix local;
-	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
-	float length=Vec3_Length(vec);
-	int vertexCount=(rings+1)*(segments+1);
-	int triangleCount=rings*segments*2;
-
-	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	vec4 *vPtr=glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-
-	float sectorStep=2.0f*PI/segments;
-	float stackStep=PI/rings;
-
-	for(int i=0;i<=rings;i++)
-	{
-		float stackAngle=0.5f*PI-i*stackStep;
-
-		float xy=radius*cosf(stackAngle);
-		float z=radius*sinf(stackAngle);
-
-		for(int j=0;j<=segments;j++)
-		{
-			float sectorAngle=j*sectorStep;
-
-			float x=xy*cosf(sectorAngle);
-			float y=xy*sinf(sectorAngle);
-
-			// This is just a sphere that gets stretched halfway through
-			if(i>rings/2)
-				Vec4_Set(*vPtr++, x, y, z, 1.0f);
-			else
-				Vec4_Set(*vPtr++, x, y, z+length, 1.0f);
-		}
-	}
-
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-
-	glUseProgram(Objects[GLSL_BEAM_SHADER]);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_PROJ], 1, GL_FALSE, Projection);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_MV], 1, GL_FALSE, ModelView);
-
-	MatrixIdentity(local);
-	align(start, end, local);
-	glUniformMatrix4fv(Objects[GLSL_BEAM_LOCAL], 1, GL_FALSE, local);
-
-	glUniform4f(0, color[0], color[1], color[2], 1.0f/radius);
-	glUniform3fv(1, 1, (vec3) { 0.0f, 0.0f, 0.0f });
-	glUniform3fv(2, 1, (vec3) { 0.0f, 0.0f, length });
-
-	glBindVertexArray(BeamVAO);
-	glDrawElements(GL_TRIANGLES, triangleCount*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glUniform4f(0, 999.0f, 999.0f, 999.0f, 1.0f/(radius*4));
-	//glDrawElements(GL_TRIANGLES, triangleCount*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Render(void)
 {
 	matrix local;
 
-//	for(int i=0;i<Level.NumMesh;i++)
-//		CameraCheckCollision(&Camera, Level.Mesh[i].Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
+	for(int i=0;i<Level.NumMesh;i++)
+		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
 	// Sphere -> BBox intersection testing
 	//float min[3]={ 0.0f, };
@@ -421,7 +261,7 @@ void Render(void)
 	// Set viewport and calculate a projection matrix (perspective, with infinite z-far plane)
 	glViewport(0, 0, Width, Height);
 	MatrixIdentity(Projection);
-	InfPerspective(90.0f, (float)Width/Height, 0.01f, 0, Projection);
+	MatrixInfPerspective(90.0f, (float)Width/Height, 0.01f, 0, Projection);
 
 	// Set up model view matrix (translate and rotation)
 	MatrixIdentity(ModelView);
@@ -450,10 +290,11 @@ void Render(void)
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_POS], 1, Light4_Pos);
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_KD], 1, Light4_Kd);
 
-	glUniform3fv(0, 1, start);
-	glUniform3fv(1, 1, end);
-	glUniform3fv(2, 1, start2);
-	glUniform3fv(3, 1, end2);
+	glUniform3fv(0, 1, BeamStart0);
+	glUniform3fv(1, 1, BeamEnd0);
+
+	glUniform3fv(2, 1, BeamStart1);
+	glUniform3fv(3, 1, BeamEnd1);
 
 	// Projection matrix
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_PROJ], 1, GL_FALSE, Projection);
@@ -504,8 +345,8 @@ void Render(void)
 	///// Beam stuff
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	DrawBeam(start, end, (vec3) { 1.0f, 0.0f, 0.0f }, radius);
-	DrawBeam(start2, end2, (vec3) { 0.0f, 0.0f, 1.0f }, radius);
+	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 0.0f, 0.0f }, radius);
+	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 0.0f, 0.0f, 1.0f }, radius);
 	glDisable(GL_BLEND);
 	/////
 
@@ -535,7 +376,7 @@ int Init(void)
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glEnable(GL_DEBUG_OUTPUT);
 
-	BuildBeamVBO();
+	InitBeam();
 
 	BuildSkyboxVBO();
 
@@ -557,7 +398,7 @@ int Init(void)
 		return 0;
 
 	// Set up camera structs
-	CameraInit(&Camera, CameraPath.Position, CameraPath.View, (float[3]) { 0.0f, 1.0f, 0.0f });
+	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
 #endif
 
 	// Load texture images
@@ -597,19 +438,12 @@ int Init(void)
 
 	// Load shaders
 
-	// Laserbeam shader
-	Objects[GLSL_BEAM_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/beam_v.glsl", "./shaders/beam_f.glsl", NULL, NULL });
-	glUseProgram(Objects[GLSL_BEAM_SHADER]);
-	Objects[GLSL_BEAM_PROJ]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "proj");
-	Objects[GLSL_BEAM_MV]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "mv");
-	Objects[GLSL_BEAM_LOCAL]=glGetUniformLocation(Objects[GLSL_BEAM_SHADER], "local");
-
 	// Raycast volume rendering
-	Objects[GLSL_CUBE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/cube_v.glsl", "./shaders/cube_f.glsl", NULL, NULL });
-	glUseProgram(Objects[GLSL_CUBE_SHADER]);
-	Objects[GLSL_CUBE_PROJ]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "proj");
-	Objects[GLSL_CUBE_MV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mv");
-	Objects[GLSL_CUBE_LOCAL]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "local");
+	//Objects[GLSL_CUBE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/cube_v.glsl", "./shaders/cube_f.glsl", NULL, NULL });
+	//glUseProgram(Objects[GLSL_CUBE_SHADER]);
+	//Objects[GLSL_CUBE_PROJ]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "proj");
+	//Objects[GLSL_CUBE_MV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mv");
+	//Objects[GLSL_CUBE_LOCAL]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "local");
 
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
@@ -675,100 +509,4 @@ void Destroy(void)
 	DestroyMD5Model(&Hellknight);
 	DestroyMD5Model(&Fatty);
 	DestroyMD5Model(&Pinky);
-}
-
-int LoadShader(GLuint Shader, const char *Filename)
-{
-	FILE *stream=NULL;
-
-	if((stream=fopen(Filename, "rb"))==NULL)
-		return 0;
-
-	fseek(stream, 0, SEEK_END);
-	size_t length=ftell(stream);
-	fseek(stream, 0, SEEK_SET);
-
-	char *buffer=(char *)malloc(length+1);
-
-	if(buffer==NULL)
-		return 0;
-
-	fread(buffer, 1, length, stream);
-	buffer[length]='\0';
-
-	glShaderSource(Shader, 1, (const char **)&buffer, NULL);
-
-	fclose(stream);
-	FREE(buffer);
-
-	return 1;
-}
-
-void CompileAndAttachShader(GLuint Program, const char *Filename, GLuint Target)
-{
-	GLint _Status=0, LogLength=0;
-	char *Log=NULL;
-
-	GLuint Shader=glCreateShader(Target);
-
-	if(LoadShader(Shader, Filename))
-	{
-		glCompileShader(Shader);
-		glGetShaderiv(Shader, GL_COMPILE_STATUS, &_Status);
-
-		if(!_Status)
-		{
-			glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, &LogLength);
-			Log=(char *)malloc(LogLength);
-
-			if(Log)
-			{
-				glGetShaderInfoLog(Shader, LogLength, NULL, Log);
-				DBGPRINTF("%s - %s\n", Filename, Log);
-				FREE(Log);
-			}
-		}
-		else
-			glAttachShader(Program, Shader);
-	}
-
-	glDeleteShader(Shader);
-}
-
-GLuint CreateShaderProgram(ProgNames_t Names)
-{
-	GLint _Status=0, LogLength=0;
-	GLchar *Log=NULL;
-
-	GLuint Program=glCreateProgram();
-
-	if(Names.Vertex)
-		CompileAndAttachShader(Program, Names.Vertex, GL_VERTEX_SHADER);
-
-	if(Names.Fragment)
-		CompileAndAttachShader(Program, Names.Fragment, GL_FRAGMENT_SHADER);
-
-	if(Names.Geometry)
-		CompileAndAttachShader(Program, Names.Geometry, GL_GEOMETRY_SHADER);
-
-	if(Names.Compute)
-		CompileAndAttachShader(Program, Names.Compute, GL_COMPUTE_SHADER);
-
-	glLinkProgram(Program);
-	glGetProgramiv(Program, GL_LINK_STATUS, &_Status);
-
-	if(!_Status)
-	{
-		glGetProgramiv(Program, GL_INFO_LOG_LENGTH, &LogLength);
-		Log=(char *)malloc(LogLength);
-
-		if(Log)
-		{
-			glGetProgramInfoLog(Program, LogLength, NULL, Log);
-			DBGPRINTF("Link - %s\n", Log);
-			FREE(Log);
-		}
-	}
-
-	return Program;
 }

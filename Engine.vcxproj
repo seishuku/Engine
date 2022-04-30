@@ -295,6 +295,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="3ds_gl.c" />
+    <ClCompile Include="beam_gl.c" />
     <ClCompile Include="camera.c" />
     <ClCompile Include="dds.c">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -406,8 +407,10 @@
   <ItemGroup>
     <ClInclude Include="3ds.h" />
     <ClInclude Include="3ds_gl.h" />
+    <ClInclude Include="beam_gl.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="fontdata.h" />
     <ClInclude Include="gl_objects.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="math.h" />

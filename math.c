@@ -1,6 +1,7 @@
 #include <string.h>
 #include "math.h"
 
+// Some fast approx. trig. functions
 float fsinf(const float v)
 {
 	float fx=v*0.1591549f+0.5f;
@@ -266,7 +267,7 @@ void QuatAngle(const float angle, const float x, const float y, const float z, v
 {
 	if(out)
 	{
-		float v[3]={ x, y, z };
+		vec3 v={ x, y, z };
 		float s=sinf(angle*0.5f);
 
 		Vec3_Normalize(v);
@@ -427,8 +428,8 @@ void QuatMatrix(const vec4 q, float *out)
 {
 	if(out)
 	{
-		float m[16], s=0.0f;
-		float norm=sqrtf(Vec4_Dot(q, q));
+		matrix m;
+		float norm=sqrtf(Vec4_Dot(q, q)), s=0.0f;
 
 		if(norm>0.0f)
 			s=2.0f/norm;
@@ -465,20 +466,20 @@ void QuatMatrix(const vec4 q, float *out)
 }
 
 // Matrix functions
-void MatrixIdentity(float *out)
+void MatrixIdentity(matrix out)
 {
-	if(!out)
-		return;
-
-	out[ 0]=1.0f;	out[ 1]=0.0f;	out[ 2]=0.0f;	out[ 3]=0.0f;
-	out[ 4]=0.0f;	out[ 5]=1.0f;	out[ 6]=0.0f;	out[ 7]=0.0f;
-	out[ 8]=0.0f;	out[ 9]=0.0f;	out[10]=1.0f;	out[11]=0.0f;
-	out[12]=0.0f;	out[13]=0.0f;	out[14]=0.0f;	out[15]=1.0f;
+	if(out)
+	{
+		out[0]=1.0f;	out[1]=0.0f;	out[2]=0.0f;	out[3]=0.0f;
+		out[4]=0.0f;	out[5]=1.0f;	out[6]=0.0f;	out[7]=0.0f;
+		out[8]=0.0f;	out[9]=0.0f;	out[10]=1.0f;	out[11]=0.0f;
+		out[12]=0.0f;	out[13]=0.0f;	out[14]=0.0f;	out[15]=1.0f;
+	}
 }
 
-void MatrixMult(const float a[16], const float b[16], float *out)
+void MatrixMult(const matrix a, const matrix b, matrix out)
 {
-	float res[16];
+	matrix res;
 
 	if(!out)
 		return;
@@ -500,12 +501,12 @@ void MatrixMult(const float a[16], const float b[16], float *out)
 	res[14]=a[12]*b[ 2]+a[13]*b[ 6]+a[14]*b[10]+a[15]*b[14];
 	res[15]=a[12]*b[ 3]+a[13]*b[ 7]+a[14]*b[11]+a[15]*b[15];
 
-	memcpy(out, res, sizeof(float)*16);
+	memcpy(out, res, sizeof(matrix));
 }
 
-void MatrixInverse(const float in[16], float *out)
+void MatrixInverse(const float in[16], matrix out)
 {
-	float res[16];
+	matrix res;
 
 	if(!out)
 		return;
@@ -527,12 +528,12 @@ void MatrixInverse(const float in[16], float *out)
 	res[14]=-(in[12]*in[ 8])-(in[13]*in[ 9])-(in[14]*in[10]);
 	res[15]=1.0f;
 
-	memcpy(out, res, sizeof(float)*16);
+	memcpy(out, res, sizeof(matrix));
 }
 
-void MatrixTranspose(const float in[16], float *out)
+void MatrixTranspose(const float in[16], matrix out)
 {
-	float res[16];
+	matrix res;
 
 	if(!out)
 		return;
@@ -554,14 +555,14 @@ void MatrixTranspose(const float in[16], float *out)
 	res[14]=in[11];
 	res[15]=in[15];
 
-	memcpy(out, res, sizeof(float)*16);
+	memcpy(out, res, sizeof(matrix));
 }
 
-void MatrixRotate(const float angle, const float x, const float y, const float z, float *out)
+void MatrixRotate(const float angle, const float x, const float y, const float z, matrix out)
 {
 	if(out)
 	{
-		float m[16];
+		matrix m;
 		float c=cosf(angle);
 		float s=sinf(angle);
 
@@ -588,16 +589,16 @@ void MatrixRotate(const float angle, const float x, const float y, const float z
 	}
 }
 
-void MatrixRotatev(const float angle, const vec3 v, float *out)
+void MatrixRotatev(const float angle, const vec3 v, matrix out)
 {
 	MatrixRotate(angle, v[0], v[1], v[2], out);
 }
 
-void MatrixTranslate(const float x, const float y, const float z, float *out)
+void MatrixTranslate(const float x, const float y, const float z, matrix out)
 {
 	if(out)
 	{
-		float m[16]=
+		matrix m=
 		{
 			1.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
@@ -609,16 +610,16 @@ void MatrixTranslate(const float x, const float y, const float z, float *out)
 	}
 }
 
-void MatrixTranslatev(const vec3 v, float *out)
+void MatrixTranslatev(const vec3 v, matrix out)
 {
 	MatrixTranslate(v[0], v[1], v[2], out);
 }
 
-void MatrixScale(const float x, const float y, const float z, float *out)
+void MatrixScale(const float x, const float y, const float z, matrix out)
 {
 	if(out)
 	{
-		float m[16]=
+		matrix m=
 		{
 			   x, 0.0f, 0.0f, 0.0f,
 			0.0f,    y, 0.0f, 0.0f,
@@ -630,12 +631,50 @@ void MatrixScale(const float x, const float y, const float z, float *out)
 	}
 }
 
-void MatrixScalev(const vec3 v, float *out)
+void MatrixScalev(const vec3 v, matrix out)
 {
 	MatrixScale(v[0], v[1], v[2], out);
 }
 
-void Matrix4x4MultVec4(const vec4 in, const float m[16], float *out)
+void MatrixAlignPoints(const vec3 start, const vec3 end, const vec3 up, matrix out)
+{
+	if(out)
+	{
+		vec3 axis;
+
+		// Find the direction of the start point and end point, then normalize it.
+		vec3 direction={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
+		Vec3_Normalize(direction);
+
+		// Get the cross product between the direction
+		// and the object's current orientation, and normalize that.
+		// That vector is the axis of rotation
+		Cross(direction, up, axis);
+		Vec3_Normalize(axis);
+
+		// direction.orientation=cos(angle), so arccos to get angle between
+		// the new direction and the static orientation.
+		float angle=acosf(Vec3_Dot(direction, up));
+
+		// Use that angle to build a rotation and translation matrix to reorient it.
+		float s=sinf(angle);
+		float c=cosf(angle);
+		float c1=1.0f-c;
+
+		matrix m=
+		{
+			c+axis[0]*axis[0]*c1,			axis[1]*axis[0]*c1+axis[2]*s,	axis[2]*axis[0]*c1-axis[1]*s,	0.0f,
+			axis[0]*axis[1]*c1-axis[2]*s,	c+axis[1]*axis[1]*c1,			axis[2]*axis[1]*c1+axis[0]*s,	0.0f,
+			axis[0]*axis[2]*c1+axis[1]*s,	axis[1]*axis[2]*c1-axis[0]*s,	c+axis[2]*axis[2]*c1,			0.0f,
+			start[0],						start[1],						start[2],						1.0f
+		};
+
+		// Multiply that with the current set matrix
+		MatrixMult(m, out, out);
+	}
+}
+
+void Matrix4x4MultVec4(const vec4 in, const float m[16], vec4 out)
 {
 	if(out)
 	{
@@ -647,11 +686,11 @@ void Matrix4x4MultVec4(const vec4 in, const float m[16], float *out)
 			in[0]*m[ 3]+in[1]*m[ 7]+in[2]*m[11]+in[3]*m[15]
 		};
 
-		memcpy(out, res, sizeof(float)*4);
+		memcpy(out, res, sizeof(vec4));
 	}
 }
 
-void Matrix4x4MultVec3(const float in[3], const float m[16], float *out)
+void Matrix4x4MultVec3(const float in[3], const float m[16], vec3 out)
 {
 	if(out)
 	{
@@ -662,11 +701,11 @@ void Matrix4x4MultVec3(const float in[3], const float m[16], float *out)
 			in[0]*m[ 2]+in[1]*m[ 6]+in[2]*m[10]+m[14]
 		};
 
-		memcpy(out, res, sizeof(float)*3);
+		memcpy(out, res, sizeof(vec3));
 	}
 }
 
-void Matrix3x3MultVec3(const float in[3], const float m[16], float *out)
+void Matrix3x3MultVec3(const float in[3], const float m[16], vec3 out)
 {
 	if(out)
 	{
@@ -677,11 +716,12 @@ void Matrix3x3MultVec3(const float in[3], const float m[16], float *out)
 			in[0]*m[ 2]+in[1]*m[ 6]+in[2]*m[10]
 		};
 
-		memcpy(out, res, sizeof(float)*3);
+		memcpy(out, res, sizeof(vec3));
 	}
 }
 
-void LookAt(const vec3 position, const vec3 forward, const vec3 up, float *out)
+// TODO?: Should this multiply with the supplied matrix like the other functions?
+void MatrixLookAt(const vec3 position, const vec3 forward, const vec3 up, matrix out)
 {
 	if(out)
 	{
@@ -714,75 +754,86 @@ void LookAt(const vec3 position, const vec3 forward, const vec3 up, float *out)
 }
 
 // Projection matrix functions
-void InfPerspective(const float fovy, const float aspect, const float zNear, const int flip, float *out)
+void MatrixInfPerspective(const float fovy, const float aspect, const float zNear, const int flip, matrix out)
 {
-	float y=tanf((fovy/2.0f)*3.14159f/180.0f)*zNear, x=aspect*y;
-	float nudge=1.0f-(1.0f/(1<<16));
-	float m[16];
+	if(out)
+	{
+		float y=tanf((fovy/2.0f)*3.14159f/180.0f)*zNear, x=aspect*y;
+		float nudge=1.0f-(1.0f/(1<<16));
+		matrix m;
 
-	if(!out)
-		return;
+		m[0]=zNear/x;
+		m[1]=0.0f;
+		m[2]=0.0f;
+		m[3]=0.0f;
+		m[4]=0.0f;
+		m[5]=flip?-zNear/y:zNear/y;
+		m[6]=0.0f;
+		m[7]=0.0f;
+		m[8]=0.0f;
+		m[9]=0.0f;
+		m[10]=-1.0f*nudge;
+		m[11]=-1.0f;
+		m[12]=0.0f;
+		m[13]=0.0f;
+		m[14]=-2.0f*zNear*nudge;
+		m[15]=0.0f;
 
-	m[0]=zNear/x;
-	m[1]=0.0f;
-	m[2]=0.0f;
-	m[3]=0.0f;
-	m[4]=0.0f;
-	m[5]=flip?-zNear/y:zNear/y;
-	m[6]=0.0f;
-	m[7]=0.0f;
-	m[8]=0.0f;
-	m[9]=0.0f;
-	m[10]=-1.0f*nudge;
-	m[11]=-1.0f;
-	m[12]=0.0f;
-	m[13]=0.0f;
-	m[14]=-2.0f*zNear*nudge;
-	m[15]=0.0f;
-
-	MatrixMult(m, out, out);
+		MatrixMult(m, out, out);
+	}
 }
 
-void Perspective(const float fovy, const float aspect, const float zNear, const float zFar, const int flip, float *out)
+void MatrixPerspective(const float fovy, const float aspect, const float zNear, const float zFar, const int flip, matrix out)
 {
-	float y=tanf((fovy/2.0f)*3.14159f/180.0f)*zNear, x=aspect*y;
-	float m[16];
+	if(out)
+	{
+		float y=tanf((fovy/2.0f)*3.14159f/180.0f)*zNear, x=aspect*y;
+		matrix m;
 
-	if(!out)
-		return;
+		m[0]=zNear/x;
+		m[1]=0.0f;
+		m[2]=0.0f;
+		m[3]=0.0f;
+		m[4]=0.0f;
+		m[5]=flip?-zNear/y:zNear/y;
+		m[6]=0.0f;
+		m[7]=0.0f;
+		m[8]=0.0f;
+		m[9]=0.0f;
+		m[10]=-(zFar+zNear)/(zFar-zNear);
+		m[11]=-1.0f;
+		m[12]=0.0f;
+		m[13]=0.0f;
+		m[14]=-(2.0f*zNear*zFar)/(zFar-zNear);
+		m[15]=0.0f;
 
-	m[0]=zNear/x;
-	m[1]=0.0f;
-	m[2]=0.0f;
-	m[3]=0.0f;
-	m[4]=0.0f;
-	m[5]=flip?-zNear/y:zNear/y;
-	m[6]=0.0f;
-	m[7]=0.0f;
-	m[8]=0.0f;
-	m[9]=0.0f;
-	m[10]=-(zFar+zNear)/(zFar-zNear);
-	m[11]=-1.0f;
-	m[12]=0.0f;
-	m[13]=0.0f;
-	m[14]=-(2.0f*zNear*zFar)/(zFar-zNear);
-	m[15]=0.0f;
-
-	MatrixMult(m, out, out);
+		MatrixMult(m, out, out);
+	}
 }
 
-void Ortho(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar, float *out)
+void MatrixOrtho(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar, matrix out)
 {
-	float m[16];
+	if(out)
+	{
+		matrix m;
 
-	MatrixIdentity(m);
+		m[0]=2/(right-left);
+		m[1]=0.0f;
+		m[2]=0.0f;
+		m[3]=0.0f;
+		m[4]=0.0f;
+		m[5]=2/(top-bottom);
+		m[6]=0.0f;
+		m[7]=0.0f;
+		m[8]=0.0f;
+		m[9]=0.0f;
+		m[10]=-2/(zFar-zNear);
+		m[11]=0.0f;
+		m[12]=-(right+left)/(right-left);
+		m[13]=-(top+bottom)/(top-bottom);
+		m[14]=-(zFar+zNear)/(zFar-zNear);
+		m[15]=1.0f;
 
-	m[0]=2/(right-left);
-	m[5]=2/(top-bottom);	
-	m[10]=-2/(zFar-zNear);
-	m[12]=-(right+left)/(right-left);
-	m[13]=-(top+bottom)/(top-bottom);
-	m[14]=-(zFar+zNear)/(zFar-zNear);
-
-	MatrixMult(m, out, out);
+		MatrixMult(m, out, out);
+	}
 }

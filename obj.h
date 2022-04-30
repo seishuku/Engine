@@ -1,8 +1,6 @@
 #ifndef __OBJ_H__
 #define __OBJ_H__
 
-#include "math.h"
-
 typedef struct
 {
 	char Name[255];

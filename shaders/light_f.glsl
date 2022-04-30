@@ -31,7 +31,7 @@ layout(location=3) uniform vec3 End2;
 
 layout(location=0) out vec4 Output;
 
-vec3 GetLineVector(vec3 pos, vec3 start, vec3 end)
+vec3 GetPointOnLine(vec3 pos, vec3 start, vec3 end)
 {
 	float len=length(start-pos);
 	return start+(end-start)*max(0.0, len/(length(end-pos)+len));
@@ -41,6 +41,19 @@ float ComputeFalloff(vec3 position, vec3 lightPosition)
 {
     float d=distance(position, lightPosition);    
     return 1.0/(d*d);
+}
+
+float SpotLight(vec3 pos, vec3 dir, float innerCutOff, float outerCutOff, float exponent)
+{
+	float outerCutOffAngle=cos(radians(outerCutOff));
+	float innercutOffAngle=cos(radians(innerCutOff));
+
+	float spot=dot(normalize(dir), -pos);
+
+	if(spot<outerCutOffAngle)
+		return 0.0;
+	else
+		return pow(smoothstep(outerCutOffAngle, innercutOffAngle, spot), exponent);
 }
 
 void main()
@@ -110,17 +123,7 @@ void main()
 	vec3 l4_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l4, r), 16.0)*dot(l4, n)*Base.a);
 
 	// Testing spotlight
-	float outerCutOff=cos(radians(90.0));
-	float cutOff=cos(radians(22.5));
-	vec3 direction=vec3(0.0, -0.5, -0.5);
-	float spotExponent=64.0;
-
-	float spotEffect=dot(normalize(direction), -l0);
-
-	if(spotEffect<outerCutOff)
-		spotEffect=0.0;
-	else
-		spotEffect=pow(smoothstep(outerCutOff, cutOff, spotEffect), spotExponent);
+	float spotEffect=SpotLight(l0, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
 
 	// I=(base*diffuse+specular)*shadow*attenuation+volumelight
 
@@ -133,7 +136,7 @@ void main()
 	temp+=vec4((Base.xyz*l3_diffuse+l3_specular*Specular)*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz), 1.0);
 	temp+=vec4((Base.xyz*l4_diffuse+l4_specular*Specular)*l4_atten*(1.0-l4_volume.w)+(l4_volume.w*Light4_Kd.xyz), 1.0);
 
-	vec3 Line=GetLineVector(Position, Start1, End1);
+	vec3 Line=GetPointOnLine(Position, Start1, End1);
 	vec3 LightPos=normalize(Line-Position);
         
 	vec3 NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
@@ -143,7 +146,7 @@ void main()
 
 	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
 
-	Line=GetLineVector(Position, Start2, End2);
+	Line=GetPointOnLine(Position, Start2, End2);
 	LightPos=normalize(Line-Position);
         
 	NdotL=vec3(0.0, 0.0, 1.0)*max(0.0, dot(n, LightPos));

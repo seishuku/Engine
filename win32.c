@@ -63,8 +63,7 @@ unsigned __int64 GetFrequency(void)
 	return (StopTicks-StartTicks)*TimeFreq/(TimeStop-TimeStart);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
-{
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow){
 	WNDCLASS wc;
 	MSG msg={ 0, };
 	RECT Rect;

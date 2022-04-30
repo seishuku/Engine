@@ -51,7 +51,7 @@ int InsidePolygon(float Intersection[3], float Tri[3][3])
 	return 0;
 }
 
-void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 *ClosestPoint)
+void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 ClosestPoint)
 {
 	vec3 Vector1={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
 	vec3 Vector2={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
@@ -63,25 +63,21 @@ void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 *ClosestPoint)
 
 	if(t<=0.0f)
 	{
-		*ClosestPoint[0]=A[0];
-		*ClosestPoint[1]=A[1];
-		*ClosestPoint[2]=A[2];
-
-		return;
+		ClosestPoint[0]=A[0];
+		ClosestPoint[1]=A[1];
+		ClosestPoint[2]=A[2];
 	}
 	else if(t>=d)
 	{
-		*ClosestPoint[0]=B[0];
-		*ClosestPoint[1]=B[1];
-		*ClosestPoint[2]=B[2];
-
-		return;
+		ClosestPoint[0]=B[0];
+		ClosestPoint[1]=B[1];
+		ClosestPoint[2]=B[2];
 	}
 	else
 	{
-		*ClosestPoint[0]=A[0]+(Vector2[0]*t);
-		*ClosestPoint[1]=A[1]+(Vector2[1]*t);
-		*ClosestPoint[2]=A[2]+(Vector2[2]*t);
+		ClosestPoint[0]=A[0]+(Vector2[0]*t);
+		ClosestPoint[1]=A[1]+(Vector2[1]*t);
+		ClosestPoint[2]=A[2]+(Vector2[2]*t);
 	}
 }
 
@@ -93,7 +89,7 @@ int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
 
 	for(i=0;i<3;i++)
 	{
-		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, &Point);
+		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, Point);
 
 		distance=Vec3_Distance(Point, Center);
 
@@ -104,23 +100,23 @@ int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
 	return 0;
 }
 
-void GetCollisionOffset(vec3 Normal, float radius, float distance, vec3 *Offset)
+void GetCollisionOffset(vec3 Normal, float radius, float distance, vec3 Offset)
 {
 	if(distance>0.0f)
 	{
 		float distanceOver=radius-distance;
 
-		*Offset[0]=Normal[0]*distanceOver;
-		*Offset[1]=Normal[1]*distanceOver;
-		*Offset[2]=Normal[2]*distanceOver;
+		Offset[0]=Normal[0]*distanceOver;
+		Offset[1]=Normal[1]*distanceOver;
+		Offset[2]=Normal[2]*distanceOver;
 	}
 	else
 	{
 		float distanceOver=radius+distance;
 
-		*Offset[0]=Normal[0]*-distanceOver;
-		*Offset[1]=Normal[1]*-distanceOver;
-		*Offset[2]=Normal[2]*-distanceOver;
+		Offset[0]=Normal[0]*-distanceOver;
+		Offset[1]=Normal[1]*-distanceOver;
+		Offset[2]=Normal[2]*-distanceOver;
 	}
 }
 
@@ -146,14 +142,12 @@ int SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBM
 	return 0;
 }
 
-void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace)
+void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned long *Face, int NumFace)
 {
-	unsigned short i;
-	int classification;
 	float distance=0.0f;
 	vec3 n;
 
-	for(i=0;i<NumFace;i++)
+	for(int i=0;i<NumFace;i++)
 	{
 		vec3 Tri[3]=
 		{
@@ -169,7 +163,7 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face,
 
 		Vec3_Normalize(n);
 
-		classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
+		int classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
 
 		if(classification==1)
 		{
@@ -178,7 +172,7 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face,
 
 			if(InsidePolygon(Intersection, Tri)||EdgeSphereCollision(Camera->Position, Tri, Camera->Radius*0.5f))
 			{
-				GetCollisionOffset(n, Camera->Radius, distance, &Offset);
+				GetCollisionOffset(n, Camera->Radius, distance, Offset);
 
 				Camera->Position[0]+=Offset[0];
 				Camera->Position[1]+=Offset[1];
@@ -279,9 +273,6 @@ void CameraUpdate(Camera_t *Camera, float Time, matrix out)
 	if(!out)
 		return;
 
-	Cross(Camera->Forward, Camera->Up, Camera->Right);
-	Vec3_Normalize(Camera->Right);
-
 	if(Camera->key_d)
 		Camera->Velocity[0]+=Time;
 
@@ -301,27 +292,21 @@ void CameraUpdate(Camera_t *Camera, float Time, matrix out)
 		Camera->Velocity[2]-=Time;
 
 	if(Camera->key_q)
-//		CameraRoll(Camera, Time*2.0f);
 		Camera->Roll+=Time*0.25f;
 
 	if(Camera->key_e)
-//		CameraRoll(Camera, -Time*2.0f);
 		Camera->Roll-=Time*0.25f;
 
 	if(Camera->key_left)
-//		CameraYaw(Camera, Time*2.0f);
 		Camera->Yaw+=Time*0.25f;
 
 	if(Camera->key_right)
-//		CameraYaw(Camera, -Time*2.0f);
 		Camera->Yaw-=Time*0.25f;
 
 	if(Camera->key_up)
-//		CameraPitch(Camera, Time*2.0f);
 		Camera->Pitch+=Time*0.25f;
 
 	if(Camera->key_down)
-//		CameraPitch(Camera, -Time*2.0f);
 		Camera->Pitch-=Time*0.25f;
 
 	Camera->Velocity[0]*=0.91f;
@@ -351,7 +336,7 @@ void CameraUpdate(Camera_t *Camera, float Time, matrix out)
 	Camera->View[1]=Camera->Position[1]+Camera->Forward[1];
 	Camera->View[2]=Camera->Position[2]+Camera->Forward[2];
 
-	LookAt(Camera->Position, Camera->View, Camera->Up, m);
+	MatrixLookAt(Camera->Position, Camera->View, Camera->Up, m);
 	MatrixMult(m, out, out);
 }
 
@@ -509,7 +494,7 @@ void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep,
 	CalculatePoint(Path->Knots, Path->NumPoints-1, 3, Path->Time, Path->Position, Camera->Position);
 	CalculatePoint(Path->Knots, Path->NumPoints-1, 3, Path->Time, Path->View, Camera->View);
 
-	LookAt(Camera->Position, Camera->View, Camera->Up, m);
+	MatrixLookAt(Camera->Position, Camera->View, Camera->Up, m);
 	MatrixMult(m, out, out);
 }
 

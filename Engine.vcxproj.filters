@@ -55,6 +55,9 @@
     <ClCompile Include="obj_gl.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="beam_gl.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3ds.h">
@@ -94,6 +97,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="3ds_gl.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="fontdata.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="beam_gl.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

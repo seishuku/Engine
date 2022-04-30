@@ -6,13 +6,13 @@ in vec2 UV;
 in vec3 startp;
 in vec3 endp;
 
-uniform mat4 proj;
-uniform mat4 mv;
-uniform mat4 local;
+layout(location=0) uniform mat4 proj;
+layout(location=1) uniform mat4 mv;
+layout(location=2) uniform mat4 local;
 
-layout(location=0) uniform vec4 color;
-layout(location=1) uniform vec3 start;
-layout(location=2) uniform vec3 end;
+layout(location=3) uniform vec4 color;
+layout(location=4) uniform vec3 start;
+layout(location=5) uniform vec3 end;
 
 layout(location=0) out vec4 Output;
 

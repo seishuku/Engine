@@ -38,7 +38,7 @@ typedef struct
 
 void CameraInit(Camera_t *Camera, const vec3 Position, const vec3 View, const vec3 Up);
 void CameraUpdate(Camera_t *Camera, float Time, matrix out);
-void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned short *Face, int NumFace);
+void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned long *Face, int NumFace);
 int CameraLoadPath(char *filename, CameraPath_t *Path);
 void CameraInterpolatePath(CameraPath_t *Path, Camera_t *Camera, float TimeStep, matrix out);
 void CameraDeletePath(CameraPath_t *Path);

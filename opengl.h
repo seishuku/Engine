@@ -2353,4 +2353,14 @@ typedef struct
 int CreateContext(GLContext_t *Context, int Color, int Depth, int Stencil, int Accum, unsigned long Flags);
 void DestroyContext(GLContext_t *Context);
 
+typedef struct
+{
+	const char *Vertex;
+	const char *Fragment;
+	const char *Geometry;
+	const char *Compute;
+} ProgNames_t;
+
+GLuint CreateShaderProgram(ProgNames_t Names);
+
 #endif

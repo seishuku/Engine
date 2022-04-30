@@ -1,4 +1,5 @@
 #include "opengl.h"
+#include "math.h"
 #include "obj.h"
 #include "image.h"
 #include <stdio.h>
@@ -47,7 +48,7 @@ void LoadMaterialsOBJ(ModelOBJ_t *Model)
 		if(!Model->Material[i].TexNormalID)
 		{
 			snprintf(buf, 256, "./assets/%s_n%s", nameNoExt, fileExt);
-			Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+			Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_NORMALIZE|IMAGE_TRILINEAR);
 		}
 
 

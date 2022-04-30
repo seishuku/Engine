@@ -87,14 +87,13 @@ void MatrixTranslate(const float x, const float y, const float z, matrix out);
 void MatrixTranslatev(const vec3 v, matrix out);
 void MatrixScale(const float x, const float y, const float z, matrix out);
 void MatrixScalev(const vec3 v, matrix out);
+void MatrixAlignPoints(const vec3 start, const vec3 end, const vec3 up, matrix out);
 void Matrix4x4MultVec4(const vec4 in, const matrix m, matrix out);
 void Matrix4x4MultVec3(const vec3 in, const matrix m, matrix out);
 void Matrix3x3MultVec3(const vec3 in, const matrix m, matrix out);
-
-void LookAt(const vec3 position, const vec3 forward, const vec3 up, matrix out);
-
-void InfPerspective(float fovy, float aspect, float zNear, int flip, matrix out);
-void Perspective(float fovy, float aspect, float zNear, float zFar, int flip, matrix out);
-void Ortho(float left, float right, float bottom, float top, float zNear, float zFar, matrix out);
+void MatrixLookAt(const vec3 position, const vec3 forward, const vec3 up, matrix out);
+void MatrixInfPerspective(float fovy, float aspect, float zNear, int flip, matrix out);
+void MatrixPerspective(float fovy, float aspect, float zNear, float zFar, int flip, matrix out);
+void MatrixOrtho(float left, float right, float bottom, float top, float zNear, float zFar, matrix out);
 
 #endif
