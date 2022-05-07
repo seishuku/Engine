@@ -308,14 +308,12 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 				Model->Mesh[Model->NumMesh-1].NumFace++;
 
 				if(!Model->Mesh[Model->NumMesh-1].Face)
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned long *)malloc(sizeof(unsigned long)*3);
+					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)malloc(sizeof(unsigned long)*3);
 				else
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned long *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(unsigned long)*3*Model->Mesh[Model->NumMesh-1].NumFace);
+					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(unsigned long)*3*Model->Mesh[Model->NumMesh-1].NumFace);
 
 				if(Model->Mesh[Model->NumMesh-1].Face)
 				{
-					unsigned long temp=0;
-
 					// So... Alias Wavefront models allow a different index buffer for vertices, normals, and UV
 					// But, I'm ignoring that and only using the vertex indices for everything and hope that
 					// whatever exported the model used the same index for all attribs.

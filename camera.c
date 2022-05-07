@@ -142,7 +142,7 @@ int SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBM
 	return 0;
 }
 
-void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned long *Face, int NumFace)
+void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned int *Face, int NumFace)
 {
 	float distance=0.0f;
 	vec3 n;

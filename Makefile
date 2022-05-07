@@ -11,7 +11,7 @@ OBJS+=quad_gl.o
 OBJS+=skybox_gl.o
 
 CC=gcc
-CFLAGS=-Wall -O3 -c -I/usr/X11/include -g
+CFLAGS=-Wall -O3 -std=c17 -c -I/usr/X11/include -g -ggdb
 LDFLAGS=-L/usr/X11/lib -lGL -lX11 -lm
 
 $(TARGET): $(OBJS)

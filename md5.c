@@ -148,7 +148,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 				{
 					// Allocate memory for triangles
 					if(mesh->num_tris>0)
-						mesh->triangles=(unsigned long *)malloc(sizeof(unsigned long)*mesh->num_tris*3);
+						mesh->triangles=(unsigned int *)malloc(sizeof(unsigned int)*mesh->num_tris*3);
 				}
 				else if(sscanf(buff, " numweights %d", &mesh->num_weights)==1)
 				{

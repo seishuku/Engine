@@ -46,7 +46,7 @@ typedef struct
 	MD5_Vertex_t *vertices;
 
 	int num_tris;
-	unsigned long *triangles;
+	unsigned int *triangles;
 
 	int num_weights;
 	MD5_Weight_t *weights;
@@ -54,9 +54,9 @@ typedef struct
 	char shader[256];
 
 	//float *vertexArray;
-	unsigned long VAO;
-	unsigned long WeightID, VertID;
-	unsigned long FinalVertID, ElemID;
+	unsigned int VAO;
+	unsigned int WeightID, VertID;
+	unsigned int FinalVertID, ElemID;
 } MD5_Mesh_t;
 
 // MD5 model structure
