@@ -152,7 +152,7 @@ void BuildVBOOBJ(ModelOBJ_t *Model)
 
 		// Create element (index) buffer, copy data directly, no processing needed.
 		glCreateBuffers(1, &Model->Mesh[i].ElemID);
-		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(unsigned long)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
+		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(unsigned int)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
 		glVertexArrayElementBuffer(Model->Mesh[i].VAO, Model->Mesh[i].ElemID);
 
 		// Assign the vertex buffer to the vertex array on binding point 0, and set buffer stride

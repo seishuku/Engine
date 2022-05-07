@@ -19,8 +19,8 @@ typedef struct
 	char MaterialName[255];
 	int MaterialNumber;
 
-	unsigned long NumFace;
-	unsigned long *Face;
+	unsigned int NumFace;
+	unsigned int *Face;
 
 	unsigned int VAO, ElemID;
 } MeshOBJ_t;
@@ -31,7 +31,7 @@ typedef struct
 	int NumMaterial;
 	MaterialOBJ_t *Material;
 
-	unsigned long NumVertex;
+	unsigned int NumVertex;
 	float *Vertex, *UV, *Normal, *Tangent, *Binormal;
 	unsigned int VertID;
 

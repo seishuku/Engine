@@ -94,8 +94,6 @@ int LoadMTL(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
-	unsigned long NumVertex=0;
-	unsigned long NumUV=0;
 
 	if(!(fp=fopen(Filename, "r")))
 		return 0;
@@ -118,7 +116,7 @@ int LoadMTL(ModelOBJ_t *Model, const char *Filename)
 			{
 				memset(&Model->Material[Model->NumMaterial-1], 0, sizeof(MaterialOBJ_t));
 
-				if(sscanf(buff, "newmtl %s", &Model->Material[Model->NumMaterial-1].Name)!=1)
+				if(sscanf(buff, "newmtl %s", Model->Material[Model->NumMaterial-1].Name)!=1)
 					return 0;
 			}
 		}
@@ -179,7 +177,7 @@ int LoadMTL(ModelOBJ_t *Model, const char *Filename)
 		{
 			if(Model->Material)
 			{
-				if(sscanf(buff, "map_Kd %s", &Model->Material[Model->NumMaterial-1].Texture)!=1)
+				if(sscanf(buff, "map_Kd %s", Model->Material[Model->NumMaterial-1].Texture)!=1)
 					return 0;
 			}
 		}
@@ -251,7 +249,7 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 			{
 				memset(&Model->Mesh[Model->NumMesh-1], 0, sizeof(MeshOBJ_t));
 
-				if(sscanf(buff, "o %s", &Model->Mesh[Model->NumMesh-1].Name)!=1)
+				if(sscanf(buff, "o %s", Model->Mesh[Model->NumMesh-1].Name)!=1)
 					return 0;
 			}
 		}
@@ -259,13 +257,13 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 		{
 			if(Model->Mesh)
 			{
-				if(sscanf(buff, "usemtl %s", &Model->Mesh[Model->NumMesh-1].MaterialName)!=1)
+				if(sscanf(buff, "usemtl %s", Model->Mesh[Model->NumMesh-1].MaterialName)!=1)
 					return 0;
 			}
 		}
 		else if(strncmp(buff, "mtllib ", 7)==0)
 		{
-			if(sscanf(buff, "mtllib %s", &Model->MaterialFilename)!=1)
+			if(sscanf(buff, "mtllib %s", Model->MaterialFilename)!=1)
 				return 0;
 		}
 		else if(strncmp(buff, "v ", 2)==0)
@@ -310,14 +308,12 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 				Model->Mesh[Model->NumMesh-1].NumFace++;
 
 				if(!Model->Mesh[Model->NumMesh-1].Face)
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned long *)malloc(sizeof(unsigned long)*3);
+					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)malloc(sizeof(unsigned long)*3);
 				else
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned long *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(unsigned long)*3*Model->Mesh[Model->NumMesh-1].NumFace);
+					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(unsigned long)*3*Model->Mesh[Model->NumMesh-1].NumFace);
 
 				if(Model->Mesh[Model->NumMesh-1].Face)
 				{
-					unsigned long temp=0;
-
 					// So... Alias Wavefront models allow a different index buffer for vertices, normals, and UV
 					// But, I'm ignoring that and only using the vertex indices for everything and hope that
 					// whatever exported the model used the same index for all attribs.

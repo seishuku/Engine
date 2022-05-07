@@ -65,7 +65,7 @@ void BuildVBOMD5(MD5_Model_t *Model)
 
 		glGenBuffers(1, &Model->meshes[i].ElemID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Model->meshes[i].ElemID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned long)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
 
 		glBindVertexArray(0);
 	}

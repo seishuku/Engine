@@ -1888,33 +1888,82 @@ int CreateContext(GLContext_t *Context, int Color, int Depth, int Stencil, int A
 		return 0;
 	}
 
-	if(Flags&OGL_CORE33)
+	if(GLX_ARB_create_context_Flag)
 	{
-		if(GLX_ARB_create_context_Flag)
-		{
-			i=0;
-			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;
-			ContextAttribs[i++]=3;
-			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;
-			ContextAttribs[i++]=3;
-			ContextAttribs[i++]=GLX_CONTEXT_FLAGS_ARB;
-			ContextAttribs[i++]=GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
-			ContextAttribs[i++]=None;
+		i=0;
 
-			if((Context->ctx=glXCreateContextAttribsARB(dpy, fbconfig[0], NULL, True, ContextAttribs))==NULL)
-			{
-				DBGPRINTF("glXCreateContextAttribsARB failed.\n");
-				return 0;
-			}
-		}
-		else
+		if(Flags&OGL_CORE30)
 		{
-			DBGPRINTF("Error: Requested OpenGL 3.3 CORE, GLX_ARB_create_context not supported!\n");
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=3;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=0;
+		}
+		else if(Flags&OGL_CORE31)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=3;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=1;
+		}
+		else if(Flags&OGL_CORE32)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=3;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=2;
+		}
+		else if(Flags&OGL_CORE33)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=3;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=3;
+		}
+		else if(Flags&OGL_CORE40)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=0;
+		}
+		else if(Flags&OGL_CORE41)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=1;
+		}
+		else if(Flags&OGL_CORE42)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=2;
+		}
+		else if(Flags&OGL_CORE43)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=3;
+		}
+		else if(Flags&OGL_CORE44)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=4;
+		}
+		else if(Flags&OGL_CORE45)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=5;
+		}
+		else if(Flags&OGL_CORE46)
+		{
+			ContextAttribs[i++]=GLX_CONTEXT_MAJOR_VERSION_ARB;	ContextAttribs[i++]=4;
+			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=6;
+		}
+
+		ContextAttribs[i++]=GLX_CONTEXT_FLAGS_ARB;
+		ContextAttribs[i++]=GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+		ContextAttribs[i++]=GLX_CONTEXT_PROFILE_MASK_ARB;
+		ContextAttribs[i++]=GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+		ContextAttribs[i++]=0;
+
+		if((Context->ctx=glXCreateContextAttribsARB(dpy, fbconfig[0], NULL, True, ContextAttribs))==NULL)
+		{
+			DBGPRINTF("glXCreateContextAttribsARB failed.\n");
 			return 0;
 		}
 	}
 	else
 	{
+		DBGPRINTF("GLX_ARB_create_context not supported, attempting old glXCreateNewContext...");
+
 		if((Context->ctx=glXCreateNewContext(dpy, fbconfig[0], GLX_RGBA, NULL, True))==NULL)
 		{
 			DBGPRINTF("Error: glXCreateContext failed\n");

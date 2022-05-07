@@ -2,6 +2,9 @@
 #include <X11/keysym.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <stdio.h>
+#include "opengl.h"
+#include "camera.h"
 
 #define __int64 long long
 
@@ -82,8 +85,8 @@ void EventLoop(void)
 
 					if(Event.xmotion.state&Button1Mask)
 					{
-						Camera.Yaw-=(float)delta.x/800.0f;
-						Camera.Pitch+=(float)delta.y/800.0f;
+						Camera.Yaw+=(float)dx/800.0f;
+						Camera.Pitch+=(float)dy/800.0f;
 					}
 
 					if(Event.xmotion.state&Button2Mask)
@@ -112,6 +115,54 @@ void EventLoop(void)
 
 					switch(Keysym)
 					{
+						case 'w':
+							Camera.key_w=1;
+							break;
+
+						case 's':
+							Camera.key_s=1;
+							break;
+
+						case 'a':
+							Camera.key_a=1;
+							break;
+
+						case 'd':
+							Camera.key_d=1;
+							break;
+
+						case 'v':
+							Camera.key_v=1;
+							break;
+
+						case 'c':
+							Camera.key_c=1;
+							break;
+
+						case 'q':
+							Camera.key_q=1;
+							break;
+
+						case 'e':
+							Camera.key_e=1;
+							break;
+
+						case XK_Up:
+							Camera.key_up=1;
+							break;
+
+						case XK_Down:
+							Camera.key_down=1;
+							break;
+
+						case XK_Left:
+							Camera.key_left=1;
+							break;
+
+						case XK_Right:
+							Camera.key_right=1;
+							break;
+
 						case XK_Escape:
 							Done=1;
 							break;
@@ -127,6 +178,54 @@ void EventLoop(void)
 
 					switch(Keysym)
 					{
+						case 'w':
+							Camera.key_w=0;
+							break;
+
+						case 's':
+							Camera.key_s=0;
+							break;
+
+						case 'a':
+							Camera.key_a=0;
+							break;
+
+						case 'd':
+							Camera.key_d=0;
+							break;
+
+						case 'v':
+							Camera.key_v=0;
+							break;
+
+						case 'c':
+							Camera.key_c=0;
+							break;
+
+						case 'q':
+							Camera.key_q=0;
+							break;
+
+						case 'e':
+							Camera.key_e=0;
+							break;
+
+						case XK_Up:
+							Camera.key_up=0;
+							break;
+
+						case XK_Down:
+							Camera.key_down=0;
+							break;
+
+						case XK_Left:
+							Camera.key_left=0;
+							break;
+
+						case XK_Right:
+							Camera.key_right=0;
+							break;
+
 						default:
 							break;
 					}
@@ -180,7 +279,7 @@ int main(int argc, char **argv)
 	}
 
 	DBGPRINTF("Creating OpenGL context...\n");
-	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_DOUBLEBUFFER|OGL_CORE46))
+	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_DOUBLEBUFFER|OGL_CORE44))
 	{
 		DBGPRINTF("\t...failed.\n");
 		XCloseDisplay(dpy);
