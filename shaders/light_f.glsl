@@ -31,16 +31,18 @@ layout(location=3) uniform vec3 End2;
 
 layout(location=0) out vec4 Output;
 
-vec3 GetPointOnLine(vec3 pos, vec3 start, vec3 end)
+vec3 ClosestPointOnSegment(vec3 point, vec3 start, vec3 end)
 {
-	float len=length(start-pos);
-	return start+(end-start)*max(0.0, len/(length(end-pos)+len));
-}
+	// Find the slope of the line and length
+	vec3 slope=end-start;
+	float slopeLen=dot(slope, slope);
 
-float ComputeFalloff(vec3 position, vec3 lightPosition)
-{
-    float d=distance(position, lightPosition);    
-    return 1.0/(d*d);
+	// Project the point-start direction onto the line
+	// and divie by the length to normalize.
+	// Clamp to 0-1 range to limit to bounds of start and end points.
+	float dist=clamp(dot(point-start, slope)/slopeLen, 0.0, 1.0);
+
+	return start+dist*slope;
 }
 
 float SpotLight(vec3 pos, vec3 dir, float innerCutOff, float outerCutOff, float exponent)
@@ -60,9 +62,11 @@ void main()
 {
 	vec4 Base=texture(TexBase, UV);
 	vec3 Specular=texture(TexSpecular, UV).xyz;
-	vec4 Normalmap=2.0*texture(TexNormal, UV)-1.0;		// Sign/bias texture to move from 0,1 to -1,1 range.
+
+	// Use this for vertex normals
 //	vec3 n=normalize(mat3(local)*Tangent[2]);			// Vertex normals
-	vec3 n=normalize(mat3(local)*Tangent*Normalmap.xyz);// Normal map normals
+	// Use this for normal mapped normals
+	vec3 n=normalize(mat3(local)*Tangent*(2*texture(TexNormal, UV)-1).xyz);
 	vec3 e=inverse(mv)[3].xyz-Position, r;
 
 	vec3 l0=Light0_Pos.xyz-Position;
@@ -116,45 +120,51 @@ void main()
 	vec3 l4_diffuse=Light4_Kd.rgb*max(0.0, dot(l4, n));
 
 	// Specular = Ks*((R.L)^n)*(N.L)*Gloss
-	vec3 l0_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l0, r), 16.0)*dot(l0, n)*Base.a);
-	vec3 l1_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l1, r), 16.0)*dot(l1, n)*Base.a);
-	vec3 l2_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l2, r), 16.0)*dot(l2, n)*Base.a);
-	vec3 l3_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l3, r), 16.0)*dot(l3, n)*Base.a);
-	vec3 l4_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l4, r), 16.0)*dot(l4, n)*Base.a);
+	vec3 l0_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l0, r), 16.0)*dot(l0, n));
+	vec3 l1_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l1, r), 16.0)*dot(l1, n));
+	vec3 l2_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l2, r), 16.0)*dot(l2, n));
+	vec3 l3_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l3, r), 16.0)*dot(l3, n));
+	vec3 l4_specular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(l4, r), 16.0)*dot(l4, n));
 
 	// Testing spotlight
 	float spotEffect=SpotLight(l0, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
 
-	// I=(base*diffuse+specular)*shadow*attenuation+volumelight
+
+	// zero out the lighting terms accumulator
+	vec3 temp=vec3(0.0);
+	
+	// I=(base*diffuse+specular)*shadow*attenuation*lightvolumeatten+volumelight
 
 	// Light 0 is the only one that casts a shadow in this scene
-	vec4 temp=vec4((Base.xyz*l0_diffuse+l0_specular*Specular)*Shadow0*l0_atten*(1.0-l0_volume.w)*spotEffect+(l0_volume.w*Light0_Kd.xyz), 1.0);
+	temp+=(Base.xyz*l0_diffuse+(l0_specular*Specular))*Shadow0*l0_atten*spotEffect*(1.0-l0_volume.w)+(l0_volume.w*Light0_Kd.xyz);
 
 	// Lights 1-4
-	temp+=vec4((Base.xyz*l1_diffuse+l1_specular*Specular)*l1_atten*(1.0-l1_volume.w)+(l1_volume.w*Light1_Kd.xyz), 1.0);
-	temp+=vec4((Base.xyz*l2_diffuse+l2_specular*Specular)*l2_atten*(1.0-l2_volume.w)+(l2_volume.w*Light2_Kd.xyz), 1.0);
-	temp+=vec4((Base.xyz*l3_diffuse+l3_specular*Specular)*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz), 1.0);
-	temp+=vec4((Base.xyz*l4_diffuse+l4_specular*Specular)*l4_atten*(1.0-l4_volume.w)+(l4_volume.w*Light4_Kd.xyz), 1.0);
+	temp+=(Base.xyz*l1_diffuse+(l1_specular*Specular))*l1_atten*(1.0-l1_volume.w)+(l1_volume.w*Light1_Kd.xyz);
+	temp+=(Base.xyz*l2_diffuse+(l2_specular*Specular))*l2_atten*(1.0-l2_volume.w)+(l2_volume.w*Light2_Kd.xyz);
+	temp+=(Base.xyz*l3_diffuse+(l3_specular*Specular))*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz);
+	temp+=(Base.xyz*l4_diffuse+(l4_specular*Specular))*l4_atten*(1.0-l4_volume.w)+(l4_volume.w*Light4_Kd.xyz);
 
-	vec3 Line=GetPointOnLine(Position, Start1, End1);
-	vec3 LightPos=normalize(Line-Position);
-        
-	vec3 NdotL=vec3(1.0, 0.0, 0.0)*max(0.0, dot(n, LightPos));
-	vec3 RdotL=vec3(1.0, 0.1, 0.1)*max(0.0, pow(dot(r, LightPos), 16.0));
+	vec3 Line=ClosestPointOnSegment(Position, Start1, End1)-Position;
+	vec3 Light=normalize(Line);
 
-	float falloff=max(0.0, min(1.0, ComputeFalloff(Position, Line)*1000.0));
+	vec3 NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
+	vec3 RdotL=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(r, Light), 32.0)*dot(n, Light));
 
-	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
+	float radius=5.0;
+	float falloff=1.0/length(Line/(radius*radius));
 
-	Line=GetPointOnLine(Position, Start2, End2);
-	LightPos=normalize(Line-Position);
-        
-	NdotL=vec3(0.0, 0.0, 1.0)*max(0.0, dot(n, LightPos));
-	RdotL=vec3(0.1, 0.1, 1.1)*max(0.0, pow(dot(r, LightPos), 16.0));
+	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
 
-	falloff=max(0.0, min(1.0, ComputeFalloff(Position, Line)*1000.0));
+	Line=ClosestPointOnSegment(Position, Start2, End2)-Position;
+	Light=normalize(Line);
 
-	temp+=vec4(((Base.xyz*NdotL+RdotL*Specular)*falloff), 1.0);
+	NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
+	RdotL=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(r, Light), 32.0)*dot(n, Light));
 
-	Output=vec4(temp.xyz, 1.0);
+	radius=5.0;
+	falloff=1.0/length(Line/(radius*radius));
+
+	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
+
+	Output=vec4(temp, 1.0);
 }

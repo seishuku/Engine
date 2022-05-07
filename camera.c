@@ -53,45 +53,34 @@ int InsidePolygon(float Intersection[3], float Tri[3][3])
 
 void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 ClosestPoint)
 {
-	vec3 Vector1={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
-	vec3 Vector2={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
-	float d=Vec3_Distance(A, B), t;
+	vec3 PointDir={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
+	vec3 Slope={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
+	float d=Vec3_Distance(A, B);
 
-	Vec3_Normalize(Vector2);
+	if(d)
+	{
+		Slope[0]/=d;
+		Slope[1]/=d;
+		Slope[2]/=d;
+	}
 
-	t=Vec3_Dot(Vector1, Vector2);
+	float t=max(0.0f, min(1.0f, Vec3_Dot(PointDir, Slope)));
 
-	if(t<=0.0f)
-	{
-		ClosestPoint[0]=A[0];
-		ClosestPoint[1]=A[1];
-		ClosestPoint[2]=A[2];
-	}
-	else if(t>=d)
-	{
-		ClosestPoint[0]=B[0];
-		ClosestPoint[1]=B[1];
-		ClosestPoint[2]=B[2];
-	}
-	else
-	{
-		ClosestPoint[0]=A[0]+(Vector2[0]*t);
-		ClosestPoint[1]=A[1]+(Vector2[1]*t);
-		ClosestPoint[2]=A[2]+(Vector2[2]*t);
-	}
+	ClosestPoint[0]=A[0]+(Slope[0]*t);
+	ClosestPoint[1]=A[1]+(Slope[1]*t);
+	ClosestPoint[2]=A[2]+(Slope[2]*t);
 }
 
-int EdgeSphereCollision(float *Center, float Tri[3][3], float radius)
+int EdgeSphereCollision(vec3 Center, float Tri[3][3], float radius)
 {
 	int i;
 	vec3 Point;
-	float distance;
 
 	for(i=0;i<3;i++)
 	{
 		ClosestPointOnLine(Tri[i], Tri[(i+1)%3], Center, Point);
 
-		distance=Vec3_Distance(Point, Center);
+		float distance=Vec3_Distance(Point, Center);
 
 		if(distance<radius)
 			return 1;
