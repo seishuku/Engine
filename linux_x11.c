@@ -2,6 +2,9 @@
 #include <X11/keysym.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <stdio.h>
+#include "opengl.h"
+#include "camera.h"
 
 #define __int64 long long
 
@@ -82,8 +85,8 @@ void EventLoop(void)
 
 					if(Event.xmotion.state&Button1Mask)
 					{
-						Camera.Yaw-=(float)delta.x/800.0f;
-						Camera.Pitch+=(float)delta.y/800.0f;
+						Camera.Yaw-=(float)dx/800.0f;
+						Camera.Pitch+=(float)dy/800.0f;
 					}
 
 					if(Event.xmotion.state&Button2Mask)

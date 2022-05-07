@@ -705,7 +705,7 @@ void Matrix4x4MultVec3(const float in[3], const float m[16], vec3 out)
 	}
 }
 
-void Matrix3x3MultVec3(const float in[3], const float m[16], vec3 out)
+void Matrix3x3MultVec3(const vec3 in, const matrix m, vec3 out)
 {
 	if(out)
 	{
