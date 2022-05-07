@@ -345,8 +345,8 @@ void Render(void)
 	///// Beam stuff
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 0.0f, 0.0f }, radius);
-	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 0.0f, 0.0f, 1.0f }, radius);
+	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
+	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
 	glDisable(GL_BLEND);
 	/////
 
