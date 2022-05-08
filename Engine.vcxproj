@@ -369,7 +369,6 @@
     </ClCompile>
     <ClCompile Include="md5.c" />
     <ClCompile Include="md5_gl.c" />
-    <ClCompile Include="noise.c" />
     <ClCompile Include="obj.c" />
     <ClCompile Include="obj_gl.c" />
     <ClCompile Include="opengl.c">

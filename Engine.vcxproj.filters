@@ -46,9 +46,6 @@
     <ClCompile Include="win32.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="noise.c">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="obj.c">
       <Filter>Source</Filter>
     </ClCompile>
