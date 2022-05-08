@@ -64,7 +64,7 @@ void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 ClosestPoint)
 		Slope[2]/=d;
 	}
 
-	float t=max(0.0f, min(1.0f, Vec3_Dot(PointDir, Slope)));
+	float t=fmax(0.0f, fmin(1.0f, Vec3_Dot(PointDir, Slope)));
 
 	ClosestPoint[0]=A[0]+(Slope[0]*t);
 	ClosestPoint[1]=A[1]+(Slope[1]*t);

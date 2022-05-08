@@ -3,6 +3,7 @@
 #include "md5.h"
 #include "md5_gl.h"
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }

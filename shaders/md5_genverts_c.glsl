@@ -2,49 +2,57 @@
 
 layout(local_size_x=1) in;
 
+struct Vertex_t
+{
+	vec2 st;
+	int start;
+	int count;
+};
+
 layout(std430, binding=0) buffer layoutVertices
 {
-	struct
-	{
-		vec2 st;
-		int start;
-		int count;
-	} Vertices[];
+	Vertex_t Vertices[];
+};
+
+struct Weight_t
+{
+	int joint;
+	float bias;
+	float pad[2];
+	vec4 pos;
+	vec4 tangent;
+	vec4 binormal;
+	vec4 normal;
 };
 
 layout(std430, binding=1) buffer layoutWeights
 {
-    struct
-	{
-		int joint;
-		float bias;
-		float pad[2];
-		vec4 pos;
-		vec4 tangent;
-		vec4 binormal;
-		vec4 normal;
-	} Weights[];
+	Weight_t Weights[];
+};
+
+struct FinalVertex_t
+{
+	vec4 vertex;
+	vec4 uv;
+	vec4 tangent;
+	vec4 binormal;
+	vec4 normal;
 };
 
 layout(std430, binding=2) buffer layoutFinalVertices
 {
-	struct
-	{
-		vec4 vertex;
-		vec4 uv;
-		vec4 tangent;
-		vec4 binormal;
-		vec4 normal;
-	} FinalVertex[];
+	FinalVertex_t FinalVertex[];
+};
+
+struct Skeleton_t
+{
+	vec4 pos;
+	vec4 orient;
 };
 
 layout(std430, binding=3) buffer layoutSkeleton
 {
-	struct
-	{
-		vec4 pos;
-		vec4 orient;
-	} skeleton[];
+	Skeleton_t skeleton[];
 };
 
 layout(location=0) uniform int numVerts;

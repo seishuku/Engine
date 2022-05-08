@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 #include "math.h"
 #include "opengl.h"
 #include "gl_objects.h"
@@ -119,7 +120,7 @@ void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum sever
 	else
 		_type="Unknown";
 
-	DBGPRINTF("OpenGL debug:\n\tID: 0x%0.4X\n\tType: %s\n\tSeverity: %s\n\tSource: %s\n\tMessage: %s\n\n", id, _type, _severity, _source, message);
+	DBGPRINTF("OpenGL debug:\n\tID: 0x%4X\n\tType: %s\n\tSeverity: %s\n\tSource: %s\n\tMessage: %s\n\n", id, _type, _severity, _source, message);
 }
 
 GLuint VAO, VBO;

@@ -176,9 +176,12 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 					// Copy weight data
 					mesh->weights[weight_index].joint=idata[0];
 					mesh->weights[weight_index].bias=fdata[3];
+					mesh->weights[weight_index].pad[0]=0.0f;
+					mesh->weights[weight_index].pad[1]=0.0f;
 					mesh->weights[weight_index].pos[0]=fdata[0];
 					mesh->weights[weight_index].pos[1]=fdata[1];
 					mesh->weights[weight_index].pos[2]=fdata[2];
+					mesh->weights[weight_index].pos[3]=1.0f;
 				}
 			}
 
@@ -291,18 +294,21 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 					weight->tangent[0]+=temp[0];
 					weight->tangent[1]+=temp[1];
 					weight->tangent[2]+=temp[2];
+					weight->tangent[3]=0.0f;
 
 					Quat_rotatePoint(inv, &tempbinorm[3*i], temp);
 
 					weight->binormal[0]+=temp[0];
 					weight->binormal[1]+=temp[1];
 					weight->binormal[2]+=temp[2];
+					weight->binormal[3]=0.0f;
 
 					Quat_rotatePoint(inv, &tempnorm[3*i], temp);
 
 					weight->normal[0]+=temp[0];
 					weight->normal[1]+=temp[1];
 					weight->normal[2]+=temp[2];
+					weight->normal[3]=0.0f;
 				}
 			}
 

@@ -424,7 +424,7 @@ void QuatSlerp(const vec4 qa, const vec4 qb, vec4 out, const float t)
 	}
 }
 
-void QuatMatrix(const vec4 q, float *out)
+void QuatMatrix(const vec4 q, matrix out)
 {
 	if(out)
 	{
@@ -504,7 +504,7 @@ void MatrixMult(const matrix a, const matrix b, matrix out)
 	memcpy(out, res, sizeof(matrix));
 }
 
-void MatrixInverse(const float in[16], matrix out)
+void MatrixInverse(const matrix in, matrix out)
 {
 	matrix res;
 
@@ -674,7 +674,7 @@ void MatrixAlignPoints(const vec3 start, const vec3 end, const vec3 up, matrix o
 	}
 }
 
-void Matrix4x4MultVec4(const vec4 in, const float m[16], vec4 out)
+void Matrix4x4MultVec4(const vec4 in, const matrix m, vec4 out)
 {
 	if(out)
 	{
@@ -690,7 +690,7 @@ void Matrix4x4MultVec4(const vec4 in, const float m[16], vec4 out)
 	}
 }
 
-void Matrix4x4MultVec3(const float in[3], const float m[16], vec3 out)
+void Matrix4x4MultVec3(const vec3 in, const matrix m, vec3 out)
 {
 	if(out)
 	{

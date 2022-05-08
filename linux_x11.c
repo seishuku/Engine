@@ -265,7 +265,6 @@ int main(int argc, char **argv)
 {
 	XVisualInfo *visinfo=NULL;
 	XSetWindowAttributes Attrib;
-	XTextProperty WindowProp;
 	Window root;
 
 	DBGPRINTF("Opening X display...\n");
@@ -279,7 +278,7 @@ int main(int argc, char **argv)
 	}
 
 	DBGPRINTF("Creating OpenGL context...\n");
-	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_DOUBLEBUFFER|OGL_CORE44))
+	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_DOUBLEBUFFER|OGL_CORE46))
 	{
 		DBGPRINTF("\t...failed.\n");
 		XCloseDisplay(dpy);
@@ -333,8 +332,8 @@ int main(int argc, char **argv)
 
 	XMapWindow(dpy, Context.win);
 
-	DBGPRINTF("\nCPU freqency: %0.2fGHz\n", (float)Frequency/1000000000);
 	Frequency=GetFrequency();
+	DBGPRINTF("\nCPU freqency: %0.2fGHz\n", (float)Frequency/1000000000);
 
 	DBGPRINTF("\nStarting main loop.\n");
 	EventLoop();

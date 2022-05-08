@@ -5,8 +5,9 @@ layout(triangle_strip, max_vertices=18) out;
 
 uniform mat4 proj;
 uniform mat4 mv[6];
+uniform mat4 local;
 
-layout(location=0) out vec4 vPosition;
+out vec4 Position;
 
 void main()
 {
@@ -16,8 +17,8 @@ void main()
 
         for(int j=0;j<3;j++)
         {
-            vPosition=gl_in[j].gl_Position;
-            gl_Position=proj*mv[i]*vPosition;
+            Position=local*gl_in[j].gl_Position;
+            gl_Position=proj*mv[i]*Position;
 
             EmitVertex();
         }

@@ -220,7 +220,6 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
-	unsigned long NumVertex=0;
 	unsigned long NumUV=0;
 	unsigned long vi[3]={ 0, 0, 0 };
 	unsigned long ti[3]={ 0, 0, 0 };
@@ -368,7 +367,6 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 	ptr[0]='\0';
 
 	strcat(nameNoExt, ".mtl");
-	printf(nameNoExt);
 	LoadMTL(Model, nameNoExt);
 
 	return 1;

@@ -17,7 +17,6 @@ GLuint BeamShader;
 
 int InitBeam(void)
 {
-	unsigned short *tris=NULL;
 	const int segments=10, rings=9;
 	const int vertexCount=(rings+1)*(segments+1);
 	const int triangleCount=(rings*segments-segments)*2;
@@ -80,7 +79,6 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
 	float length=Vec3_Length(vec);
 	const int segments=10, rings=9;
-	const int vertexCount=(rings+1)*(segments+1);
 	const int triangleCount=(rings*segments-segments)*2;
 
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
