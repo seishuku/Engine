@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <malloc.h>
 #include <string.h>
 #include "math.h"
@@ -32,11 +33,11 @@
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
-int Width=1280, Height=720;
+int32_t Width=1280, Height=720;
 
 extern float fps, fFrameTime, fTimeStep, fTime;
 
-unsigned int Objects[NUM_OBJECTS];
+uint32_t Objects[NUM_OBJECTS];
 
 ModelOBJ_t Level;
 
@@ -47,7 +48,7 @@ Model_t Pinky;
 Camera_t Camera;
 CameraPath_t CameraPath;
 
-extern int Auto;
+extern int32_t Auto;
 
 matrix Projection, ModelView, ModelViewInv;
 
@@ -74,7 +75,7 @@ float BeamEnd1[3]={ 75.0f, 90.0f, -120.0f };
 
 const float radius=5.0f;
 
-int DynWidth=1024, DynHeight=1024;
+int32_t DynWidth=1024, DynHeight=1024;
 
 void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_data)
 {
@@ -142,7 +143,7 @@ void UpdateLineChart(const float val)
 	lines[3*0+2]=-1.0f;
 
 	// Propagate out into a temp array
-	for(int i=0;i<NUM_SAMPLES;i++)
+	for(int32_t i=0;i<NUM_SAMPLES;i++)
 	{
 		temp[3*(i)+0]=(1.0f-((float)i/NUM_SAMPLES*0.5f)+xPos)/xScale;
 		temp[3*(i)+1]=lines[3*(i)+1];
@@ -150,7 +151,7 @@ void UpdateLineChart(const float val)
 	}
 
 	// Shift the whole array over one, as to create the "continuous" effect
-	for(int i=0;i<NUM_SAMPLES-1;i++)
+	for(int32_t i=0;i<NUM_SAMPLES-1;i++)
 	{
 		lines[3*(i+1)+0]=temp[3*(i)+0];
 		lines[3*(i+1)+1]=temp[3*(i)+1];
@@ -233,7 +234,7 @@ void Render(void)
 {
 	matrix local;
 
-	for(int i=0;i<Level.NumMesh;i++)
+	for(int32_t i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
 	// Sphere -> BBox intersection testing
@@ -245,7 +246,7 @@ void Render(void)
 	//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	//Matrix4x4MultVec3(Hellknight.Anim.bboxes[Hellknight.frame].min, local, min);
 	//Matrix4x4MultVec3(Hellknight.Anim.bboxes[Hellknight.frame].max, local, max);
-	//int collide=SphereBBOXIntersection(Camera.Position, Camera.Radius, min, max);
+	//int32_t collide=SphereBBOXIntersection(Camera.Position, Camera.Radius, min, max);
 	////
 
 	UpdateAnimation(&Hellknight, fTimeStep);
@@ -370,7 +371,7 @@ void Render(void)
 	glEnable(GL_DEPTH_TEST);
 }
 
-int Init(void)
+int32_t Init(void)
 {
 	glDebugMessageCallback(error_callback, NULL);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -481,7 +482,7 @@ int Init(void)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	for(int i=0;i<6;i++)
+	for(int32_t i=0;i<6;i++)
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT32, DynWidth, DynHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE0]);

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdint.h>
 #include "math.h"
 
 // Some fast approx. trig. functions
@@ -44,9 +45,9 @@ float ftanf(const float x)
 }
 
 // Misc functions
-float fact(const int n)
+float fact(const int32_t n)
 {
-	int i;
+	int32_t i;
 	float j=1.0f;
 
 	for(i=1;i<n;i++)
@@ -55,7 +56,7 @@ float fact(const int n)
 	return j;
 }
 
-unsigned int NextPower2(unsigned int value)
+uint32_t NextPower2(uint32_t value)
 {
 	value--;
 	value|=value>>1;
@@ -68,9 +69,9 @@ unsigned int NextPower2(unsigned int value)
 	return value;
 }
 
-int ComputeLog(unsigned int value)
+int32_t ComputeLog(uint32_t value)
 {
-	int i=0;
+	int32_t i=0;
 
 	if(value==0)
 		return -1;
@@ -754,7 +755,7 @@ void MatrixLookAt(const vec3 position, const vec3 forward, const vec3 up, matrix
 }
 
 // Projection matrix functions
-void MatrixInfPerspective(const float fovy, const float aspect, const float zNear, const int flip, matrix out)
+void MatrixInfPerspective(const float fovy, const float aspect, const float zNear, const int32_t flip, matrix out)
 {
 	if(out)
 	{
@@ -783,7 +784,7 @@ void MatrixInfPerspective(const float fovy, const float aspect, const float zNea
 	}
 }
 
-void MatrixPerspective(const float fovy, const float aspect, const float zNear, const float zFar, const int flip, matrix out)
+void MatrixPerspective(const float fovy, const float aspect, const float zNear, const float zFar, const int32_t flip, matrix out)
 {
 	if(out)
 	{

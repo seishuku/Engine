@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "math.h"
 #include "obj.h"
@@ -37,13 +38,13 @@ void CalculateTangentOBJ(ModelOBJ_t *Model)
 
 		memset(Model->Normal, 0, sizeof(float)*3*Model->NumVertex);
 
-		for(int j=0;j<Model->NumMesh;j++)
+		for(int32_t j=0;j<Model->NumMesh;j++)
 		{
-			for(unsigned long i=0;i<Model->Mesh[j].NumFace;i++)
+			for(uint32_t i=0;i<Model->Mesh[j].NumFace;i++)
 			{
-				unsigned long i1=Model->Mesh[j].Face[3*i+0];
-				unsigned long i2=Model->Mesh[j].Face[3*i+1];
-				unsigned long i3=Model->Mesh[j].Face[3*i+2];
+				uint32_t i1=Model->Mesh[j].Face[3*i+0];
+				uint32_t i2=Model->Mesh[j].Face[3*i+1];
+				uint32_t i3=Model->Mesh[j].Face[3*i+2];
 
 				v0[0]=Model->Vertex[3*i2+0]-Model->Vertex[3*i1+0];
 				v0[1]=Model->Vertex[3*i2+1]-Model->Vertex[3*i1+1];
@@ -90,7 +91,7 @@ void CalculateTangentOBJ(ModelOBJ_t *Model)
 	}
 }
 
-int LoadMTL(ModelOBJ_t *Model, const char *Filename)
+int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
@@ -186,9 +187,9 @@ int LoadMTL(ModelOBJ_t *Model, const char *Filename)
 	// Match up material names with their meshes with an index number
 	if(Model->Material)
 	{
-		for(int i=0;i<Model->NumMesh;i++)
+		for(int32_t i=0;i<Model->NumMesh;i++)
 		{
-			for(int j=0;j<Model->NumMaterial;j++)
+			for(int32_t j=0;j<Model->NumMaterial;j++)
 			{
 				if(strcmp(Model->Mesh[i].MaterialName, Model->Material[j].Name)==0)
 					Model->Mesh[i].MaterialNumber=j;
@@ -216,14 +217,14 @@ char *strrstr(const char *haystack, const char *needle)
 	}
 }
 
-int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
+int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
-	unsigned long NumUV=0;
-	unsigned long vi[3]={ 0, 0, 0 };
-	unsigned long ti[3]={ 0, 0, 0 };
-	unsigned long ni[3]={ 0, 0, 0 };
+	uint32_t NumUV=0;
+	uint32_t vi[3]={ 0, 0, 0 };
+	uint32_t ti[3]={ 0, 0, 0 };
+	uint32_t ni[3]={ 0, 0, 0 };
 
 	if(!(fp=fopen(Filename, "r")))
 		return 0;
@@ -307,9 +308,9 @@ int LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 				Model->Mesh[Model->NumMesh-1].NumFace++;
 
 				if(!Model->Mesh[Model->NumMesh-1].Face)
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)malloc(sizeof(unsigned long)*3);
+					Model->Mesh[Model->NumMesh-1].Face=(uint32_t *)malloc(sizeof(uint32_t)*3);
 				else
-					Model->Mesh[Model->NumMesh-1].Face=(unsigned int *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(unsigned long)*3*Model->Mesh[Model->NumMesh-1].NumFace);
+					Model->Mesh[Model->NumMesh-1].Face=(uint32_t *)realloc(Model->Mesh[Model->NumMesh-1].Face, sizeof(uint32_t)*3*Model->Mesh[Model->NumMesh-1].NumFace);
 
 				if(Model->Mesh[Model->NumMesh-1].Face)
 				{
@@ -384,7 +385,7 @@ void FreeOBJ(ModelOBJ_t *Model)
 	if(Model->NumMesh)
 	{
 		/* Free mesh data */
-		for(int i=0;i<Model->NumMesh;i++)
+		for(int32_t i=0;i<Model->NumMesh;i++)
 			FREE(Model->Mesh[i].Face);
 
 		FREE(Model->Mesh);

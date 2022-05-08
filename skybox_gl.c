@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "opengl.h"
 
 #ifndef BUFFER_OFFSET
@@ -42,7 +43,7 @@ void BuildSkyboxVBO(void)
 		+scale, +scale, -scale, w, +1.0f, +1.0f, -1.0f, //22
 		-scale, +scale, -scale, w, -1.0f, +1.0f, -1.0f  //23
 	};
-	unsigned short SkyboxTris[]=
+	uint16_t SkyboxTris[]=
 	{
 		 0,  1,  2,  3,  0, 2,	// Right
 		 4,  5,  6,  7,  4, 6,	// Left
@@ -69,7 +70,7 @@ void BuildSkyboxVBO(void)
 
 	glGenBuffers(1, &_SkyboxElemID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _SkyboxElemID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*36, SkyboxTris, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*36, SkyboxTris, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 }

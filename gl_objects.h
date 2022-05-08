@@ -59,6 +59,6 @@ typedef enum
 	NUM_OBJECTS
 } ObjectNames;
 
-extern unsigned int Objects[NUM_OBJECTS];
+extern uint32_t Objects[NUM_OBJECTS];
 
 #endif

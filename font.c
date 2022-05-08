@@ -5,11 +5,12 @@
 	a quad, the other contains instancing data for character
 	position, texture altas lookup and color.
 */
-#include "opengl.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
+#include "opengl.h"
 #include "math.h"
 #include "font.h"
 
@@ -18,18 +19,18 @@
 #include "fontdata.h"
 
 // Various shader/texture/VBO object IDs
-unsigned int Font_Texture=0;
-unsigned int Font_Shader=0;
-unsigned int Font_Shader_Texture=0;
-unsigned int Font_Shader_Viewport=0;
-unsigned int Font_VAO=0, Font_VBO=0;
-unsigned int Font_Instanced=0;
+GLuint Font_Texture=0;
+GLuint Font_Shader=0;
+GLuint Font_Shader_Texture=0;
+GLuint Font_Shader_Viewport=0;
+GLuint Font_VAO=0, Font_VBO=0;
+GLuint Font_Instanced=0;
 
 // Initialization flag
-unsigned char Font_Init=1;
+uint8_t Font_Init=1;
 
 // Window width/height from main app.
-extern int Width, Height;
+extern int32_t Width, Height;
 
 // Fragment shader source
 // This is real simple, just sample texture into alpha channel with instance color
@@ -73,7 +74,7 @@ void Font_Print(float x, float y, char *string, ...)
 	// variable arguments list
 	va_list	ap;
 	// some misc variables
-	int sx=(int)x, numchar;
+	int32_t sx=(int32_t)x, numchar;
 	// current text color
 	float r=1.0f, g=1.0f, b=1.0f;
 
@@ -87,7 +88,7 @@ void Font_Print(float x, float y, char *string, ...)
 	va_end(ap);
 
 	// Find how many characters were need to deal with
-	numchar=(int)strlen(text);
+	numchar=(int32_t)strlen(text);
 
 	// Generate texture, shaders, etc once
 	if(Font_Init)

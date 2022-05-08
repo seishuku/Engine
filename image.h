@@ -27,15 +27,15 @@
 
 typedef struct
 {
-	int Width, Height;
-	unsigned long Depth;
-	unsigned char *Data;
+	int32_t Width, Height;
+	uint32_t Depth;
+	uint8_t *Data;
 } Image_t;
 
-int DDS_Load(char *Filename, Image_t *Image);
-int TGA_Load(char *Filename, Image_t *Image);
-int TGA_Write(char *filename, Image_t *Image, int rle);
+int32_t DDS_Load(char *Filename, Image_t *Image);
+int32_t TGA_Load(char *Filename, Image_t *Image);
+int32_t TGA_Write(char *filename, Image_t *Image, int32_t rle);
 
-unsigned int Image_Upload(char *Filename, unsigned long Flags);
+uint32_t Image_Upload(char *Filename, uint32_t Flags);
 
 #endif

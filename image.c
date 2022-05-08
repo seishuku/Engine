@@ -1,7 +1,8 @@
-#include "opengl.h"
 #include <malloc.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include "opengl.h"
 #include "math.h"
 #include "image.h"
 
@@ -9,19 +10,11 @@
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
-#endif
-
-#ifndef max
-#define max(a, b) ((a)>(b)?(a):(b))
-#endif
-
 void _MakeNormalMap(Image_t *Image)
 {
-	int x, y, xx, yy;
-	int Channels=Image->Depth>>3;
-	unsigned short *Buffer=NULL;
+	int32_t x, y, xx, yy;
+	int32_t Channels=Image->Depth>>3;
+	uint16_t *Buffer=NULL;
 	const float OneOver255=1.0f/255.0f;
 	float KernelX[9]={ 1.0f, 0.0f, -1.0f, 2.0f, 0.0f, -2.0f, 1.0f, 0.0f, -1.0f };
 	float KernelY[9]={ -1.0f, -2.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f };
@@ -29,7 +22,7 @@ void _MakeNormalMap(Image_t *Image)
 	if(!((Image->Depth==32)||(Image->Depth==24)||(Image->Depth==8)))
 		return;
 
-	Buffer=(unsigned short *)malloc(sizeof(unsigned short)*Image->Width*Image->Height*4);
+	Buffer=(uint16_t *)malloc(sizeof(uint16_t)*Image->Width*Image->Height*4);
 
 	if(Buffer==NULL)
 		return;
@@ -42,11 +35,11 @@ void _MakeNormalMap(Image_t *Image)
 
 			for(yy=0;yy<3;yy++)
 			{
-				int oy=min(Image->Height-1, y+yy);
+				int32_t oy=min(Image->Height-1, y+yy);
 
 				for(xx=0;xx<3;xx++)
 				{
-					int ox=min(Image->Width-1, x+xx);
+					int32_t ox=min(Image->Width-1, x+xx);
 
 					n[0]+=KernelX[yy*3+xx]*(float)(Image->Data[Channels*(oy*Image->Width+ox)]*OneOver255);
 					n[1]+=KernelY[yy*3+xx]*(float)(Image->Data[Channels*(oy*Image->Width+ox)]*OneOver255);
@@ -58,12 +51,12 @@ void _MakeNormalMap(Image_t *Image)
 			n[1]*=mag;
 			n[2]*=mag;
 
-			Buffer[4*(y*Image->Width+x)+0]=(unsigned short)(65535.0f*(0.5f*n[0]+0.5f));
-			Buffer[4*(y*Image->Width+x)+1]=(unsigned short)(65535.0f*(0.5f*n[1]+0.5f));
-			Buffer[4*(y*Image->Width+x)+2]=(unsigned short)(65535.0f*(0.5f*n[2]+0.5f));
+			Buffer[4*(y*Image->Width+x)+0]=(uint16_t)(65535.0f*(0.5f*n[0]+0.5f));
+			Buffer[4*(y*Image->Width+x)+1]=(uint16_t)(65535.0f*(0.5f*n[1]+0.5f));
+			Buffer[4*(y*Image->Width+x)+2]=(uint16_t)(65535.0f*(0.5f*n[2]+0.5f));
 
 			if(Channels==4)
-				Buffer[4*(y*Image->Width+x)+3]=(unsigned short)(Image->Data[4*(y*Image->Width+x)+3]<<8);
+				Buffer[4*(y*Image->Width+x)+3]=(uint16_t)(Image->Data[4*(y*Image->Width+x)+3]<<8);
 			else
 				Buffer[4*(y*Image->Width+x)+3]=65535;
 		}
@@ -72,19 +65,19 @@ void _MakeNormalMap(Image_t *Image)
 	Image->Depth=64;
 
 	FREE(Image->Data);
-	Image->Data=(unsigned char *)Buffer;
+	Image->Data=(uint8_t *)Buffer;
 }
 
 void _Normalize(Image_t *Image)
 {
-	int i, Channels=Image->Depth>>3;
-	unsigned short *Buffer=NULL;
+	int32_t i, Channels=Image->Depth>>3;
+	uint16_t *Buffer=NULL;
 	const float OneOver255=1.0f/255.0f;
 
 	if(!((Image->Depth==32)||(Image->Depth==24)))
 		return;
 
-	Buffer=(unsigned short *)malloc(sizeof(unsigned short)*Image->Width*Image->Height*4);
+	Buffer=(uint16_t *)malloc(sizeof(uint16_t)*Image->Width*Image->Height*4);
 
 	if(Buffer==NULL)
 		return;
@@ -102,12 +95,12 @@ void _Normalize(Image_t *Image)
 		n[1]*=mag;
 		n[2]*=mag;
 
-		Buffer[4*i+0]=(unsigned short)(65535.0f*(0.5f*n[0]+0.5f));
-		Buffer[4*i+1]=(unsigned short)(65535.0f*(0.5f*n[1]+0.5f));
-		Buffer[4*i+2]=(unsigned short)(65535.0f*(0.5f*n[2]+0.5f));
+		Buffer[4*i+0]=(uint16_t)(65535.0f*(0.5f*n[0]+0.5f));
+		Buffer[4*i+1]=(uint16_t)(65535.0f*(0.5f*n[1]+0.5f));
+		Buffer[4*i+2]=(uint16_t)(65535.0f*(0.5f*n[2]+0.5f));
 
 		if(Channels==4)
-			Buffer[4*i+3]=(unsigned short)(Image->Data[4*i+3]<<8);
+			Buffer[4*i+3]=(uint16_t)(Image->Data[4*i+3]<<8);
 		else
 			Buffer[4*i+3]=65535;
 	}
@@ -115,12 +108,12 @@ void _Normalize(Image_t *Image)
 	Image->Depth=64;
 
 	FREE(Image->Data);
-	Image->Data=(unsigned char *)Buffer;
+	Image->Data=(uint8_t *)Buffer;
 }
 
 void _RGBE2Float(Image_t *Image)
 {
-	int i;
+	int32_t i;
 	float *Buffer=NULL;
 
 	Buffer=(float *)malloc(sizeof(float)*Image->Width*Image->Height*3);
@@ -130,13 +123,13 @@ void _RGBE2Float(Image_t *Image)
 
 	for(i=0;i<Image->Width*Image->Height;i++)
 	{
-		unsigned char *rgbe=&Image->Data[4*i];
+		uint8_t *rgbe=&Image->Data[4*i];
 		float *rgb=&Buffer[3*i];
 
 		if(rgbe[3])
 		{
 			float f=1.0f;
-			int i, e=rgbe[3]-(128+8);
+			int32_t i, e=rgbe[3]-(128+8);
 
 			if(e>0)
 			{
@@ -160,7 +153,7 @@ void _RGBE2Float(Image_t *Image)
 	Image->Depth=96;
 
 	FREE(Image->Data);
-	Image->Data=(unsigned char *)Buffer;
+	Image->Data=(uint8_t *)Buffer;
 }
 
 void _Resample(Image_t *Src, Image_t *Dst)
@@ -168,7 +161,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 	float fx, fy, hx, hy, lx, ly, sx, sy;
 	float xPercent, yPercent, Percent;
 	float Total[4], Sum;
-	int x, y, iy, ix, Index;
+	int32_t x, y, iy, ix, Index;
 
 	if(Dst->Data==NULL)
 		return;
@@ -209,7 +202,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 			Total[0]=Total[1]=Total[2]=Total[3]=Sum=0.0f;
 
 			fy=ly;
-			iy=(int)fy;
+			iy=(int32_t)fy;
 
 			while(fy<hy)
 			{
@@ -219,7 +212,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 					yPercent=(iy+1)-fy;
 
 				fx=lx;
-				ix=(int)fx;
+				ix=(int32_t)fx;
 
 				while(fx<hx)
 				{
@@ -249,16 +242,16 @@ void _Resample(Image_t *Src, Image_t *Dst)
 							break;
 
 						case 64:
-							Total[0]+=((unsigned short *)Src->Data)[4*Index+0]*Percent;
-							Total[1]+=((unsigned short *)Src->Data)[4*Index+1]*Percent;
-							Total[2]+=((unsigned short *)Src->Data)[4*Index+2]*Percent;
-							Total[3]+=((unsigned short *)Src->Data)[4*Index+3]*Percent;
+							Total[0]+=((uint16_t *)Src->Data)[4*Index+0]*Percent;
+							Total[1]+=((uint16_t *)Src->Data)[4*Index+1]*Percent;
+							Total[2]+=((uint16_t *)Src->Data)[4*Index+2]*Percent;
+							Total[3]+=((uint16_t *)Src->Data)[4*Index+3]*Percent;
 							break;
 
 						case 48:
-							Total[0]+=((unsigned short *)Src->Data)[3*Index+0]*Percent;
-							Total[1]+=((unsigned short *)Src->Data)[3*Index+1]*Percent;
-							Total[2]+=((unsigned short *)Src->Data)[3*Index+2]*Percent;
+							Total[0]+=((uint16_t *)Src->Data)[3*Index+0]*Percent;
+							Total[1]+=((uint16_t *)Src->Data)[3*Index+1]*Percent;
+							Total[2]+=((uint16_t *)Src->Data)[3*Index+2]*Percent;
 							break;
 
 						case 32:
@@ -275,9 +268,9 @@ void _Resample(Image_t *Src, Image_t *Dst)
 							break;
 
 						case 16:
-							Total[0]+=((((unsigned short *)Src->Data)[Index]>>0x0)&0x1F)*Percent;
-							Total[1]+=((((unsigned short *)Src->Data)[Index]>>0x5)&0x1F)*Percent;
-							Total[2]+=((((unsigned short *)Src->Data)[Index]>>0xA)&0x1F)*Percent;
+							Total[0]+=((((uint16_t *)Src->Data)[Index]>>0x0)&0x1F)*Percent;
+							Total[1]+=((((uint16_t *)Src->Data)[Index]>>0x5)&0x1F)*Percent;
+							Total[2]+=((((uint16_t *)Src->Data)[Index]>>0xA)&0x1F)*Percent;
 							break;
 
 						case 8:
@@ -311,47 +304,47 @@ void _Resample(Image_t *Src, Image_t *Dst)
 					break;
 
 				case 64:
-					((unsigned short *)Dst->Data)[4*Index+0]=(unsigned short)(Total[0]*Sum);
-					((unsigned short *)Dst->Data)[4*Index+1]=(unsigned short)(Total[1]*Sum);
-					((unsigned short *)Dst->Data)[4*Index+2]=(unsigned short)(Total[2]*Sum);
-					((unsigned short *)Dst->Data)[4*Index+3]=(unsigned short)(Total[3]*Sum);
+					((uint16_t *)Dst->Data)[4*Index+0]=(uint16_t)(Total[0]*Sum);
+					((uint16_t *)Dst->Data)[4*Index+1]=(uint16_t)(Total[1]*Sum);
+					((uint16_t *)Dst->Data)[4*Index+2]=(uint16_t)(Total[2]*Sum);
+					((uint16_t *)Dst->Data)[4*Index+3]=(uint16_t)(Total[3]*Sum);
 					break;
 
 				case 48:
-					((unsigned short *)Dst->Data)[3*Index+0]=(unsigned short)(Total[0]*Sum);
-					((unsigned short *)Dst->Data)[3*Index+1]=(unsigned short)(Total[1]*Sum);
-					((unsigned short *)Dst->Data)[3*Index+2]=(unsigned short)(Total[2]*Sum);
+					((uint16_t *)Dst->Data)[3*Index+0]=(uint16_t)(Total[0]*Sum);
+					((uint16_t *)Dst->Data)[3*Index+1]=(uint16_t)(Total[1]*Sum);
+					((uint16_t *)Dst->Data)[3*Index+2]=(uint16_t)(Total[2]*Sum);
 					break;
 
 				case 32:
-					((unsigned char *)Dst->Data)[4*Index+0]=(unsigned char)(Total[0]*Sum);
-					((unsigned char *)Dst->Data)[4*Index+1]=(unsigned char)(Total[1]*Sum);
-					((unsigned char *)Dst->Data)[4*Index+2]=(unsigned char)(Total[2]*Sum);
-					((unsigned char *)Dst->Data)[4*Index+3]=(unsigned char)(Total[3]*Sum);
+					((uint8_t *)Dst->Data)[4*Index+0]=(uint8_t)(Total[0]*Sum);
+					((uint8_t *)Dst->Data)[4*Index+1]=(uint8_t)(Total[1]*Sum);
+					((uint8_t *)Dst->Data)[4*Index+2]=(uint8_t)(Total[2]*Sum);
+					((uint8_t *)Dst->Data)[4*Index+3]=(uint8_t)(Total[3]*Sum);
 					break;
 
 				case 24:
-					((unsigned char *)Dst->Data)[3*Index+0]=(unsigned char)(Total[0]*Sum);
-					((unsigned char *)Dst->Data)[3*Index+1]=(unsigned char)(Total[1]*Sum);
-					((unsigned char *)Dst->Data)[3*Index+2]=(unsigned char)(Total[2]*Sum);
+					((uint8_t *)Dst->Data)[3*Index+0]=(uint8_t)(Total[0]*Sum);
+					((uint8_t *)Dst->Data)[3*Index+1]=(uint8_t)(Total[1]*Sum);
+					((uint8_t *)Dst->Data)[3*Index+2]=(uint8_t)(Total[2]*Sum);
 					break;
 
 				case 16:
-					((unsigned short *)Dst->Data)[Index]=((unsigned short)((Total[0]*Sum))&0x1F)<<0x0|((unsigned short)(Total[1]*Sum)&0x1F)<<0x5|((unsigned short)(Total[2]*Sum)&0x1F)<<0xA;
+					((uint16_t *)Dst->Data)[Index]=((uint16_t)((Total[0]*Sum))&0x1F)<<0x0|((uint16_t)(Total[1]*Sum)&0x1F)<<0x5|((uint16_t)(Total[2]*Sum)&0x1F)<<0xA;
 					break;
 
 				case 8:
-					((unsigned char *)Dst->Data)[Index]=(unsigned char)(Total[0]*Sum);
+					((uint8_t *)Dst->Data)[Index]=(uint8_t)(Total[0]*Sum);
 					break;
 			}
 		}
 	}
 }
 
-void _BuildMipmaps(Image_t *Image, unsigned int Target)
+void _BuildMipmaps(Image_t *Image, uint32_t Target)
 {
-	int i=0, levels;
-	unsigned int MaxSize;
+	int32_t i=0, levels;
+	uint32_t MaxSize;
 	Image_t Dst;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxSize);
@@ -367,7 +360,7 @@ void _BuildMipmaps(Image_t *Image, unsigned int Target)
 
 	while(i<=levels)
 	{
-		Dst.Data=(unsigned char *)malloc(Dst.Width*Dst.Height*(Dst.Depth>>3));
+		Dst.Data=(uint8_t *)malloc(Dst.Width*Dst.Height*(Dst.Depth>>3));
 
 		_Resample(Image, &Dst);
 
@@ -414,10 +407,10 @@ void _BuildMipmaps(Image_t *Image, unsigned int Target)
 	}
 }
 
-void _GetPixelBilinear(Image_t *Image, float x, float y, unsigned char *Out)
+void _GetPixelBilinear(Image_t *Image, float x, float y, uint8_t *Out)
 {
-	int ix=(int)x, iy=(int)y;
-	int ox=ix+1, oy=iy+1;
+	int32_t ix=(int32_t)x, iy=(int32_t)y;
+	int32_t ox=ix+1, oy=iy+1;
 	float fx=x-ix, fy=y-iy;
 	float w00, w01, w10, w11;
 
@@ -454,46 +447,46 @@ void _GetPixelBilinear(Image_t *Image, float x, float y, unsigned char *Out)
 			break;
 
 		case 64:
-			((unsigned short *)Out)[0]=(unsigned short)(((unsigned short *)Image->Data)[4*(iy*Image->Width+ix)+0]*w00+((unsigned short *)Image->Data)[4*(iy*Image->Width+ox)+0]*w10+((unsigned short *)Image->Data)[4*(oy*Image->Width+ix)+0]*w01+((unsigned short *)Image->Data)[4*(oy*Image->Width+ox)+0]*w11);
-			((unsigned short *)Out)[1]=(unsigned short)(((unsigned short *)Image->Data)[4*(iy*Image->Width+ix)+1]*w00+((unsigned short *)Image->Data)[4*(iy*Image->Width+ox)+1]*w10+((unsigned short *)Image->Data)[4*(oy*Image->Width+ix)+1]*w01+((unsigned short *)Image->Data)[4*(oy*Image->Width+ox)+1]*w11);
-			((unsigned short *)Out)[2]=(unsigned short)(((unsigned short *)Image->Data)[4*(iy*Image->Width+ix)+2]*w00+((unsigned short *)Image->Data)[4*(iy*Image->Width+ox)+2]*w10+((unsigned short *)Image->Data)[4*(oy*Image->Width+ix)+2]*w01+((unsigned short *)Image->Data)[4*(oy*Image->Width+ox)+2]*w11);
-			((unsigned short *)Out)[3]=(unsigned short)(((unsigned short *)Image->Data)[4*(iy*Image->Width+ix)+3]*w00+((unsigned short *)Image->Data)[4*(iy*Image->Width+ox)+3]*w10+((unsigned short *)Image->Data)[4*(oy*Image->Width+ix)+3]*w01+((unsigned short *)Image->Data)[4*(oy*Image->Width+ox)+3]*w11);
+			((uint16_t *)Out)[0]=(uint16_t)(((uint16_t *)Image->Data)[4*(iy*Image->Width+ix)+0]*w00+((uint16_t *)Image->Data)[4*(iy*Image->Width+ox)+0]*w10+((uint16_t *)Image->Data)[4*(oy*Image->Width+ix)+0]*w01+((uint16_t *)Image->Data)[4*(oy*Image->Width+ox)+0]*w11);
+			((uint16_t *)Out)[1]=(uint16_t)(((uint16_t *)Image->Data)[4*(iy*Image->Width+ix)+1]*w00+((uint16_t *)Image->Data)[4*(iy*Image->Width+ox)+1]*w10+((uint16_t *)Image->Data)[4*(oy*Image->Width+ix)+1]*w01+((uint16_t *)Image->Data)[4*(oy*Image->Width+ox)+1]*w11);
+			((uint16_t *)Out)[2]=(uint16_t)(((uint16_t *)Image->Data)[4*(iy*Image->Width+ix)+2]*w00+((uint16_t *)Image->Data)[4*(iy*Image->Width+ox)+2]*w10+((uint16_t *)Image->Data)[4*(oy*Image->Width+ix)+2]*w01+((uint16_t *)Image->Data)[4*(oy*Image->Width+ox)+2]*w11);
+			((uint16_t *)Out)[3]=(uint16_t)(((uint16_t *)Image->Data)[4*(iy*Image->Width+ix)+3]*w00+((uint16_t *)Image->Data)[4*(iy*Image->Width+ox)+3]*w10+((uint16_t *)Image->Data)[4*(oy*Image->Width+ix)+3]*w01+((uint16_t *)Image->Data)[4*(oy*Image->Width+ox)+3]*w11);
 			break;
 
 		case 48:
-			((unsigned short *)Out)[0]=(unsigned short)(((unsigned short *)Image->Data)[3*(iy*Image->Width+ix)+0]*w00+((unsigned short *)Image->Data)[3*(iy*Image->Width+ox)+0]*w10+((unsigned short *)Image->Data)[3*(oy*Image->Width+ix)+0]*w01+((unsigned short *)Image->Data)[3*(oy*Image->Width+ox)+0]*w11);
-			((unsigned short *)Out)[1]=(unsigned short)(((unsigned short *)Image->Data)[3*(iy*Image->Width+ix)+1]*w00+((unsigned short *)Image->Data)[3*(iy*Image->Width+ox)+1]*w10+((unsigned short *)Image->Data)[3*(oy*Image->Width+ix)+1]*w01+((unsigned short *)Image->Data)[3*(oy*Image->Width+ox)+1]*w11);
-			((unsigned short *)Out)[2]=(unsigned short)(((unsigned short *)Image->Data)[3*(iy*Image->Width+ix)+2]*w00+((unsigned short *)Image->Data)[3*(iy*Image->Width+ox)+2]*w10+((unsigned short *)Image->Data)[3*(oy*Image->Width+ix)+2]*w01+((unsigned short *)Image->Data)[3*(oy*Image->Width+ox)+2]*w11);
+			((uint16_t *)Out)[0]=(uint16_t)(((uint16_t *)Image->Data)[3*(iy*Image->Width+ix)+0]*w00+((uint16_t *)Image->Data)[3*(iy*Image->Width+ox)+0]*w10+((uint16_t *)Image->Data)[3*(oy*Image->Width+ix)+0]*w01+((uint16_t *)Image->Data)[3*(oy*Image->Width+ox)+0]*w11);
+			((uint16_t *)Out)[1]=(uint16_t)(((uint16_t *)Image->Data)[3*(iy*Image->Width+ix)+1]*w00+((uint16_t *)Image->Data)[3*(iy*Image->Width+ox)+1]*w10+((uint16_t *)Image->Data)[3*(oy*Image->Width+ix)+1]*w01+((uint16_t *)Image->Data)[3*(oy*Image->Width+ox)+1]*w11);
+			((uint16_t *)Out)[2]=(uint16_t)(((uint16_t *)Image->Data)[3*(iy*Image->Width+ix)+2]*w00+((uint16_t *)Image->Data)[3*(iy*Image->Width+ox)+2]*w10+((uint16_t *)Image->Data)[3*(oy*Image->Width+ix)+2]*w01+((uint16_t *)Image->Data)[3*(oy*Image->Width+ox)+2]*w11);
 			break;
 
 		case 32:
-			Out[0]=(unsigned char)(Image->Data[4*(iy*Image->Width+ix)+0]*w00+Image->Data[4*(iy*Image->Width+ox)+0]*w10+Image->Data[4*(oy*Image->Width+ix)+0]*w01+Image->Data[4*(oy*Image->Width+ox)+0]*w11);
-			Out[1]=(unsigned char)(Image->Data[4*(iy*Image->Width+ix)+1]*w00+Image->Data[4*(iy*Image->Width+ox)+1]*w10+Image->Data[4*(oy*Image->Width+ix)+1]*w01+Image->Data[4*(oy*Image->Width+ox)+1]*w11);
-			Out[2]=(unsigned char)(Image->Data[4*(iy*Image->Width+ix)+2]*w00+Image->Data[4*(iy*Image->Width+ox)+2]*w10+Image->Data[4*(oy*Image->Width+ix)+2]*w01+Image->Data[4*(oy*Image->Width+ox)+2]*w11);
-			Out[3]=(unsigned char)(Image->Data[4*(iy*Image->Width+ix)+3]*w00+Image->Data[4*(iy*Image->Width+ox)+3]*w10+Image->Data[4*(oy*Image->Width+ix)+3]*w01+Image->Data[4*(oy*Image->Width+ox)+3]*w11);
+			Out[0]=(uint8_t)(Image->Data[4*(iy*Image->Width+ix)+0]*w00+Image->Data[4*(iy*Image->Width+ox)+0]*w10+Image->Data[4*(oy*Image->Width+ix)+0]*w01+Image->Data[4*(oy*Image->Width+ox)+0]*w11);
+			Out[1]=(uint8_t)(Image->Data[4*(iy*Image->Width+ix)+1]*w00+Image->Data[4*(iy*Image->Width+ox)+1]*w10+Image->Data[4*(oy*Image->Width+ix)+1]*w01+Image->Data[4*(oy*Image->Width+ox)+1]*w11);
+			Out[2]=(uint8_t)(Image->Data[4*(iy*Image->Width+ix)+2]*w00+Image->Data[4*(iy*Image->Width+ox)+2]*w10+Image->Data[4*(oy*Image->Width+ix)+2]*w01+Image->Data[4*(oy*Image->Width+ox)+2]*w11);
+			Out[3]=(uint8_t)(Image->Data[4*(iy*Image->Width+ix)+3]*w00+Image->Data[4*(iy*Image->Width+ox)+3]*w10+Image->Data[4*(oy*Image->Width+ix)+3]*w01+Image->Data[4*(oy*Image->Width+ox)+3]*w11);
 			break;
 
 		case 24:
-			Out[0]=(unsigned char)(Image->Data[3*(iy*Image->Width+ix)+0]*w00+Image->Data[3*(iy*Image->Width+ox)+0]*w10+Image->Data[3*(oy*Image->Width+ix)+0]*w01+Image->Data[3*(oy*Image->Width+ox)+0]*w11);
-			Out[1]=(unsigned char)(Image->Data[3*(iy*Image->Width+ix)+1]*w00+Image->Data[3*(iy*Image->Width+ox)+1]*w10+Image->Data[3*(oy*Image->Width+ix)+1]*w01+Image->Data[3*(oy*Image->Width+ox)+1]*w11);
-			Out[2]=(unsigned char)(Image->Data[3*(iy*Image->Width+ix)+2]*w00+Image->Data[3*(iy*Image->Width+ox)+2]*w10+Image->Data[3*(oy*Image->Width+ix)+2]*w01+Image->Data[3*(oy*Image->Width+ox)+2]*w11);
+			Out[0]=(uint8_t)(Image->Data[3*(iy*Image->Width+ix)+0]*w00+Image->Data[3*(iy*Image->Width+ox)+0]*w10+Image->Data[3*(oy*Image->Width+ix)+0]*w01+Image->Data[3*(oy*Image->Width+ox)+0]*w11);
+			Out[1]=(uint8_t)(Image->Data[3*(iy*Image->Width+ix)+1]*w00+Image->Data[3*(iy*Image->Width+ox)+1]*w10+Image->Data[3*(oy*Image->Width+ix)+1]*w01+Image->Data[3*(oy*Image->Width+ox)+1]*w11);
+			Out[2]=(uint8_t)(Image->Data[3*(iy*Image->Width+ix)+2]*w00+Image->Data[3*(iy*Image->Width+ox)+2]*w10+Image->Data[3*(oy*Image->Width+ix)+2]*w01+Image->Data[3*(oy*Image->Width+ox)+2]*w11);
 			break;
 
 		case 16:
 		{
-			unsigned short p0=((unsigned short *)Image->Data)[iy*Image->Width+ix];
-			unsigned short p1=((unsigned short *)Image->Data)[iy*Image->Width+ox];
-			unsigned short p2=((unsigned short *)Image->Data)[oy*Image->Width+ix];
-			unsigned short p3=((unsigned short *)Image->Data)[oy*Image->Width+ox];
+			uint16_t p0=((uint16_t *)Image->Data)[iy*Image->Width+ix];
+			uint16_t p1=((uint16_t *)Image->Data)[iy*Image->Width+ox];
+			uint16_t p2=((uint16_t *)Image->Data)[oy*Image->Width+ix];
+			uint16_t p3=((uint16_t *)Image->Data)[oy*Image->Width+ox];
 
-			*((unsigned short *)Out) =(unsigned short)(((p0>>0x0)&0x1F)*w00+((p1>>0x0)&0x1F)*w10+((p2>>0x0)&0x1F)*w01+((p3>>0x0)&0x1F)*w11)<<0x0;
-			*((unsigned short *)Out)|=(unsigned short)(((p0>>0x5)&0x1F)*w00+((p1>>0x5)&0x1F)*w10+((p2>>0x5)&0x1F)*w01+((p3>>0x5)&0x1F)*w11)<<0x5;
-			*((unsigned short *)Out)|=(unsigned short)(((p0>>0xA)&0x1F)*w00+((p1>>0xA)&0x1F)*w10+((p2>>0xA)&0x1F)*w01+((p3>>0xA)&0x1F)*w11)<<0xA;
+			*((uint16_t *)Out) =(uint16_t)(((p0>>0x0)&0x1F)*w00+((p1>>0x0)&0x1F)*w10+((p2>>0x0)&0x1F)*w01+((p3>>0x0)&0x1F)*w11)<<0x0;
+			*((uint16_t *)Out)|=(uint16_t)(((p0>>0x5)&0x1F)*w00+((p1>>0x5)&0x1F)*w10+((p2>>0x5)&0x1F)*w01+((p3>>0x5)&0x1F)*w11)<<0x5;
+			*((uint16_t *)Out)|=(uint16_t)(((p0>>0xA)&0x1F)*w00+((p1>>0xA)&0x1F)*w10+((p2>>0xA)&0x1F)*w01+((p3>>0xA)&0x1F)*w11)<<0xA;
 			break;
 		}
 
 		case 8:
-			*Out=(unsigned char)(Image->Data[iy*Image->Width+ix]*w00+Image->Data[iy*Image->Width+ox]*w10+Image->Data[oy*Image->Width+ix]*w01+Image->Data[oy*Image->Width+ox]*w11);
+			*Out=(uint8_t)(Image->Data[iy*Image->Width+ix]*w00+Image->Data[iy*Image->Width+ox]*w10+Image->Data[oy*Image->Width+ix]*w01+Image->Data[oy*Image->Width+ox]*w11);
 			break;
 	}
 }
@@ -506,7 +499,7 @@ void _GetUVAngularMap(float xyz[3], float *uv)
 	uv[1]=0.5f*((phi/3.1415926f)*(float)sin(theta))+0.5f;
 }
 
-void _GetXYZFace(float uv[2], float *xyz, int face)
+void _GetXYZFace(float uv[2], float *xyz, int32_t face)
 {
 	float mag;
 
@@ -566,11 +559,11 @@ void _GetXYZFace(float uv[2], float *xyz, int face)
 	}
 }
 
-void _AngularMapFace(Image_t *In, int Face, int Mipmap)
+void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
 {
 	Image_t Out;
-	int x, y;
-	unsigned int Internal, External, Type;
+	int32_t x, y;
+	uint32_t Internal, External, Type;
 
 	switch(In->Depth)
 	{
@@ -629,7 +622,7 @@ void _AngularMapFace(Image_t *In, int Face, int Mipmap)
 	Out.Depth=In->Depth;
 	Out.Width=NextPower2(In->Width>>1);
 	Out.Height=NextPower2(In->Height>>1);
-	Out.Data=(unsigned char *)malloc(Out.Width*Out.Height*(Out.Depth>>3));
+	Out.Data=(uint8_t *)malloc(Out.Width*Out.Height*(Out.Depth>>3));
 
 	for(y=0;y<Out.Height;y++)
 	{
@@ -655,10 +648,10 @@ void _AngularMapFace(Image_t *In, int Face, int Mipmap)
 	FREE(Out.Data);
 }
 
-unsigned int Image_Upload(char *Filename, unsigned long Flags)
+uint32_t Image_Upload(char *Filename, uint32_t Flags)
 {
-	unsigned int TextureID=0;
-	unsigned int Target=GL_TEXTURE_2D;
+	uint32_t TextureID=0;
+	uint32_t Target=GL_TEXTURE_2D;
 	Image_t Image;
 	char *Extension=strrchr(Filename, '.');
 

@@ -1,7 +1,8 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <malloc.h>
 #include "opengl.h"
 #include "math.h"
-#include <stdio.h>
-#include <malloc.h>
 #include "camera.h"
 
 #ifndef FREE
@@ -9,7 +10,7 @@
 #endif
 
 // Camera collision stuff
-int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radius, float *distance)
+int32_t ClassifySphere(float Center[3], float Normal[3], float Point[3], float radius, float *distance)
 {
 	*distance=Vec3_Dot(Normal, Center)-Vec3_Dot(Normal, Point);
 
@@ -24,7 +25,7 @@ int ClassifySphere(float Center[3], float Normal[3], float Point[3], float radiu
 	return 0;
 }
 
-int InsidePolygon(float Intersection[3], float Tri[3][3])
+int32_t InsidePolygon(float Intersection[3], float Tri[3][3])
 {
 	float Angle=0.0f;
 	float A[3], B[3], C[3];
@@ -55,25 +56,21 @@ void ClosestPointOnLine(vec3 A, vec3 B, vec3 Point, vec3 ClosestPoint)
 {
 	vec3 PointDir={ Point[0]-A[0], Point[1]-A[1], Point[2]-A[2] };
 	vec3 Slope={ B[0]-A[0], B[1]-A[1], B[2]-A[2] };
-	float d=Vec3_Distance(A, B);
+	float d=Vec3_Dot(Slope, Slope), recip_d=0.0f;
 
 	if(d)
-	{
-		Slope[0]/=d;
-		Slope[1]/=d;
-		Slope[2]/=d;
-	}
+		recip_d=1.0f/d;
 
-	float t=fmax(0.0f, fmin(1.0f, Vec3_Dot(PointDir, Slope)));
+	float t=fmaxf(0.0f, fminf(1.0f, Vec3_Dot(PointDir, Slope)*recip_d));
 
-	ClosestPoint[0]=A[0]+(Slope[0]*t);
-	ClosestPoint[1]=A[1]+(Slope[1]*t);
-	ClosestPoint[2]=A[2]+(Slope[2]*t);
+	ClosestPoint[0]=A[0]+t*Slope[0];
+	ClosestPoint[1]=A[1]+t*Slope[1];
+	ClosestPoint[2]=A[2]+t*Slope[2];
 }
 
-int EdgeSphereCollision(vec3 Center, float Tri[3][3], float radius)
+int32_t EdgeSphereCollision(vec3 Center, float Tri[3][3], float radius)
 {
-	int i;
+	int32_t i;
 	vec3 Point;
 
 	for(i=0;i<3;i++)
@@ -109,12 +106,12 @@ void GetCollisionOffset(vec3 Normal, float radius, float distance, vec3 Offset)
 	}
 }
 
-int SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBMin, const vec3 BBMax)
+int32_t SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBMin, const vec3 BBMax)
 {
 	float dmin=0.0f;
 	float R2=Radius*Radius;
 
-	for(int i=0;i<3;i++)
+	for(int32_t i=0;i<3;i++)
 	{
 		if(Center[i]<BBMin[i])
 			dmin+=(Center[i]-BBMin[i])*(Center[i]-BBMin[i]);
@@ -131,12 +128,12 @@ int SphereBBOXIntersection(const vec3 Center, const float Radius, const vec3 BBM
 	return 0;
 }
 
-void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned int *Face, int NumFace)
+void CameraCheckCollision(Camera_t *Camera, float *Vertex, uint32_t *Face, int32_t NumFace)
 {
 	float distance=0.0f;
 	vec3 n;
 
-	for(int i=0;i<NumFace;i++)
+	for(int32_t i=0;i<NumFace;i++)
 	{
 		vec3 Tri[3]=
 		{
@@ -152,7 +149,7 @@ void CameraCheckCollision(Camera_t *Camera, float *Vertex, unsigned int *Face, i
 
 		Vec3_Normalize(n);
 
-		int classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
+		int32_t classification=ClassifySphere(Camera->Position, n, Tri[0], Camera->Radius, &distance);
 
 		if(classification==1)
 		{
@@ -330,7 +327,7 @@ void CameraUpdate(Camera_t *Camera, float Time, matrix out)
 }
 
 // Camera path track stuff
-float Blend(int k, int t, int *knots, float v)
+float Blend(int32_t k, int32_t t, int32_t *knots, float v)
 {
 	float b;
 
@@ -362,9 +359,9 @@ float Blend(int k, int t, int *knots, float v)
 	return b;
 }
 
-void CalculateKnots(int *knots, int n, int t)
+void CalculateKnots(int32_t *knots, int32_t n, int32_t t)
 {
-	int i;
+	int32_t i;
 
 	for(i=0;i<=n+t;i++)
 	{
@@ -383,9 +380,9 @@ void CalculateKnots(int *knots, int n, int t)
 	}
 }
 
-void CalculatePoint(int *knots, int n, int t, float v, float *control, float *output)
+void CalculatePoint(int32_t *knots, int32_t n, int32_t t, float v, float *control, float *output)
 {
-	int k;
+	int32_t k;
 	float b;
 
 	output[0]=output[1]=output[2]=0.0f;
@@ -400,10 +397,10 @@ void CalculatePoint(int *knots, int n, int t, float v, float *control, float *ou
 	}
 }
 
-int CameraLoadPath(char *filename, CameraPath_t *Path)
+int32_t CameraLoadPath(char *filename, CameraPath_t *Path)
 {
 	FILE *stream;
-	int i;
+	int32_t i;
 
 	Path->NumPoints=0;
 
@@ -452,7 +449,7 @@ int CameraLoadPath(char *filename, CameraPath_t *Path)
 	Path->Time=0.0f;
 	Path->EndTime=(float)(Path->NumPoints-2);
 
-	Path->Knots=(int *)malloc(sizeof(int)*Path->NumPoints*3);
+	Path->Knots=(int32_t *)malloc(sizeof(int32_t)*Path->NumPoints*3);
 
 	if(Path->Knots==NULL)
 	{

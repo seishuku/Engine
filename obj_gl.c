@@ -1,10 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include "opengl.h"
 #include "math.h"
 #include "obj.h"
 #include "image.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
@@ -22,7 +23,7 @@
 
 void LoadMaterialsOBJ(ModelOBJ_t *Model)
 {
-	for(int i=0;i<Model->NumMaterial;i++)
+	for(int32_t i=0;i<Model->NumMaterial;i++)
 	{
 		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
 
@@ -60,7 +61,7 @@ void LoadMaterialsOBJ(ModelOBJ_t *Model)
 
 void DrawModelOBJ(ModelOBJ_t *Model)
 {
-	for(int i=0;i<Model->NumMesh;i++)
+	for(int32_t i=0;i<Model->NumMesh;i++)
 	{
 		if(Model->Material)
 		{
@@ -97,7 +98,7 @@ void BuildVBOOBJ(ModelOBJ_t *Model)
 
 	float *fPtr=data;
 
-	for(unsigned long j=0;j<Model->NumVertex;j++)
+	for(uint32_t j=0;j<Model->NumVertex;j++)
 	{
 		// Copy vertex/texture/tangent/binormal/normal data, padded to 16 floats (64 byte alignment, is this needed?)
 		*fPtr++=Model->Vertex[3*j+0];
@@ -125,7 +126,7 @@ void BuildVBOOBJ(ModelOBJ_t *Model)
 	// Unmap the data pointer
 	glUnmapNamedBuffer(Model->VertID);
 
-	for(int i=0;i<Model->NumMesh;i++)
+	for(int32_t i=0;i<Model->NumMesh;i++)
 	{
 		// Create vertex array object
 		glCreateVertexArrays(1, &Model->Mesh[i].VAO);
@@ -153,7 +154,7 @@ void BuildVBOOBJ(ModelOBJ_t *Model)
 
 		// Create element (index) buffer, copy data directly, no processing needed.
 		glCreateBuffers(1, &Model->Mesh[i].ElemID);
-		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(unsigned int)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
+		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(uint32_t)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
 		glVertexArrayElementBuffer(Model->Mesh[i].VAO, Model->Mesh[i].ElemID);
 
 		// Assign the vertex buffer to the vertex array on binding point 0, and set buffer stride

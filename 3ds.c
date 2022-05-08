@@ -1,6 +1,7 @@
 // A very crude and naive rewrite of the old 3DS loader, which had issues with x64.
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <malloc.h>
 #include <memory.h>
@@ -10,7 +11,7 @@
 #ifdef _linux_
 #include <inttypes.h>
 #else
-typedef unsigned int uint32_t;
+typedef uint32_t uint32_t;
 #endif
 
 #ifndef FREE
@@ -19,7 +20,7 @@ typedef unsigned int uint32_t;
 
 void CalculateTangent(Mesh3DS_t *Mesh)
 {
-	int i;
+	int32_t i;
 	vec3 v0, v1, s, t, n;
 	vec2 uv0, uv1;
 	float r;
@@ -47,9 +48,9 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 
 	for(i=0;i<Mesh->NumFace;i++)
 	{
-		unsigned short i1=Mesh->Face[3*i+0];
-		unsigned short i2=Mesh->Face[3*i+1];
-		unsigned short i3=Mesh->Face[3*i+2];
+		uint16_t i1=Mesh->Face[3*i+0];
+		uint16_t i2=Mesh->Face[3*i+1];
+		uint16_t i3=Mesh->Face[3*i+2];
 
 		v0[0]=Mesh->Vertex[3*i2+0]-Mesh->Vertex[3*i1+0];
 		v0[1]=Mesh->Vertex[3*i2+1]-Mesh->Vertex[3*i1+1];
@@ -94,16 +95,16 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 	}
 }
 
-int Load3DS(Model3DS_t *Model, char *Filename)
+int32_t Load3DS(Model3DS_t *Model, char *Filename)
 {
 	FILE *Stream=NULL;
 	long Length;
-	unsigned short ChunkID;
+	uint16_t ChunkID;
 	uint32_t ChunkLength;
 	uint32_t Temp;
-	unsigned short Temp16;
+	uint16_t Temp16;
 	char *Ptr=NULL;
-	unsigned char RGB[3];
+	uint8_t RGB[3];
 	float *ColorPtr=NULL;
 
 	if((Stream=fopen(Filename, "rb"))==NULL)
@@ -115,7 +116,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 	while(ftell(Stream)<Length)
 	{
-		fread(&ChunkID, sizeof(unsigned short), 1, Stream);
+		fread(&ChunkID, sizeof(uint16_t), 1, Stream);
 		fread(&ChunkLength, sizeof(uint32_t), 1, Stream);
 
 		// Any chunk to be read *must* be in the switch block.
@@ -161,7 +162,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 			// Vertex list subchunk
 			case 0x4110:
-				fread(&Model->Mesh[Model->NumMesh-1].NumVertex, sizeof(unsigned short), 1, Stream);
+				fread(&Model->Mesh[Model->NumMesh-1].NumVertex, sizeof(uint16_t), 1, Stream);
 
 				if(!Model->Mesh[Model->NumMesh-1].NumVertex)
 					break;
@@ -178,7 +179,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 				fread(Model->Mesh[Model->NumMesh-1].Vertex, sizeof(float), 3*Model->Mesh[Model->NumMesh-1].NumVertex, Stream);
 
-				for(int i=0;i<Model->Mesh[Model->NumMesh-1].NumVertex;i++)
+				for(int32_t i=0;i<Model->Mesh[Model->NumMesh-1].NumVertex;i++)
 				{
 					float Temp=Model->Mesh[Model->NumMesh-1].Vertex[3*i+1];
 					Model->Mesh[Model->NumMesh-1].Vertex[3*i+1]=Model->Mesh[Model->NumMesh-1].Vertex[3*i+2];
@@ -188,12 +189,12 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 			// Face description (contains vertex indices) subchunk
 			case 0x4120:
-				fread(&Model->Mesh[Model->NumMesh-1].NumFace, sizeof(unsigned short), 1, Stream);
+				fread(&Model->Mesh[Model->NumMesh-1].NumFace, sizeof(uint16_t), 1, Stream);
 
 				if(!Model->Mesh[Model->NumMesh-1].NumFace)
 					break;
 
-				Model->Mesh[Model->NumMesh-1].Face=(unsigned short *)malloc(3*sizeof(unsigned short)*Model->Mesh[Model->NumMesh-1].NumFace);
+				Model->Mesh[Model->NumMesh-1].Face=(uint16_t *)malloc(3*sizeof(uint16_t)*Model->Mesh[Model->NumMesh-1].NumFace);
 
 				if(Model->Mesh[Model->NumMesh-1].Face==NULL)
 				{
@@ -203,10 +204,10 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 					return 0;
 				}
 
-				for(int i=0;i<Model->Mesh[Model->NumMesh-1].NumFace;i++)
+				for(int32_t i=0;i<Model->Mesh[Model->NumMesh-1].NumFace;i++)
 				{
-					fread(&Model->Mesh[Model->NumMesh-1].Face[3*i], sizeof(unsigned short), 3, Stream);
-					fread(&Temp, sizeof(unsigned short), 1, Stream);
+					fread(&Model->Mesh[Model->NumMesh-1].Face[3*i], sizeof(uint16_t), 3, Stream);
+					fread(&Temp, sizeof(uint16_t), 1, Stream);
 				}
 				break;
 
@@ -223,13 +224,13 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 				}
 
 				// Skip face groups, probably should read these though.
-				fread(&Temp16, sizeof(unsigned short), 1, Stream);
-				fseek(Stream, sizeof(unsigned short)*Temp16, SEEK_CUR);
+				fread(&Temp16, sizeof(uint16_t), 1, Stream);
+				fseek(Stream, sizeof(uint16_t)*Temp16, SEEK_CUR);
 				break;
 
 			// Texture coordinates subchunk
 			case 0x4140:
-				fread(&Temp16, sizeof(unsigned short), 1, Stream);
+				fread(&Temp16, sizeof(uint16_t), 1, Stream);
 
 				if(!Temp16||Temp16!=Model->Mesh[Model->NumMesh-1].NumVertex)
 					break;
@@ -338,7 +339,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 			// RGB byte color subchunk read
 			case 0x0011:
 				// Read in bytes from file stream
-				fread(RGB, sizeof(unsigned char), 3, Stream);
+				fread(RGB, sizeof(uint8_t), 3, Stream);
 
 				if(ColorPtr!=NULL)
 				{
@@ -391,9 +392,9 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 	// If there are materials, match them to their meshes with an index number
 	if(Model->Material)
 	{
-		for(int i=0;i<Model->NumMesh;i++)
+		for(int32_t i=0;i<Model->NumMesh;i++)
 		{
-			for(int j=0;j<Model->NumMaterial;j++)
+			for(int32_t j=0;j<Model->NumMaterial;j++)
 			{
 				if(strcmp(Model->Mesh[i].MaterialName, Model->Material[j].Name)==0)
 					Model->Mesh[i].MaterialNumber=j;
@@ -401,7 +402,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 		}
 	}
 
-	for(int i=0;i<Model->NumMesh;i++)
+	for(int32_t i=0;i<Model->NumMesh;i++)
 		CalculateTangent(&Model->Mesh[i]);
 
 	return 1;
@@ -409,7 +410,7 @@ int Load3DS(Model3DS_t *Model, char *Filename)
 
 void Free3DS(Model3DS_t *Model)
 {
-	int i;
+	int32_t i;
 
 	if(Model->Mesh)
 	{

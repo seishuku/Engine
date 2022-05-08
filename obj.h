@@ -10,36 +10,36 @@ typedef struct
 	vec3 Emission;
 	float Shininess;
 	char Texture[255];
-	unsigned int TexBaseID, TexNormalID, TexSpecularID;
+	uint32_t TexBaseID, TexNormalID, TexSpecularID;
 } MaterialOBJ_t;
 
 typedef struct
 {
 	char Name[255];
 	char MaterialName[255];
-	int MaterialNumber;
+	int32_t MaterialNumber;
 
-	unsigned int NumFace;
-	unsigned int *Face;
+	uint32_t NumFace;
+	uint32_t *Face;
 
-	unsigned int VAO, ElemID;
+	uint32_t VAO, ElemID;
 } MeshOBJ_t;
 
 typedef struct
 {
 	char MaterialFilename[255];
-	int NumMaterial;
+	int32_t NumMaterial;
 	MaterialOBJ_t *Material;
 
-	unsigned int NumVertex;
+	uint32_t NumVertex;
 	float *Vertex, *UV, *Normal, *Tangent, *Binormal;
-	unsigned int VertID;
+	uint32_t VertID;
 
-	int NumMesh;
+	int32_t NumMesh;
 	MeshOBJ_t *Mesh;
 } ModelOBJ_t;
 
-int LoadOBJ(ModelOBJ_t *Model, const char *Filename);
+int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename);
 void FreeOBJ(ModelOBJ_t *Model);
 
 #endif

@@ -1,8 +1,6 @@
 #ifndef __3DS_H__
 #define __3DS_H__
 
-#include "math.h"
-
 typedef struct
 {
 	char Name[32];
@@ -12,34 +10,34 @@ typedef struct
 	vec3 Emission;
 	float Shininess;
 	char Texture[32];
-	unsigned int TexBaseID, TexNormalID, TexSpecularID;
+	uint32_t TexBaseID, TexNormalID, TexSpecularID;
 } Material3DS_t;
 
 typedef struct
 {
 	char Name[32];
 	char MaterialName[32];
-	int MaterialNumber;
+	int32_t MaterialNumber;
 
-	unsigned short NumVertex;
+	uint16_t NumVertex;
 	float *Vertex, *UV, *Normal, *Tangent, *Binormal;
 
-	unsigned short NumFace;
-	unsigned short *Face;
+	uint16_t NumFace;
+	uint16_t *Face;
 
-	unsigned int VAO, VertID, ElemID;
+	uint32_t VAO, VertID, ElemID;
 } Mesh3DS_t;
 
 typedef struct
 {
-	int NumMaterial;
+	int32_t NumMaterial;
 	Material3DS_t *Material;
 
-	int NumMesh;
+	int32_t NumMesh;
 	Mesh3DS_t *Mesh;
 } Model3DS_t;
 
-int Load3DS(Model3DS_t *Model, char *Filename);
+int32_t Load3DS(Model3DS_t *Model, char *Filename);
 void Free3DS(Model3DS_t *Model);
 
 #endif

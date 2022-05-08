@@ -7,6 +7,14 @@
 #define PI 3.1415926f
 #endif
 
+#ifndef min
+#define min(a, b) ((a)<(b)?(a):(b))
+#endif
+
+#ifndef max
+#define max(a, b) ((a)>(b)?(a):(b))
+#endif
+
 typedef float vec2[2];
 typedef float vec3[3];
 typedef float vec4[4];
@@ -44,10 +52,10 @@ float fsinf(const float v);
 float fcosf(const float v);
 float ftanf(const float x);
 
-float fact(const int n);
+float fact(const int32_t n);
 
-unsigned int NextPower2(unsigned int value);
-int ComputeLog(unsigned int value);
+uint32_t NextPower2(uint32_t value);
+int32_t ComputeLog(uint32_t value);
 
 float Vec2_Dot(const vec2 a, const vec2 b);
 float Vec3_Dot(const vec3 a, const vec3 b);
@@ -92,8 +100,8 @@ void Matrix4x4MultVec4(const vec4 in, const matrix m, vec4 out);
 void Matrix4x4MultVec3(const vec3 in, const matrix m, vec3 out);
 void Matrix3x3MultVec3(const vec3 in, const matrix m, vec3 out);
 void MatrixLookAt(const vec3 position, const vec3 forward, const vec3 up, matrix out);
-void MatrixInfPerspective(float fovy, float aspect, float zNear, int flip, matrix out);
-void MatrixPerspective(float fovy, float aspect, float zNear, float zFar, int flip, matrix out);
+void MatrixInfPerspective(float fovy, float aspect, float zNear, int32_t flip, matrix out);
+void MatrixPerspective(float fovy, float aspect, float zNear, float zFar, int32_t flip, matrix out);
 void MatrixOrtho(float left, float right, float bottom, float top, float zNear, float zFar, matrix out);
 
 #endif

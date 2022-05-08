@@ -1,13 +1,11 @@
 #ifndef __MD5_H__
 #define __MD5_H__
 
-#include "math.h"
-
 // Joint
 typedef struct
 {
 	char name[64];
-	int parent;
+	int32_t parent;
 	vec3 pos;
 	vec4 orient;
 } MD5_Joint_t;
@@ -16,14 +14,14 @@ typedef struct
 typedef struct
 {
 	vec2 st;	// texture coordinates
-	int start;		// start weight
-	int count;		// weight count
+	int32_t start;		// start weight
+	int32_t count;		// weight count
 } MD5_Vertex_t;
 
 // Weight
 typedef struct
 {
-	int joint;			// joint for this weight
+	int32_t joint;			// joint for this weight
 	float bias;			// vertex weight
 	vec2 pad;
 	vec4 pos;		// vertex position (in joint space)
@@ -42,49 +40,49 @@ typedef struct
 // MD5 mesh
 typedef struct
 {
-	int num_verts;
+	int32_t num_verts;
 	MD5_Vertex_t *vertices;
 
-	int num_tris;
-	unsigned int *triangles;
+	int32_t num_tris;
+	uint32_t *triangles;
 
-	int num_weights;
+	int32_t num_weights;
 	MD5_Weight_t *weights;
 
 	char shader[256];
 
 	//float *vertexArray;
-	unsigned int VAO;
-	unsigned int WeightID, VertID;
-	unsigned int FinalVertID, ElemID;
+	uint32_t VAO;
+	uint32_t WeightID, VertID;
+	uint32_t FinalVertID, ElemID;
 } MD5_Mesh_t;
 
 // MD5 model structure
 typedef struct
 {
-	int num_joints;
+	int32_t num_joints;
 	MD5_Joint_t *baseSkel;	// binding pose skeleton
 
-	int num_meshes;
+	int32_t num_meshes;
 	MD5_Mesh_t *meshes;		// meshes in model
 } MD5_Model_t;
 
 // Animation data
 typedef struct
 {
-	int frameRate;				// frame rate for the animation
+	int32_t frameRate;				// frame rate for the animation
 
-	int num_frames;				// number of frames in animation
-	int num_joints;				// number of joints in animation (must match number of joints for model)
+	int32_t num_frames;				// number of frames in animation
+	int32_t num_joints;				// number of joints in animation (must match number of joints for model)
 	MD5_Joint_t **skelFrames;	// frames of joints for the animation
 
 	MD5_BBox_t *bboxes;			// bounding boxes for each frame
 } MD5_Anim_t;
 
-int LoadMD5(MD5_Model_t *Model, const char *filename);
+int32_t LoadMD5(MD5_Model_t *Model, const char *filename);
 void FreeMD5(MD5_Model_t *Model);
 void PrepareMesh(MD5_Mesh_t *mesh, const MD5_Joint_t *skeleton, float *vertexArray);
-int LoadAnim(MD5_Anim_t *anim, const char *filename);
+int32_t LoadAnim(MD5_Anim_t *anim, const char *filename);
 void FreeAnim(MD5_Anim_t *anim);
 void InterpolateSkeletons(const MD5_Anim_t *Anim, const MD5_Joint_t *skelA, const MD5_Joint_t *skelB, float interp, MD5_Joint_t *out);
 

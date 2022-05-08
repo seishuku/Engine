@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "math.h"
 #include "md5.h"
@@ -11,9 +12,9 @@
 typedef struct
 {
 	char name[64];
-	int parent;
-	int flags;
-	int startIndex;
+	int32_t parent;
+	int32_t flags;
+	int32_t startIndex;
 } Joint_Info_t;
 
 typedef struct
@@ -55,13 +56,13 @@ void Quat_rotatePoint(const float q[4], const float in[3], float *out)
 	out[2]=final[2];
 }
 
-int LoadMD5(MD5_Model_t *mdl, const char *filename)
+int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
 {
 	FILE *fp;
 	char buff[512];
-	int version;
-	int curr_mesh=0;
-	int i, j;
+	int32_t version;
+	int32_t curr_mesh=0;
+	int32_t i, j;
 
 	if(!(fp=fopen(filename, "rb")))
 		return 0;
@@ -110,11 +111,11 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 		else if(strncmp(buff, "mesh {", 6)==0)
 		{
 			MD5_Mesh_t *mesh=&mdl->meshes[curr_mesh];
-			int vert_index=0;
-			int tri_index=0;
-			int weight_index=0;
+			int32_t vert_index=0;
+			int32_t tri_index=0;
+			int32_t weight_index=0;
 			float fdata[4];
-			int idata[3];
+			int32_t idata[3];
 
 			while((buff[0]!='}')&&!feof(fp))
 			{
@@ -123,7 +124,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 
 				if(strstr(buff, "shader "))
 				{
-					int quote=0;
+					int32_t quote=0;
 
 					// Copy the shader name whithout the quote marks
 					for(i=0, j=0;i<sizeof(buff)&&(quote<2);i++)
@@ -148,7 +149,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 				{
 					// Allocate memory for triangles
 					if(mesh->num_tris>0)
-						mesh->triangles=(unsigned int *)malloc(sizeof(unsigned int)*mesh->num_tris*3);
+						mesh->triangles=(uint32_t *)malloc(sizeof(uint32_t)*mesh->num_tris*3);
 				}
 				else if(sscanf(buff, " numweights %d", &mesh->num_weights)==1)
 				{
@@ -223,9 +224,9 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 
 			for(i=0;i<mesh->num_tris;i++)
 			{
-				unsigned long i1=mesh->triangles[3*i+0];
-				unsigned long i2=mesh->triangles[3*i+1];
-				unsigned long i3=mesh->triangles[3*i+2];
+				uint32_t i1=mesh->triangles[3*i+0];
+				uint32_t i2=mesh->triangles[3*i+1];
+				uint32_t i3=mesh->triangles[3*i+2];
 
 				v0[0]=temppos[3*i2+0]-temppos[3*i1+0];
 				v0[1]=temppos[3*i2+1]-temppos[3*i1+1];
@@ -256,25 +257,25 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 				Cross(v0, v1, n);
 				Vec3_Normalize(n);
 
-				temptang[3*i1+0]+=s[0];		temptang[3*i1+1]+=s[1];		temptang[3*i1+2]+=s[2];
-				temptang[3*i2+0]+=s[0];		temptang[3*i2+1]+=s[1];		temptang[3*i2+2]+=s[2];
-				temptang[3*i3+0]+=s[0];		temptang[3*i3+1]+=s[1];		temptang[3*i3+2]+=s[2];
+				Vec3_Addv(&temptang[3*i1], s);
+				Vec3_Addv(&temptang[3*i2], s);
+				Vec3_Addv(&temptang[3*i3], s);
 
-				tempbinorm[3*i1+0]+=t[0];	tempbinorm[3*i1+1]+=t[1];	tempbinorm[3*i1+2]+=t[2];
-				tempbinorm[3*i2+0]+=t[0];	tempbinorm[3*i2+1]+=t[1];	tempbinorm[3*i2+2]+=t[2];
-				tempbinorm[3*i3+0]+=t[0];	tempbinorm[3*i3+1]+=t[1];	tempbinorm[3*i3+2]+=t[2];
+				Vec3_Addv(&tempbinorm[3*i1], t);
+				Vec3_Addv(&tempbinorm[3*i2], t);
+				Vec3_Addv(&tempbinorm[3*i3], t);
 
-				tempnorm[3*i1+0]+=n[0];		tempnorm[3*i1+1]+=n[1];		tempnorm[3*i1+2]+=n[2];
-				tempnorm[3*i2+0]+=n[0];		tempnorm[3*i2+1]+=n[1];		tempnorm[3*i2+2]+=n[2];
-				tempnorm[3*i3+0]+=n[0];		tempnorm[3*i3+1]+=n[1];		tempnorm[3*i3+2]+=n[2];
+				Vec3_Addv(&tempnorm[3*i1], n);
+				Vec3_Addv(&tempnorm[3*i2], n);
+				Vec3_Addv(&tempnorm[3*i3], n);
 			}
 
 			// Clear weighted tangent space vectors
 			for(i=0;i<mesh->num_weights;i++)
 			{
-				mesh->weights[i].tangent[0]=0.0f;	mesh->weights[i].tangent[1]=0.0f;	mesh->weights[i].tangent[2]=0.0f;
-				mesh->weights[i].binormal[0]=0.0f;	mesh->weights[i].binormal[1]=0.0f;	mesh->weights[i].binormal[2]=0.0f;
-				mesh->weights[i].normal[0]=0.0f;	mesh->weights[i].normal[1]=0.0f;	mesh->weights[i].normal[2]=0.0f;
+				Vec4_Sets(mesh->weights[i].tangent, 0.0f);
+				Vec4_Sets(mesh->weights[i].binormal, 0.0f);
+				Vec4_Sets(mesh->weights[i].normal, 0.0f);
 			}
 
 			// Rotate the tangent space vectors into joint space by using the inverse joint orientation
@@ -290,24 +291,15 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 					QuatInverse(inv);
 
 					Quat_rotatePoint(inv, &temptang[3*i], temp);
-
-					weight->tangent[0]+=temp[0];
-					weight->tangent[1]+=temp[1];
-					weight->tangent[2]+=temp[2];
+					Vec3_Addv(weight->tangent, temp);
 					weight->tangent[3]=0.0f;
 
 					Quat_rotatePoint(inv, &tempbinorm[3*i], temp);
-
-					weight->binormal[0]+=temp[0];
-					weight->binormal[1]+=temp[1];
-					weight->binormal[2]+=temp[2];
+					Vec3_Addv(weight->binormal, temp);
 					weight->binormal[3]=0.0f;
 
 					Quat_rotatePoint(inv, &tempnorm[3*i], temp);
-
-					weight->normal[0]+=temp[0];
-					weight->normal[1]+=temp[1];
-					weight->normal[2]+=temp[2];
+					Vec3_Addv(weight->normal, temp);
 					weight->normal[3]=0.0f;
 				}
 			}
@@ -338,7 +330,7 @@ int LoadMD5(MD5_Model_t *mdl, const char *filename)
 // Free memory allocated for the model
 void FreeMD5(MD5_Model_t *Model)
 {
-	int i;
+	int32_t i;
 
 	if(Model->baseSkel)
 		FREE(Model->baseSkel);
@@ -367,7 +359,7 @@ void FreeMD5(MD5_Model_t *Model)
 
 void PrepareMesh(MD5_Mesh_t *mesh, const MD5_Joint_t *skeleton, float *vertexArray)
 {
-	int i, j;
+	int32_t i, j;
 
 	for(i=0;i<mesh->num_verts;i++)
 	{
@@ -428,17 +420,17 @@ void PrepareMesh(MD5_Mesh_t *mesh, const MD5_Joint_t *skeleton, float *vertexArr
 }
 
 // Load an MD5 animation from file.
-int LoadAnim(MD5_Anim_t *anim, const char *filename)
+int32_t LoadAnim(MD5_Anim_t *anim, const char *filename)
 {
 	FILE *fp=NULL;
 	char buff[512];
 	Joint_Info_t *jointInfos=NULL;
 	BaseFrame_Joint_t *baseFrame=NULL;
 	float *animFrameData=NULL;
-	int version;
-	int numAnimatedComponents;
-	int frame_index;
-	int i;
+	int32_t version;
+	int32_t numAnimatedComponents;
+	int32_t frame_index;
+	int32_t i;
 
 	if(!(fp=fopen(filename, "rb")))
 		return 0;
@@ -534,7 +526,7 @@ int LoadAnim(MD5_Anim_t *anim, const char *filename)
 			{
 				BaseFrame_Joint_t *baseJoint=&baseFrame[i];
 				float animatedPos[3], animatedOrient[4];
-				int j=0;
+				int32_t j=0;
 
 				memcpy(animatedPos, baseJoint->pos, sizeof(float)*3);
 				memcpy(animatedOrient, baseJoint->orient, sizeof(float)*4);
@@ -562,7 +554,7 @@ int LoadAnim(MD5_Anim_t *anim, const char *filename)
 
 				MD5_Joint_t *thisJoint=&anim->skelFrames[frame_index][i];
 
-				int parent=jointInfos[i].parent;
+				int32_t parent=jointInfos[i].parent;
 
 				thisJoint->parent=parent;
 
@@ -612,7 +604,7 @@ int LoadAnim(MD5_Anim_t *anim, const char *filename)
 // Free memory allocated for animation.
 void FreeAnim(MD5_Anim_t *anim)
 {
-	int i;
+	int32_t i;
 
 	if(anim->skelFrames)
 	{
@@ -631,7 +623,7 @@ void FreeAnim(MD5_Anim_t *anim)
 
 void InterpolateSkeletons(const MD5_Anim_t *Anim, const MD5_Joint_t *skelA, const MD5_Joint_t *skelB, float interp, MD5_Joint_t *out)
 {
-	for(int i=0;i<Anim->num_joints;i++)
+	for(int32_t i=0;i<Anim->num_joints;i++)
 	{
 		// Copy parent index
 		out[i].parent=skelA[i].parent;

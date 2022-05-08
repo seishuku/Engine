@@ -1,9 +1,11 @@
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include "opengl.h"
+#include "math.h"
 #include "gl_objects.h"
 #include "md5.h"
 #include "md5_gl.h"
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
@@ -21,7 +23,7 @@
 
 void DrawModelMD5(MD5_Model_t *Model)
 {
-	for(int i=0;i<Model->num_meshes;i++)
+	for(int32_t i=0;i<Model->num_meshes;i++)
 	{
 		glBindVertexArray(Model->meshes[i].VAO);
 		glDrawElements(GL_TRIANGLES, Model->meshes[i].num_tris*3, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
@@ -32,7 +34,7 @@ void DrawModelMD5(MD5_Model_t *Model)
 
 void BuildVBOMD5(MD5_Model_t *Model)
 {
-	for(int i=0;i<Model->num_meshes;i++)
+	for(int32_t i=0;i<Model->num_meshes;i++)
 	{
 		glGenBuffers(1, &Model->meshes[i].WeightID);
 		glBindBuffer(GL_ARRAY_BUFFER, Model->meshes[i].WeightID);
@@ -66,7 +68,7 @@ void BuildVBOMD5(MD5_Model_t *Model)
 
 		glGenBuffers(1, &Model->meshes[i].ElemID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Model->meshes[i].ElemID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
 
 		glBindVertexArray(0);
 	}
@@ -91,7 +93,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 
 #if 0
 	// Do mesh skinning on CPU
-	for(int i=0;i<Model->Model.num_meshes;i++)
+	for(int32_t i=0;i<Model->Model.num_meshes;i++)
 	{
 		PrepareMesh(&Model->Model.meshes[i], Model->Skel, Model->Model.meshes[i].vertexArray);
 
@@ -107,7 +109,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 	{
 		float *fPtr=(float *)p;
 
-		for(int i=0;i<Model->Model.num_joints;i++)
+		for(int32_t i=0;i<Model->Model.num_joints;i++)
 		{
 			*fPtr++=Model->Skel[i].pos[0];
 			*fPtr++=Model->Skel[i].pos[1];
@@ -122,7 +124,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-	for(int i=0;i<Model->Model.num_meshes;i++)
+	for(int32_t i=0;i<Model->Model.num_meshes;i++)
 	{
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, Model->Model.meshes[i].VertID);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, Model->Model.meshes[i].WeightID);
@@ -136,7 +138,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 #endif
 }
 
-int LoadMD5Model(const char *Filename, Model_t *Model)
+int32_t LoadMD5Model(const char *Filename, Model_t *Model)
 {
 	char Mesh[256]="\0";
 	char Anim[256]="\0";
@@ -179,7 +181,7 @@ int LoadMD5Model(const char *Filename, Model_t *Model)
 
 void DestroyMD5Model(Model_t *Model)
 {
-	for(int i=0;i<Model->Model.num_meshes;i++)
+	for(int32_t i=0;i<Model->Model.num_meshes;i++)
 	{
 		glDeleteBuffers(1, &Model->Model.meshes[i].WeightID);
 		glDeleteBuffers(1, &Model->Model.meshes[i].VertID);

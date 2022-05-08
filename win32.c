@@ -3,6 +3,7 @@
 #include <intrin.h>
 #include <crtdbg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #pragma intrinsic(__rdtsc)
 
@@ -21,21 +22,21 @@ GLContext_t Context;
 
 char szAppName[]="OpenGL";
 
-extern int Width, Height;
+extern int32_t Width, Height;
 
-int Done=0, Key[256];
+int32_t Done=0, Key[256];
 
 unsigned __int64 Frequency, StartTime, EndTime, EndFrameTime;
 float avgfps=0.0f, fps=0.0f, fTimeStep=0.0f, fFrameTime=0.0f, fTime=0.0f;
-int Frames=0;
+int32_t Frames=0;
 
-int Auto=0;
+int32_t Auto=0;
 
 extern Camera_t Camera;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void Render(void);
-int Init(void);
+int32_t Init(void);
 void Destroy(void);
 void UpdateLineChart(const float val);
 
@@ -63,7 +64,7 @@ unsigned __int64 GetFrequency(void)
 	return (StopTicks-StartTicks)*TimeFreq/(TimeStop-TimeStart);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow){
+int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t iCmdShow){
 	WNDCLASS wc;
 	MSG msg={ 0, };
 	RECT Rect;
@@ -187,7 +188,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DBGPRINTF("Exit\n");
 
-	return (int)msg.wParam;
+	return (int32_t)msg.wParam;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

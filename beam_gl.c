@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include "opengl.h"
 #include "math.h"
 #include "gl_objects.h"
@@ -15,11 +16,11 @@ extern matrix Projection, ModelView;
 GLuint BeamVAO, BeamVBO, BeamEBO;
 GLuint BeamShader;
 
-int InitBeam(void)
+int32_t InitBeam(void)
 {
-	const int segments=10, rings=9;
-	const int vertexCount=(rings+1)*(segments+1);
-	const int triangleCount=(rings*segments-segments)*2;
+	const int32_t segments=10, rings=9;
+	const int32_t vertexCount=(rings+1)*(segments+1);
+	const int32_t triangleCount=(rings*segments-segments)*2;
 
 	BeamShader=CreateShaderProgram((ProgNames_t) { "./shaders/beam_v.glsl", "./shaders/beam_f.glsl", NULL, NULL });
 
@@ -35,18 +36,18 @@ int InitBeam(void)
 
 	glGenBuffers(1, &BeamEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*3*triangleCount, NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*3*triangleCount, NULL, GL_STATIC_DRAW);
 
-	unsigned short *pTris=glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+	uint16_t *pTris=glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
 
 	if(pTris)
 	{
-		for(int i=0;i<rings;i++)
+		for(int32_t i=0;i<rings;i++)
 		{
-			int k1=i*(segments+1);
-			int k2=k1+segments+1;
+			int32_t k1=i*(segments+1);
+			int32_t k2=k1+segments+1;
 
-			for(int j=0;j<segments;j++, k1++, k2++)
+			for(int32_t j=0;j<segments;j++, k1++, k2++)
 			{
 				if(i!=0)
 				{
@@ -78,8 +79,8 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 	matrix local;
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
 	float length=Vec3_Length(vec);
-	const int segments=10, rings=9;
-	const int triangleCount=(rings*segments-segments)*2;
+	const int32_t segments=10, rings=9;
+	const int32_t triangleCount=(rings*segments-segments)*2;
 
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
 	vec4 *pVerts=glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -89,14 +90,14 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 		float sectorStep=2.0f*PI/segments;
 		float stackStep=PI/rings;
 
-		for(int i=0;i<=rings;i++)
+		for(int32_t i=0;i<=rings;i++)
 		{
 			float stackAngle=0.5f*PI-i*stackStep;
 
 			float xy=radius*cosf(stackAngle);
 			float z=radius*sinf(stackAngle);
 
-			for(int j=0;j<=segments;j++)
+			for(int32_t j=0;j<=segments;j++)
 			{
 				float sectorAngle=j*sectorStep;
 

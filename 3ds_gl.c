@@ -1,9 +1,11 @@
-#include "opengl.h"
-#include "3ds.h"
-#include "image.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include "opengl.h"
+#include "math.h"
+#include "3ds.h"
+#include "image.h"
 
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
@@ -21,7 +23,7 @@
 
 void LoadMaterials3DS(Model3DS_t *Model)
 {
-	for(int i=0;i<Model->NumMaterial;i++)
+	for(int32_t i=0;i<Model->NumMaterial;i++)
 	{
 		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
 
@@ -51,7 +53,7 @@ void LoadMaterials3DS(Model3DS_t *Model)
 
 void DrawModel3DS(Model3DS_t *Model)
 {
-	for(int i=0;i<Model->NumMesh;i++)
+	for(int32_t i=0;i<Model->NumMesh;i++)
 	{
 		if(Model->Material)
 		{
@@ -69,7 +71,7 @@ void DrawModel3DS(Model3DS_t *Model)
 
 void BuildVBO3DS(Model3DS_t *Model)
 {
-	for(int i=0;i<Model->NumMesh;i++)
+	for(int32_t i=0;i<Model->NumMesh;i++)
 	{
 		float *data=NULL;
 
@@ -123,7 +125,7 @@ void BuildVBO3DS(Model3DS_t *Model)
 
 		float *fPtr=data;
 
-		for(int j=0;j<Model->Mesh[i].NumVertex;j++)
+		for(int32_t j=0;j<Model->Mesh[i].NumVertex;j++)
 		{
 			// Copy vertex/texture/tangent/binormal/normal data, padded to 16 floats (64 byte alignment, is this needed?)
 			*fPtr++=Model->Mesh[i].Vertex[3*j+0];
@@ -153,7 +155,7 @@ void BuildVBO3DS(Model3DS_t *Model)
 
 		// Create element (index) buffer, copy data directly, no processing needed.
 		glCreateBuffers(1, &Model->Mesh[i].ElemID);
-		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(unsigned short)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
+		glNamedBufferData(Model->Mesh[i].ElemID, sizeof(uint16_t)*Model->Mesh[i].NumFace*3, Model->Mesh[i].Face, GL_STATIC_DRAW);
 		glVertexArrayElementBuffer(Model->Mesh[i].VAO, Model->Mesh[i].ElemID);
 	}
 
