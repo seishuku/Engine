@@ -234,7 +234,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 
 	fclose(stream);
 
-	if(ImageDescriptor&0x20)
+	if(!(ImageDescriptor&0x20))
 	{
 		int32_t Scanline=Width*bpp, Size=Scanline*Height;
 		uint8_t *Buffer=(uint8_t *)malloc(Size);

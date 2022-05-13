@@ -19,14 +19,24 @@
 
 #define QOI_HASH(C)	(C[0]*3+C[1]*5+C[2]*7+C[3]*11)
 
+uint32_t Int32Swap(const uint32_t l)
+{
+	uint8_t b1=(l>>0)&255;
+	uint8_t b2=(l>>8)&255;
+	uint8_t b3=(l>>16)&255;
+	uint8_t b4=(l>>24)&255;
+
+	return ((uint32_t)b1<<24)+((uint32_t)b2<<16)+((uint32_t)b3<<8)+((uint32_t)b4<<0);
+}
+
 int32_t QOI_Load(const char *Filename, Image_t *Image)
 {
 	FILE *stream=NULL;
-	uint32_t magic;
-	uint32_t width;
-	uint32_t height;
-	uint8_t channels;
-	uint8_t colorspace;
+	uint32_t magic=0;
+	uint32_t width=0;
+	uint32_t height=0;
+	uint8_t channels=0;
+	uint8_t colorspace=0;
 	uint8_t b1=0, b2=0;
 	uint8_t index[64][4], bytes[4];
 	uint32_t run=0;
@@ -34,14 +44,14 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 	if(!(stream=fopen(Filename, "rb")))
 		return 0;
 
-	fread(bytes, 1, 4, stream);
-	magic=bytes[0]<<24|bytes[1]<<16|bytes[2]<<8|bytes[3];
+	fread(&magic, 1, 4, stream);
+	magic=Int32Swap(magic);
 
-	fread(bytes, 1, 4, stream);
-	width=bytes[0]<<24|bytes[1]<<16|bytes[2]<<8|bytes[3];
+	fread(&width, 1, 4, stream);
+	width=Int32Swap(width);
 
-	fread(bytes, 1, 4, stream);
-	height=bytes[0]<<24|bytes[1]<<16|bytes[2]<<8|bytes[3];
+	fread(&height, 1, 4, stream);
+	height=Int32Swap(height);
 
 	fread(&channels, 1, 1, stream);
 	fread(&colorspace, 1, 1, stream);
@@ -107,9 +117,9 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 			index[QOI_HASH(bytes)%64][3]=bytes[3];
 		}
 
-		Image->Data[i+0]=bytes[0];
+		Image->Data[i+2]=bytes[0];
 		Image->Data[i+1]=bytes[1];
-		Image->Data[i+2]=bytes[2];
+		Image->Data[i+0]=bytes[2];
 
 		if(channels==4)
 			Image->Data[i+3]=bytes[3];

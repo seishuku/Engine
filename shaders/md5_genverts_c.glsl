@@ -94,7 +94,7 @@ void main()
 	int i=int(gl_GlobalInvocationID.x);
 
 	FinalVertex[i].vertex=vec4(0.0);
-	FinalVertex[i].uv=vec4(Vertices[i].st[0], 1.0-Vertices[i].st[1], 0.0, 0.0);
+	FinalVertex[i].uv=vec4(Vertices[i].st, 0.0, 0.0);
 	FinalVertex[i].tangent=vec4(0.0);
 	FinalVertex[i].binormal=vec4(0.0);
 	FinalVertex[i].normal=vec4(0.0);
