@@ -433,6 +433,7 @@
     <None Include="shaders\light_f.glsl" />
     <None Include="shaders\light_v.glsl" />
     <None Include="shaders\md5_genverts_c.glsl" />
+    <None Include="shaders\tbnvis_g.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

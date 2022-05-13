@@ -167,6 +167,10 @@ void EventLoop(void)
 							Done=1;
 							break;
 
+						case XK_Space:
+							Auto^=1;
+							break;
+
 						default:
 							break;
 					}

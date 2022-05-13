@@ -76,9 +76,9 @@ void CalculateTangentOBJ(ModelOBJ_t *Model)
 				t[2]=(uv0[0]*v1[2]-uv1[0]*v0[2])*r;
 				Vec3_Normalize(t);
 
-				Model->Binormal[3*i1+0]-=t[0];	Model->Binormal[3*i1+1]-=t[1];	Model->Binormal[3*i1+2]-=t[2];
-				Model->Binormal[3*i2+0]-=t[0];	Model->Binormal[3*i2+1]-=t[1];	Model->Binormal[3*i2+2]-=t[2];
-				Model->Binormal[3*i3+0]-=t[0];	Model->Binormal[3*i3+1]-=t[1];	Model->Binormal[3*i3+2]-=t[2];
+				Model->Binormal[3*i1+0]+=t[0];	Model->Binormal[3*i1+1]+=t[1];	Model->Binormal[3*i1+2]+=t[2];
+				Model->Binormal[3*i2+0]+=t[0];	Model->Binormal[3*i2+1]+=t[1];	Model->Binormal[3*i2+2]+=t[2];
+				Model->Binormal[3*i3+0]+=t[0];	Model->Binormal[3*i3+1]+=t[1];	Model->Binormal[3*i3+2]+=t[2];
 
 				Cross(v0, v1, n);
 				Vec3_Normalize(n);
@@ -87,6 +87,29 @@ void CalculateTangentOBJ(ModelOBJ_t *Model)
 				Model->Normal[3*i2+0]+=n[0];	Model->Normal[3*i2+1]+=n[1];	Model->Normal[3*i2+2]+=n[2];
 				Model->Normal[3*i3+0]+=n[0];	Model->Normal[3*i3+1]+=n[1];	Model->Normal[3*i3+2]+=n[2];
 			}
+		}
+
+		for(uint32_t i=0;i<Model->NumVertex;i++)
+		{
+			float *t=&Model->Tangent[3*i];
+			float *b=&Model->Binormal[3*i];
+			float *n=&Model->Normal[3*i];
+
+			float d=Vec3_Dot(n, t);
+			t[0]-=n[0]*d;
+			t[1]-=n[1]*d;
+			t[2]-=n[2]*d;
+			Vec3_Normalize(t);
+			Vec3_Normalize(b);
+			Vec3_Normalize(n);
+
+			vec3 NxT;
+			Cross(n, t, NxT);
+
+			if(Vec3_Dot(NxT, b)<0.0f)
+				Vec3_Muls(t, -1.0f);
+
+			Vec3_Setv(b, NxT);
 		}
 	}
 }

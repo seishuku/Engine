@@ -151,5 +151,8 @@
     <None Include="shaders\beam_v.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\tbnvis_g.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

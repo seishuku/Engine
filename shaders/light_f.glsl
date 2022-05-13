@@ -3,6 +3,7 @@
 in vec3 Position;
 in vec2 UV;
 in mat3 Tangent;
+in vec3 Color;
 
 layout(binding=0) uniform sampler2D TexBase;
 layout(binding=1) uniform sampler2D TexSpecular;
@@ -64,9 +65,9 @@ void main()
 	vec3 Specular=texture(TexSpecular, UV).xyz;
 
 	// Use this for vertex normals
-//	vec3 n=normalize(mat3(local)*Tangent[2]);			// Vertex normals
+	vec3 n=normalize(mat3(local)*Tangent[2]);			// Vertex normals
 	// Use this for normal mapped normals
-	vec3 n=normalize(mat3(local)*Tangent*(2*texture(TexNormal, UV)-1).xyz);
+//	vec3 n=normalize(mat3(local)*Tangent*(2*texture(TexNormal, UV)-1).xyz);
 	vec3 e=inverse(mv)[3].xyz-Position, r;
 
 	vec3 l0=Light0_Pos.xyz-Position;
@@ -166,5 +167,5 @@ void main()
 
 	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
 
-	Output=vec4(temp, 1.0);
+	Output=vec4(l0_diffuse, 1.0);
 }

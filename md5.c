@@ -257,6 +257,20 @@ int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
 				Cross(v0, v1, n);
 				Vec3_Normalize(n);
 
+				float d=Vec3_Dot(n, s);
+				s[0]-=n[0]*d;
+				s[1]-=n[1]*d;
+				s[2]-=n[2]*d;
+				Vec3_Normalize(s);
+
+				vec3 NxS;
+				Cross(n, s, NxS);
+
+				if(Vec3_Dot(NxS, t)<0.0f)
+					Vec3_Muls(s, -1.0f);
+
+				Vec3_Setv(t, NxS);
+
 				Vec3_Addv(&temptang[3*i1], s);
 				Vec3_Addv(&temptang[3*i2], s);
 				Vec3_Addv(&temptang[3*i3], s);

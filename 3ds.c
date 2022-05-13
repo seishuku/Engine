@@ -18,7 +18,7 @@ typedef uint32_t uint32_t;
 #define FREE(p) { if(p) { free(p); p=NULL; } }
 #endif
 
-void CalculateTangent(Mesh3DS_t *Mesh)
+void CalculateTangent3DS(Mesh3DS_t *Mesh)
 {
 	int32_t i;
 	vec3 v0, v1, s, t, n;
@@ -92,6 +92,29 @@ void CalculateTangent(Mesh3DS_t *Mesh)
 		Mesh->Normal[3*i1+0]+=n[0];		Mesh->Normal[3*i1+1]+=n[1];		Mesh->Normal[3*i1+2]+=n[2];
 		Mesh->Normal[3*i2+0]+=n[0];		Mesh->Normal[3*i2+1]+=n[1];		Mesh->Normal[3*i2+2]+=n[2];
 		Mesh->Normal[3*i3+0]+=n[0];		Mesh->Normal[3*i3+1]+=n[1];		Mesh->Normal[3*i3+2]+=n[2];
+	}
+
+	for(uint32_t i=0;i<Mesh->NumVertex;i++)
+	{
+		float *t=&Mesh->Tangent[3*i];
+		float *b=&Mesh->Binormal[3*i];
+		float *n=&Mesh->Normal[3*i];
+
+		float d=Vec3_Dot(n, t);
+		t[0]-=n[0]*d;
+		t[1]-=n[1]*d;
+		t[2]-=n[2]*d;
+		Vec3_Normalize(t);
+		Vec3_Normalize(b);
+		Vec3_Normalize(n);
+
+		vec3 NxT;
+		Cross(n, t, NxT);
+
+		if(Vec3_Dot(NxT, b)<0.0f)
+			Vec3_Muls(t, -1.0f);
+
+		Vec3_Setv(b, NxT);
 	}
 }
 
@@ -403,7 +426,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 	}
 
 	for(int32_t i=0;i<Model->NumMesh;i++)
-		CalculateTangent(&Model->Mesh[i]);
+		CalculateTangent3DS(&Model->Mesh[i]);
 
 	return 1;
 }
