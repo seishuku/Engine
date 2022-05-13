@@ -227,7 +227,7 @@ void Flip(uint8_t *image, int32_t width, int32_t height, int32_t size, int32_t f
 	}
 }
 
-int32_t DDS_Load(char *Filename, Image_t *Image)
+int32_t DDS_Load(const char *Filename, Image_t *Image)
 {
 	DDS_Header_t dds;
 	uint32_t magic;

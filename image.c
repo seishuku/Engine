@@ -648,7 +648,7 @@ void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
 	FREE(Out.Data);
 }
 
-uint32_t Image_Upload(char *Filename, uint32_t Flags)
+uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 {
 	uint32_t TextureID=0;
 	uint32_t Target=GL_TEXTURE_2D;
@@ -666,6 +666,12 @@ uint32_t Image_Upload(char *Filename, uint32_t Flags)
 		if(!strcmp(Extension, ".tga"))
 		{
 			if(!TGA_Load(Filename, &Image))
+				return 0;
+		}
+		else
+		if(!strcmp(Extension, ".qoi"))
+		{
+			if(!QOI_Load(Filename, &Image))
 				return 0;
 		}
 		else

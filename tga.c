@@ -105,7 +105,7 @@ void rle_write(uint8_t *row, int32_t width, int32_t bpp, FILE *stream)
 	}
 }
 
-int32_t TGA_Write(char *filename, Image_t *Image, int32_t rle)
+int32_t TGA_Write(const char *filename, Image_t *Image, int32_t rle)
 {
 	FILE *stream;
 	uint8_t IDLength=0;
@@ -161,7 +161,7 @@ int32_t TGA_Write(char *filename, Image_t *Image, int32_t rle)
 	return 1;
 }
 
-int32_t TGA_Load(char *Filename, Image_t *Image)
+int32_t TGA_Load(const char *Filename, Image_t *Image)
 {
 	FILE *stream=NULL;
 	uint8_t *ptr;

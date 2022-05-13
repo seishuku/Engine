@@ -89,8 +89,8 @@ void UpdateAnimation(Model_t *Model, float dt)
 		Model->nextframe%=Model->Anim.num_frames-1;
 	}
 
-//	InterpolateSkeletons(&Model->Anim, Model->Anim.skelFrames[Model->frame], Model->Anim.skelFrames[Model->nextframe], Model->frameTime*Model->Anim.frameRate, Model->Skel);
-	memcpy(Model->Skel, Model->Model.baseSkel, sizeof(MD5_Joint_t)*Model->Model.num_joints);
+	InterpolateSkeletons(&Model->Anim, Model->Anim.skelFrames[Model->frame], Model->Anim.skelFrames[Model->nextframe], Model->frameTime*Model->Anim.frameRate, Model->Skel);
+//	memcpy(Model->Skel, Model->Model.baseSkel, sizeof(MD5_Joint_t)*Model->Model.num_joints);
 
 #if 0
 	// Do mesh skinning on CPU

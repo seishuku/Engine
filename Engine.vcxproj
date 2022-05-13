@@ -385,6 +385,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="qoi.c" />
     <ClCompile Include="quad_gl.c" />
     <ClCompile Include="skybox_gl.c" />
     <ClCompile Include="tga.c">

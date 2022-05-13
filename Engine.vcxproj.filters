@@ -55,6 +55,9 @@
     <ClCompile Include="beam_gl.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="qoi.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3ds.h">

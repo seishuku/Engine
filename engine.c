@@ -404,19 +404,19 @@ int32_t Init(void)
 #endif
 
 	// Load texture images
-	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("./assets/hellknight_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("./assets/hellknight_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("./assets/hellknight_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("./assets/hellknight_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_FATTY_BASE]=Image_Upload("./assets/fatty.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("./assets/fatty_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("./assets/fatty_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_FATTY_BASE]=Image_Upload("./assets/fatty.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("./assets/fatty_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("./assets/fatty_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	Objects[TEXTURE_PINKY_BASE]=Image_Upload("./assets/pinky.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
+	Objects[TEXTURE_PINKY_BASE]=Image_Upload("./assets/pinky.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
-	// Load the "level" 3D Studio model
+	// Load the "level" Alias/Wavefront model
 	if(LoadOBJ(&Level, "./assets/room.obj"))
 	{
 		BuildVBOOBJ(&Level);
@@ -439,13 +439,6 @@ int32_t Init(void)
 		return 0;
 
 	// Load shaders
-
-	// Raycast volume rendering
-	//Objects[GLSL_CUBE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/cube_v.glsl", "./shaders/cube_f.glsl", NULL, NULL });
-	//glUseProgram(Objects[GLSL_CUBE_SHADER]);
-	//Objects[GLSL_CUBE_PROJ]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "proj");
-	//Objects[GLSL_CUBE_MV]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "mv");
-	//Objects[GLSL_CUBE_LOCAL]=glGetUniformLocation(Objects[GLSL_CUBE_SHADER], "local");
 
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });

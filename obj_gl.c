@@ -43,7 +43,7 @@ void LoadMaterialsOBJ(ModelOBJ_t *Model)
 		snprintf(buf, 256, "./assets/%s", Model->Material[i].Texture);
 		Model->Material[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
 
-		snprintf(buf, 256, "./assets/%s_b%s", nameNoExt, fileExt);
+		snprintf(buf, 256, "./assets/%s_b%s", nameNoExt, ".tga"); // THIS IS DUMB
 		Model->Material[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_NORMALMAP|IMAGE_TRILINEAR);
 
 		// If that failed to load, try loading a normal map

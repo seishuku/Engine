@@ -10,7 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd cloth.tga
+map_Kd cloth.qoi
 
 newmtl Material_Floor
 Ns 900.000000
@@ -21,7 +21,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd floor.tga
+map_Kd floor.qoi
 
 newmtl Material_Rock
 Ns 900.000000
@@ -32,7 +32,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd rockwall.tga
+map_Kd rockwall.qoi
 
 newmtl Material_Tile
 Ns 900.000000
@@ -43,4 +43,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd tile.tga
+map_Kd tile.qoi
