@@ -9,7 +9,7 @@ OBJS+=quad_gl.o
 OBJS+=skybox_gl.o
 
 # image loading
-OBJS+=dds.o tga.o image.o
+OBJS+=qoi.o dds.o tga.o image.o
 
 # core stuff
 OBJS+=engine.o opengl.o math.o linux_x11.o

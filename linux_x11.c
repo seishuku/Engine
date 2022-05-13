@@ -167,7 +167,7 @@ void EventLoop(void)
 							Done=1;
 							break;
 
-						case XK_Space:
+						case XK_space:
 							Auto^=1;
 							break;
 
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 	}
 
 	DBGPRINTF("Creating OpenGL context...\n");
-	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_DOUBLEBUFFER|OGL_CORE46))
+	if(!CreateContext(&Context, 24, 24, 0, 0, OGL_CORE45|OGL_DOUBLEBUFFER))
 	{
 		DBGPRINTF("\t...failed.\n");
 		XCloseDisplay(dpy);

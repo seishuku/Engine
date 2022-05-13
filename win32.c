@@ -99,7 +99,7 @@ int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
 	SetForegroundWindow(Context.hWnd);
 
 	DBGPRINTF("Creating OpenGL context...\n");
-	if(!CreateContext(&Context, 32, 24, 0, 0, OGL_CORE46|OGL_DOUBLEBUFFER|OGL_SAMPLES4X))
+	if(!CreateContext(&Context, 32, 24, 0, 0, OGL_CORE45|OGL_DOUBLEBUFFER))
 	{
 		DBGPRINTF("\t...failed.\n");
 		DestroyWindow(Context.hWnd);
