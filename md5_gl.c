@@ -4,6 +4,7 @@
 #include "opengl.h"
 #include "math.h"
 #include "gl_objects.h"
+#include "image.h"
 #include "md5.h"
 #include "md5_gl.h"
 
@@ -143,17 +144,24 @@ int32_t LoadMD5Model(const char *Filename, Model_t *Model)
 {
 	char Mesh[256]="\0";
 	char Anim[256]="\0";
+	char Base[256]="\0";
+	char Specular[256]="\0";
+	char Normal[256]="\0";
 
-	strcpy(Mesh, Filename);
-	strcpy(Anim, Filename);
-
-	strcat(Mesh, ".md5mesh");
-	strcat(Anim, ".md5anim");
+	strcat(strcpy(Mesh, Filename), ".md5mesh");
+	strcat(strcpy(Anim, Filename), ".md5anim");
+	strcat(strcpy(Base, Filename), ".qoi");
+	strcat(strcpy(Specular, Filename), "_s.qoi");
+	strcat(strcpy(Normal, Filename), "_n.qoi");
 
 	if(LoadMD5(&Model->Model, Mesh))
 		BuildVBOMD5(&Model->Model);
 	else
 		return 0;
+
+	Model->Base=Image_Upload(Base, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Model->Specular=Image_Upload(Specular, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+	Model->Normal=Image_Upload(Normal, IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
 	// Load MD5 animation frames
 	if(LoadAnim(&Model->Anim, Anim))

@@ -308,25 +308,24 @@ void Render(void)
 	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE0]);
 
 	// Render model
-	glBindTextureUnit(0, Objects[TEXTURE_HELLKNIGHT_BASE]);
-	glBindTextureUnit(1, Objects[TEXTURE_HELLKNIGHT_SPECULAR]);
-	glBindTextureUnit(2, Objects[TEXTURE_HELLKNIGHT_NORMAL]);
 	MatrixIdentity(local);
 	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	glBindTextureUnit(0, Hellknight.Base);
+	glBindTextureUnit(1, Hellknight.Specular);
+	glBindTextureUnit(2, Hellknight.Normal);
 	DrawModelMD5(&Hellknight.Model);
 
-	glBindTextureUnit(0, Objects[TEXTURE_FATTY_BASE]);
-	glBindTextureUnit(1, Objects[TEXTURE_FATTY_SPECULAR]);
-	glBindTextureUnit(2, Objects[TEXTURE_FATTY_NORMAL]);
 	MatrixIdentity(local);
 	MatrixTranslate(-100.0f, -100.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	glBindTextureUnit(0, Fatty.Base);
+	glBindTextureUnit(1, Fatty.Specular);
+	glBindTextureUnit(2, Fatty.Normal);
 	DrawModelMD5(&Fatty.Model);
 
 	MatrixIdentity(local);
@@ -334,10 +333,9 @@ void Render(void)
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	glBindTextureUnit(0, Objects[TEXTURE_PINKY_BASE]);
-	glBindTextureUnit(1, Objects[TEXTURE_PINKY_SPECULAR]);
-	glBindTextureUnit(2, Objects[TEXTURE_PINKY_NORMAL]);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	glBindTextureUnit(0, Pinky.Base);
+	glBindTextureUnit(1, Pinky.Specular);
+	glBindTextureUnit(2, Pinky.Normal);
 	DrawModelMD5(&Pinky.Model);
 
 	MatrixIdentity(local);
@@ -402,19 +400,6 @@ int32_t Init(void)
 	// Set up camera structs
 	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
 #endif
-
-	// Load texture images
-	Objects[TEXTURE_HELLKNIGHT_BASE]=Image_Upload("./assets/hellknight.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_SPECULAR]=Image_Upload("./assets/hellknight_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_HELLKNIGHT_NORMAL]=Image_Upload("./assets/hellknight_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
-
-	Objects[TEXTURE_FATTY_BASE]=Image_Upload("./assets/fatty.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_SPECULAR]=Image_Upload("./assets/fatty_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_FATTY_NORMAL]=Image_Upload("./assets/fatty_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
-
-	Objects[TEXTURE_PINKY_BASE]=Image_Upload("./assets/pinky.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_SPECULAR]=Image_Upload("./assets/pinky_s.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR);
-	Objects[TEXTURE_PINKY_NORMAL]=Image_Upload("./assets/pinky_n.qoi", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
 	// Load the "level" Alias/Wavefront model
 	if(LoadOBJ(&Level, "./assets/room.obj"))

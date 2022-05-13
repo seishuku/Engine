@@ -27,9 +27,6 @@ void LoadMaterialsOBJ(ModelOBJ_t *Model)
 	{
 		char buf[256], nameNoExt[256], fileExt[256], *ptr=NULL;
 
-		for(char *p=Model->Material[i].Texture;*p;p++)
-			*p=*p>0x40&&*p<0x5b?*p|0x60:*p;
-
 		strncpy(nameNoExt, Model->Material[i].Texture, 256);
 		ptr=strstr(nameNoExt, ".");
 

@@ -11,6 +11,8 @@ typedef struct
 
 	uint32_t SkelSSBO;
 	MD5_Joint_t *Skel;
+
+	GLuint Base, Specular, Normal;
 } Model_t;
 
 void DrawModelMD5(MD5_Model_t *Model);
