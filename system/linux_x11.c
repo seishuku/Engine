@@ -3,10 +3,9 @@
 #include <sys/time.h>
 #include <strings.h>
 #include <stdio.h>
-#include "opengl.h"
-#include "camera.h"
-
-#define __int64 long long
+#include <stdint.h>
+#include "../opengl/opengl.h"
+#include "../camera.h"
 
 #ifndef DBGPRINTF
 #define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
@@ -18,37 +17,37 @@ GLContext_t Context;
 
 char szAppName[]="OpenGL";
 
-extern int Width, Height;
+extern int32_t Width, Height;
 
-unsigned char Key[65536];
+uint8_t Key[65536];
 
-unsigned __int64 Frequency, StartTime, EndTime, EndFrameTime;
+uint64_t Frequency, StartTime, EndTime, EndFrameTime;
 float avgfps=0.0f, fps=0.0f, fTimeStep=0.0f, fFrameTime=0.0f, fTime=0.0f;
-int Frames=0;
+int32_t Frames=0;
 
-int Auto=0;
+int32_t Auto=0;
 
 extern Camera_t Camera;
 
 void Render(void);
-int Init(void);
+int32_t Init(void);
 void Destroy(void);
 void UpdateLineChart(const float val);
 
-unsigned long long rdtsc(void)
+uint64_t rdtsc(void)
 {
-	unsigned long l, h;
+	uint32_t l, h;
 
 	__asm__ __volatile__ ("rdtsc" : "=a" (l), "=d" (h));
 
-	return ((unsigned long long)l|((unsigned long long)h<<32));
+	return (uint64_t)l|((uint64_t)h<<32);
 }
 
 unsigned long long GetFrequency(void)
 {
-	unsigned long long StartTicks, StopTicks;
+	uint64_t StartTicks, StopTicks;
 	struct timeval TimeStart, TimeStop;
-	volatile unsigned long i;
+	volatile uint32_t i;
 
 	gettimeofday(&TimeStart, NULL);
 	StartTicks=rdtsc();
@@ -63,10 +62,10 @@ unsigned long long GetFrequency(void)
 
 void EventLoop(void)
 {
-	int Keysym;
+	int32_t Keysym;
 	XEvent Event;
-	int ox, oy, dx, dy;
-	int Done=0;
+	int32_t ox, oy, dx, dy;
+	int32_t Done=0;
 
 	while(!Done)
 	{
