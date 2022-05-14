@@ -15,7 +15,7 @@ Display *dpy;
 
 GLContext_t Context;
 
-char szAppName[]="OpenGL";
+int8_t szAppName[]="OpenGL";
 
 extern int32_t Width, Height;
 
@@ -264,7 +264,7 @@ void EventLoop(void)
 	}
 }
 
-int main(int argc, char **argv)
+int32_t main(int32_t argc, int8_t **argv)
 {
 	XVisualInfo *visinfo=NULL;
 	XSetWindowAttributes Attrib;
