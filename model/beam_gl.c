@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include "opengl.h"
-#include "math.h"
-#include "gl_objects.h"
+#include "../opengl/opengl.h"
+#include "../math.h"
+#include "../gl_objects.h"
 #include "beam_gl.h"
 
 #ifndef BUFFER_OFFSET

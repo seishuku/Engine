@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "opengl.h"
-#include "math.h"
+#include "../opengl/opengl.h"
+#include "../math.h"
 #include "3ds.h"
-#include "image.h"
+#include "../image/image.h"
 
 #ifdef WIN32
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }

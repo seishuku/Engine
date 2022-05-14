@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "opengl.h"
-#include "math.h"
+#include "../opengl/opengl.h"
+#include "../math.h"
 #include "image.h"
 
 #ifndef FREE

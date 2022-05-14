@@ -1,18 +1,18 @@
 TARGET=engine
 
 # model loading/drawing
-OBJS=3ds.o 3ds_gl.o
-OBJS+=obj.o obj_gl.o
-OBJS+=md5.o md5_gl.o
-OBJS+=beam_gl.o
-OBJS+=quad_gl.o
-OBJS+=skybox_gl.o
+OBJS=model/3ds.o model/3ds_gl.o
+OBJS+=model/obj.o model/obj_gl.o
+OBJS+=model/md5.o model/md5_gl.o
+OBJS+=model/beam_gl.o
+OBJS+=model/quad_gl.o
+OBJS+=model/skybox_gl.o
 
 # image loading
-OBJS+=qoi.o dds.o tga.o image.o
+OBJS+=image/qoi.o image/dds.o image/tga.o image/image.o
 
 # core stuff
-OBJS+=engine.o opengl.o math.o linux_x11.o
+OBJS+=engine.o opengl/opengl.o math.o system/linux_x11.o
 OBJS+=font.o
 OBJS+=camera.o
 

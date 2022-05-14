@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
-#include "opengl.h"
+#include "./opengl/opengl.h"
 #include "math.h"
 #include "font.h"
 

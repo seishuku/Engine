@@ -7,8 +7,8 @@
 
 #pragma intrinsic(__rdtsc)
 
-#include "opengl.h"
-#include "camera.h"
+#include "../opengl/opengl.h"
+#include "../camera.h"
 
 #ifndef DBGPRINTF
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }

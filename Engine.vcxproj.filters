@@ -1,87 +1,69 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="3ds.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="dds.c">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="engine.c">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="font.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="image.c">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="math.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="opengl.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tga.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="md5.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="quad_gl.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="skybox_gl.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="3ds_gl.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="md5_gl.c">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="camera.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="win32.c">
-      <Filter>Source</Filter>
+    <ClCompile Include="image\dds.c">
+      <Filter>Source\image</Filter>
     </ClCompile>
-    <ClCompile Include="obj.c">
-      <Filter>Source</Filter>
+    <ClCompile Include="image\image.c">
+      <Filter>Source\image</Filter>
     </ClCompile>
-    <ClCompile Include="obj_gl.c">
-      <Filter>Source</Filter>
+    <ClCompile Include="image\qoi.c">
+      <Filter>Source\image</Filter>
     </ClCompile>
-    <ClCompile Include="beam_gl.c">
-      <Filter>Source</Filter>
+    <ClCompile Include="image\tga.c">
+      <Filter>Source\image</Filter>
     </ClCompile>
-    <ClCompile Include="qoi.c">
-      <Filter>Source</Filter>
+    <ClCompile Include="system\win32.c">
+      <Filter>Source\system</Filter>
+    </ClCompile>
+    <ClCompile Include="model\3ds.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\3ds_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\beam_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\md5.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\md5_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\obj.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\obj_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\quad_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="model\skybox_gl.c">
+      <Filter>Source\model</Filter>
+    </ClCompile>
+    <ClCompile Include="opengl\opengl.c">
+      <Filter>Source\opengl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="3ds.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="font.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="image.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="math.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="opengl.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="md5.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="md5_gl.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="skybox_gl.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="gl_objects.h">
@@ -90,20 +72,38 @@
     <ClInclude Include="camera.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="obj.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="obj_gl.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="3ds_gl.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="fontdata.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="beam_gl.h">
-      <Filter>Headers</Filter>
+    <ClInclude Include="model\3ds.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\3ds_gl.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\beam_gl.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\md5.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\md5_gl.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\obj.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\obj_gl.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="model\skybox_gl.h">
+      <Filter>Headers\model</Filter>
+    </ClInclude>
+    <ClInclude Include="image\image.h">
+      <Filter>Headers\image</Filter>
+    </ClInclude>
+    <ClInclude Include="opengl\opengl.h">
+      <Filter>Headers\opengl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +115,27 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{19472c44-3dca-41c8-b45f-24861c6dd750}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\image">
+      <UniqueIdentifier>{52ff548e-5553-46f6-b2fa-b3c18594f01c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\system">
+      <UniqueIdentifier>{27b10ba6-d2ab-4255-a9b9-6895c96dc384}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\model">
+      <UniqueIdentifier>{c19ccb72-0205-4ec7-a803-6ac3354cf229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\opengl">
+      <UniqueIdentifier>{e6de9510-ab7f-4c95-ace2-c43bc924b4a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\opengl">
+      <UniqueIdentifier>{cbd307d4-2afc-426a-86b8-0c68c0eb3e71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\model">
+      <UniqueIdentifier>{b34d12fd-2845-4800-8032-08a90f0b89ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\image">
+      <UniqueIdentifier>{6733a0c0-a52f-4277-b29a-468e76076855}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

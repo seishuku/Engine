@@ -3,19 +3,19 @@
 #include <malloc.h>
 #include <string.h>
 #include "math.h"
-#include "opengl.h"
+#include "./opengl/opengl.h"
 #include "gl_objects.h"
-#include "image.h"
+#include "./image/image.h"
 #include "font.h"
 #include "camera.h"
-#include "3ds.h"
-#include "3ds_gl.h"
-#include "md5.h"
-#include "md5_gl.h"
-#include "skybox_gl.h"
-#include "obj.h"
-#include "obj_gl.h"
-#include "beam_gl.h"
+#include "./model/3ds.h"
+#include "./model/3ds_gl.h"
+#include "./model/md5.h"
+#include "./model/md5_gl.h"
+#include "./model/skybox_gl.h"
+#include "./model/obj.h"
+#include "./model/obj_gl.h"
+#include "./model/beam_gl.h"
 
 #define CAMERA_RECORDING 0
 

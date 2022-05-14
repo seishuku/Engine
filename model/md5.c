@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "math.h"
+#include "../math.h"
 #include "md5.h"
 
 #ifndef FREE

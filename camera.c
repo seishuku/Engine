@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <malloc.h>
-#include "opengl.h"
+#include "./opengl/opengl.h"
 #include "math.h"
 #include "camera.h"
 

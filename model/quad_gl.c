@@ -1,4 +1,4 @@
-#include "opengl.h"
+#include "../opengl/opengl.h"
 
 #ifndef BUFFER_OFFSET
 #define BUFFER_OFFSET(x) ((char *)NULL+(x))

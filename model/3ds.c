@@ -5,7 +5,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <memory.h>
-#include "math.h"
+#include "../math.h"
 #include "3ds.h"
 
 #ifdef _linux_

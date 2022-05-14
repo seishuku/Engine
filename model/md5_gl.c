@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "opengl.h"
-#include "math.h"
-#include "gl_objects.h"
-#include "image.h"
+#include "../opengl/opengl.h"
+#include "../math.h"
+#include "../gl_objects.h"
+#include "../image/image.h"
 #include "md5.h"
 #include "md5_gl.h"
 
