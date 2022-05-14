@@ -33,4 +33,8 @@ $(TARGET): $(OBJS)
 
 clean:
 	-rm *.o
+	-rm ./image/*.o
+	-rm ./model/*.o
+	-rm ./opengl/*.o
+	-rm ./system/*.o
 	-rm $(TARGET)
