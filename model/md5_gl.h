@@ -10,7 +10,7 @@ typedef struct
 	MD5_Anim_t Anim;
 
 	uint32_t SkelSSBO;
-	MD5_Joint_t *Skel;
+	float *Skel;
 
 	GLuint Base, Specular, Normal;
 } Model_t;

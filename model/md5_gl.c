@@ -90,41 +90,45 @@ void UpdateAnimation(Model_t *Model, float dt)
 		Model->nextframe%=Model->Anim.num_frames-1;
 	}
 
-	InterpolateSkeletons(&Model->Anim, Model->Anim.skelFrames[Model->frame], Model->Anim.skelFrames[Model->nextframe], Model->frameTime*Model->Anim.frameRate, Model->Skel);
-//	memcpy(Model->Skel, Model->Model.baseSkel, sizeof(MD5_Joint_t)*Model->Model.num_joints);
-
-#if 0
-	// Do mesh skinning on CPU
-	for(int32_t i=0;i<Model->Model.num_meshes;i++)
-	{
-		PrepareMesh(&Model->Model.meshes[i], Model->Skel, Model->Model.meshes[i].vertexArray);
-
-		glBindBuffer(GL_ARRAY_BUFFER, Model->Model.meshes[i].FinalVertID);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*Model->Model.meshes[i].num_verts*20, Model->Model.meshes[i].vertexArray);
-	}
-#else
 	// Do mesh skinning on GPU
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Model->SkelSSBO);
-	GLvoid *p=glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-
-	if(p)
+	// Build interpolated skeleton to feed into compute shader
+	if(Model->Skel)
 	{
-		float *fPtr=(float *)p;
+		float *fPtr=(float *)Model->Skel;
 
-		for(int32_t i=0;i<Model->Model.num_joints;i++)
+		for(int32_t i=0;i<Model->Anim.num_joints;i++)
 		{
-			*fPtr++=Model->Skel[i].pos[0];
-			*fPtr++=Model->Skel[i].pos[1];
-			*fPtr++=Model->Skel[i].pos[2];
+			float interp=Model->frameTime*Model->Anim.frameRate;
+			vec3 pos;
+			vec4 orient;
+
+			// Liear interpolate position
+			Vec3_Lerp(
+				Model->Anim.skelFrames[Model->frame][i].pos,
+				Model->Anim.skelFrames[Model->nextframe][i].pos,
+				interp, pos
+			);
+			*fPtr++=pos[0];
+			*fPtr++=pos[1];
+			*fPtr++=pos[2];
 			*fPtr++=0.0f;	// Padding
-			*fPtr++=Model->Skel[i].orient[0];
-			*fPtr++=Model->Skel[i].orient[1];
-			*fPtr++=Model->Skel[i].orient[2];
-			*fPtr++=Model->Skel[i].orient[3];
+
+			// Spherical interpolate rotation
+			QuatSlerp(
+				Model->Anim.skelFrames[Model->frame][i].orient,
+				Model->Anim.skelFrames[Model->nextframe][i].orient,
+				orient, interp
+			);
+
+			*fPtr++=orient[0];
+			*fPtr++=orient[1];
+			*fPtr++=orient[2];
+			*fPtr++=orient[3];
 		}
 	}
 
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Model->SkelSSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float)*8*Model->Anim.num_joints, Model->Skel);
 
 	for(int32_t i=0;i<Model->Model.num_meshes;i++)
 	{
@@ -137,7 +141,6 @@ void UpdateAnimation(Model_t *Model, float dt)
 
 		glDispatchCompute(Model->Model.meshes[i].num_verts, 1, 1);
 	}
-#endif
 }
 
 int32_t LoadMD5Model(const char *Filename, Model_t *Model)
@@ -169,11 +172,11 @@ int32_t LoadMD5Model(const char *Filename, Model_t *Model)
 		// Generate an SSBO to store the interpolated skeleton
 		glGenBuffers(1, &Model->SkelSSBO);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Model->SkelSSBO);
-		glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(float)*8*Model->Anim.num_joints, NULL, GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float)*8*Model->Anim.num_joints, NULL, GL_STREAM_DRAW);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 		// Allocate system memory to store interpolated skeleton
-		Model->Skel=(MD5_Joint_t *)malloc(sizeof(MD5_Joint_t)*Model->Anim.num_joints);
+		Model->Skel=(float *)malloc(sizeof(float)*8*Model->Anim.num_joints);
 
 		if(Model->Skel==NULL)
 			return 0;

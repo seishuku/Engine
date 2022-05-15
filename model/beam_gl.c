@@ -16,6 +16,8 @@ extern matrix Projection, ModelView;
 GLuint BeamVAO, BeamVBO, BeamEBO;
 GLuint BeamShader;
 
+float *BeamVB=NULL;
+
 int32_t InitBeam(void)
 {
 	const int32_t segments=10, rings=9;
@@ -29,7 +31,12 @@ int32_t InitBeam(void)
 
 	glGenBuffers(1, &BeamVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*vertexCount, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*vertexCount, NULL, GL_STREAM_DRAW);
+
+	BeamVB=(float *)malloc(sizeof(vec4)*vertexCount);
+
+	if(!BeamVB)
+		return 0;
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
@@ -80,10 +87,10 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 	float vec[3]={ end[0]-start[0], end[1]-start[1], end[2]-start[2] };
 	float length=Vec3_Length(vec);
 	const int32_t segments=10, rings=9;
+	const int32_t vertexCount=(rings+1)*(segments+1);
 	const int32_t triangleCount=(rings*segments-segments)*2;
 
-	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	vec4 *pVerts=glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	vec4 *pVerts=(vec4 *)BeamVB;
 
 	if(pVerts)
 	{
@@ -112,7 +119,8 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 			}
 		}
 
-		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4)*vertexCount, BeamVB);
 	}
 
 	glUseProgram(BeamShader);

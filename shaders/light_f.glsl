@@ -151,8 +151,8 @@ void main()
 	vec3 NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
 	vec3 RdotL=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(r, Light), 32.0)*dot(n, Light));
 
-	float radius=5.0;
-	float falloff=1.0/length(Line/(radius*radius));
+	float radius=1.0/75.0;
+	float falloff=max(0.0, 1.0-length(Line*radius));
 
 	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
 
@@ -162,8 +162,8 @@ void main()
 	NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
 	RdotL=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(r, Light), 32.0)*dot(n, Light));
 
-	radius=5.0;
-	falloff=1.0/length(Line/(radius*radius));
+	radius=1.0/75.0;
+	falloff=max(0.0, 1.0-length(Line*radius));
 
 	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
 
