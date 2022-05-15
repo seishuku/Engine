@@ -10,8 +10,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
-#include "./opengl/opengl.h"
-#include "math.h"
+#include "../opengl/opengl.h"
+#include "../math/math.h"
 #include "font.h"
 
 // Font texture data, this does bloat the EXE quite a bit.

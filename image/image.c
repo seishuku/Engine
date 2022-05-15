@@ -3,12 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 #include "../opengl/opengl.h"
-#include "../math.h"
-#include "image.h"
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
+#include "../system/system.h"
+#include "../math/math.h"
+#include "../image/image.h"
 
 void _MakeNormalMap(Image_t *Image)
 {

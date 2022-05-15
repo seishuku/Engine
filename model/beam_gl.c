@@ -1,13 +1,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "../opengl/opengl.h"
-#include "../math.h"
+#include "../math/math.h"
 #include "../gl_objects.h"
+#include "../system/system.h"
 #include "beam_gl.h"
-
-#ifndef BUFFER_OFFSET
-#define BUFFER_OFFSET(x) ((char *)NULL+(x))
-#endif
 
 // Bring in matrices from main render code
 extern matrix Projection, ModelView;

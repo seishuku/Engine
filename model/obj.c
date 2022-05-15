@@ -2,12 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "../math.h"
+#include "../system/system.h"
+#include "../math/math.h"
 #include "obj.h"
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
 
 void CalculateTangentOBJ(ModelOBJ_t *Model)
 {

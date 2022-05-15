@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <malloc.h>
-#include "./opengl/opengl.h"
-#include "math.h"
-#include "camera.h"
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
+#include "../opengl/opengl.h"
+#include "../system/system.h"
+#include "../math/math.h"
+#include "../camera/camera.h"
 
 // Camera collision stuff
 int32_t ClassifySphere(float Center[3], float Normal[3], float Point[3], float radius, float *distance)

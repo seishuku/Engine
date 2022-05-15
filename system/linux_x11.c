@@ -5,11 +5,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "../opengl/opengl.h"
-#include "../camera.h"
-
-#ifndef DBGPRINTF
-#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
-#endif
+#include "../math/math.h"
+#include "../camera/camera.h"
+#include "system.h"
 
 Display *dpy;
 

@@ -7,16 +7,10 @@
 
 #pragma intrinsic(__rdtsc)
 
+#include "../system/system.h"
 #include "../opengl/opengl.h"
-#include "../camera.h"
-
-#ifndef DBGPRINTF
-#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
-#endif
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
+#include "../math/math.h"
+#include "../camera/camera.h"
 
 GLContext_t Context;
 

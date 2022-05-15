@@ -2,25 +2,12 @@
 #include <stdint.h>
 #include <string.h>
 #include "../opengl/opengl.h"
-#include "../math.h"
+#include "../math/math.h"
 #include "../gl_objects.h"
 #include "../image/image.h"
+#include "../system/system.h"
 #include "md5.h"
 #include "md5_gl.h"
-
-#ifdef WIN32
-#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
-#else
-#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
-#endif
-
-#ifndef BUFFER_OFFSET
-#define BUFFER_OFFSET(x) ((char *)NULL+(x))
-#endif
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
 
 void DrawModelMD5(MD5_Model_t *Model)
 {

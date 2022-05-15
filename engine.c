@@ -2,36 +2,23 @@
 #include <stdint.h>
 #include <malloc.h>
 #include <string.h>
-#include "math.h"
-#include "./opengl/opengl.h"
+#include "math/math.h"
+#include "opengl/opengl.h"
+#include "system/system.h"
 #include "gl_objects.h"
-#include "./image/image.h"
-#include "font.h"
-#include "camera.h"
-#include "./model/3ds.h"
-#include "./model/3ds_gl.h"
-#include "./model/md5.h"
-#include "./model/md5_gl.h"
-#include "./model/skybox_gl.h"
-#include "./model/obj.h"
-#include "./model/obj_gl.h"
-#include "./model/beam_gl.h"
+#include "image/image.h"
+#include "font/font.h"
+#include "camera/camera.h"
+#include "model/3ds.h"
+#include "model/3ds_gl.h"
+#include "model/md5.h"
+#include "model/md5_gl.h"
+#include "model/skybox_gl.h"
+#include "model/obj.h"
+#include "model/obj_gl.h"
+#include "model/beam_gl.h"
 
 #define CAMERA_RECORDING 0
-
-#ifdef WIN32
-#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
-#else
-#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
-#endif
-
-#ifndef BUFFER_OFFSET
-#define BUFFER_OFFSET(x) ((char *)NULL+(x))
-#endif
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
 
 int32_t Width=1280, Height=720;
 

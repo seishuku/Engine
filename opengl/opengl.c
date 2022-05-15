@@ -1,17 +1,8 @@
-#include "opengl.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef WIN32
-#define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
-#else
-#define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }
-#endif
-
-#ifndef FREE
-#define FREE(p) { if(p) { free(p); p=NULL; } }
-#endif
+#include "opengl.h"
+#include "../system/system.h"
 
 #ifdef __linux__
 extern Display *dpy;

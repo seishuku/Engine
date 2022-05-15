@@ -9,12 +9,18 @@ OBJS+=model/quad_gl.o
 OBJS+=model/skybox_gl.o
 
 # image loading
-OBJS+=image/qoi.o image/dds.o image/tga.o image/image.o
+OBJS+=image/qoi.o
+OBJS+=image/dds.o
+OBJS+=image/tga.o
+OBJS+=image/image.o
 
 # core stuff
-OBJS+=engine.o opengl/opengl.o math.o system/linux_x11.o
-OBJS+=font.o
-OBJS+=camera.o
+OBJS+=system/linux_x11.o
+OBJS+=opengl/opengl.o
+OBJS+=math/math.o
+OBJS+=font/font.o
+OBJS+=camera/camera.o
+OBJS+=engine.o
 
 CC=gcc
 CFLAGS=-Wall -O3 -std=c17 -I/usr/X11/include
@@ -33,8 +39,11 @@ $(TARGET): $(OBJS)
 
 clean:
 	-rm *.o
-	-rm ./image/*.o
-	-rm ./model/*.o
-	-rm ./opengl/*.o
-	-rm ./system/*.o
+	-rm camera/*.o
+	-rm font/*.o
+	-rm image/*.o
+	-rm math/*.o
+	-rm model/*.o
+	-rm opengl/*.o
+	-rm system/*.o
 	-rm $(TARGET)
