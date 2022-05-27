@@ -4,6 +4,7 @@
 #include <crtdbg.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #pragma intrinsic(__rdtsc)
 
@@ -18,19 +19,19 @@ char szAppName[]="OpenGL";
 
 extern int32_t Width, Height;
 
-int32_t Done=0, Key[256];
+bool Done=0, Key[256];
 
 unsigned __int64 Frequency, StartTime, EndTime, EndFrameTime;
 float avgfps=0.0f, fps=0.0f, fTimeStep=0.0f, fFrameTime=0.0f, fTime=0.0f;
 int32_t Frames=0;
 
-int32_t Auto=0;
+bool Auto=0;
 
 extern Camera_t Camera;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void Render(void);
-int32_t Init(void);
+bool Init(void);
 void Destroy(void);
 void UpdateLineChart(const float val);
 
@@ -259,56 +260,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_KEYDOWN:
-			Key[wParam]=1;
+			Key[wParam]=true;
 
 			switch(wParam)
 			{
 				case 'W':
-					Camera.key_w=1;
+					Camera.key_w=true;
 					break;
 
 				case 'S':
-					Camera.key_s=1;
+					Camera.key_s=true;
 					break;
 
 				case 'A':
-					Camera.key_a=1;
+					Camera.key_a=true;
 					break;
 
 				case 'D':
-					Camera.key_d=1;
+					Camera.key_d=true;
 					break;
 
 				case 'V':
-					Camera.key_v=1;
+					Camera.key_v=true;
 					break;
 
 				case 'C':
-					Camera.key_c=1;
+					Camera.key_c=true;
 					break;
 
 				case 'Q':
-					Camera.key_q=1;
+					Camera.key_q=true;
 					break;
 
 				case 'E':
-					Camera.key_e=1;
+					Camera.key_e=true;
 					break;
 
 				case VK_UP:
-					Camera.key_up=1;
+					Camera.key_up=true;
 					break;
 
 				case VK_DOWN:
-					Camera.key_down=1;
+					Camera.key_down=true;
 					break;
 
 				case VK_LEFT:
-					Camera.key_left=1;
+					Camera.key_left=true;
 					break;
 
 				case VK_RIGHT:
-					Camera.key_right=1;
+					Camera.key_right=true;
 					break;
 
 				case VK_SPACE:
@@ -322,7 +323,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					fclose(stream);
 				}
 #else
-					Auto^=1;
+					Auto^=true;
 #endif
 					break;
 
@@ -336,56 +337,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_KEYUP:
-			Key[wParam]=0;
+			Key[wParam]=false;
 
 			switch(wParam)
 			{
 				case 'W':
-					Camera.key_w=0;
+					Camera.key_w=false;
 					break;
 
 				case 'S':
-					Camera.key_s=0;
+					Camera.key_s=false;
 					break;
 
 				case 'A':
-					Camera.key_a=0;
+					Camera.key_a=false;
 					break;
 
 				case 'D':
-					Camera.key_d=0;
+					Camera.key_d=false;
 					break;
 
 				case 'V':
-					Camera.key_v=0;
+					Camera.key_v=false;
 					break;
 
 				case 'C':
-					Camera.key_c=0;
+					Camera.key_c=false;
 					break;
 
 				case 'Q':
-					Camera.key_q=0;
+					Camera.key_q=false;
 					break;
 
 				case 'E':
-					Camera.key_e=0;
+					Camera.key_e=false;
 					break;
 
 				case VK_UP:
-					Camera.key_up=0;
+					Camera.key_up=false;
 					break;
 
 				case VK_DOWN:
-					Camera.key_down=0;
+					Camera.key_down=false;
 					break;
 
 				case VK_LEFT:
-					Camera.key_left=0;
+					Camera.key_left=false;
 					break;
 
 				case VK_RIGHT:
-					Camera.key_right=0;
+					Camera.key_right=false;
 					break;
 
 				default:

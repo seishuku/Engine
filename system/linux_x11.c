@@ -4,6 +4,7 @@
 #include <strings.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "../opengl/opengl.h"
 #include "../math/math.h"
 #include "../camera/camera.h"
@@ -17,18 +18,18 @@ char szAppName[]="OpenGL";
 
 extern int32_t Width, Height;
 
-uint8_t Key[65536];
+bool Key[65536];
 
 uint64_t Frequency, StartTime, EndTime, EndFrameTime;
 float avgfps=0.0f, fps=0.0f, fTimeStep=0.0f, fFrameTime=0.0f, fTime=0.0f;
 int32_t Frames=0;
 
-int32_t Auto=0;
+bool Auto=0;
 
 extern Camera_t Camera;
 
 void Render(void);
-int32_t Init(void);
+bool Init(void);
 void Destroy(void);
 void UpdateLineChart(const float val);
 
@@ -63,7 +64,7 @@ void EventLoop(void)
 	int32_t Keysym;
 	XEvent Event;
 	int32_t ox, oy, dx, dy;
-	int32_t Done=0;
+	bool Done=false;
 
 	while(!Done)
 	{
@@ -108,64 +109,64 @@ void EventLoop(void)
 
 				case KeyPress:
 					Keysym=XLookupKeysym(&Event.xkey, 0);
-					Key[Keysym]=1;
+					Key[Keysym]=true;
 
 					switch(Keysym)
 					{
 						case 'w':
-							Camera.key_w=1;
+							Camera.key_w=true;
 							break;
 
 						case 's':
-							Camera.key_s=1;
+							Camera.key_s=true;
 							break;
 
 						case 'a':
-							Camera.key_a=1;
+							Camera.key_a=true;
 							break;
 
 						case 'd':
-							Camera.key_d=1;
+							Camera.key_d=true;
 							break;
 
 						case 'v':
-							Camera.key_v=1;
+							Camera.key_v=true;
 							break;
 
 						case 'c':
-							Camera.key_c=1;
+							Camera.key_c=true;
 							break;
 
 						case 'q':
-							Camera.key_q=1;
+							Camera.key_q=true;
 							break;
 
 						case 'e':
-							Camera.key_e=1;
+							Camera.key_e=true;
 							break;
 
 						case XK_Up:
-							Camera.key_up=1;
+							Camera.key_up=true;
 							break;
 
 						case XK_Down:
-							Camera.key_down=1;
+							Camera.key_down=true;
 							break;
 
 						case XK_Left:
-							Camera.key_left=1;
+							Camera.key_left=true;
 							break;
 
 						case XK_Right:
-							Camera.key_right=1;
+							Camera.key_right=true;
 							break;
 
 						case XK_Escape:
-							Done=1;
+							Done=true;
 							break;
 
 						case XK_space:
-							Auto^=1;
+							Auto^=true;
 							break;
 
 						default:
@@ -175,56 +176,56 @@ void EventLoop(void)
 
 				case KeyRelease:
 					Keysym=XLookupKeysym(&Event.xkey, 0);
-					Key[Keysym]=0;
+					Key[Keysym]=false;
 
 					switch(Keysym)
 					{
 						case 'w':
-							Camera.key_w=0;
+							Camera.key_w=false;
 							break;
 
 						case 's':
-							Camera.key_s=0;
+							Camera.key_s=false;
 							break;
 
 						case 'a':
-							Camera.key_a=0;
+							Camera.key_a=false;
 							break;
 
 						case 'd':
-							Camera.key_d=0;
+							Camera.key_d=false;
 							break;
 
 						case 'v':
-							Camera.key_v=0;
+							Camera.key_v=false;
 							break;
 
 						case 'c':
-							Camera.key_c=0;
+							Camera.key_c=false;
 							break;
 
 						case 'q':
-							Camera.key_q=0;
+							Camera.key_q=false;
 							break;
 
 						case 'e':
-							Camera.key_e=0;
+							Camera.key_e=false;
 							break;
 
 						case XK_Up:
-							Camera.key_up=0;
+							Camera.key_up=false;
 							break;
 
 						case XK_Down:
-							Camera.key_down=0;
+							Camera.key_down=false;
 							break;
 
 						case XK_Left:
-							Camera.key_left=0;
+							Camera.key_left=false;
 							break;
 
 						case XK_Right:
-							Camera.key_right=0;
+							Camera.key_right=false;
 							break;
 
 						default:

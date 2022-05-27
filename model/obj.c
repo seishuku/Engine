@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "../system/system.h"
 #include "../math/math.h"
@@ -111,13 +112,13 @@ void CalculateTangentOBJ(ModelOBJ_t *Model)
 	}
 }
 
-int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
+bool LoadMTL(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
 
 	if(!(fp=fopen(Filename, "r")))
-		return 0;
+		return false;
 
 	while(!feof(fp))
 	{
@@ -138,7 +139,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 				memset(&Model->Material[Model->NumMaterial-1], 0, sizeof(MaterialOBJ_t));
 
 				if(sscanf(buff, "newmtl %s", Model->Material[Model->NumMaterial-1].Name)!=1)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "Ka ", 3)==0)
@@ -149,7 +150,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 					&Model->Material[Model->NumMaterial-1].Ambient[0],
 					&Model->Material[Model->NumMaterial-1].Ambient[1],
 					&Model->Material[Model->NumMaterial-1].Ambient[2])!=3)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "Kd ", 3)==0)
@@ -160,7 +161,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 					&Model->Material[Model->NumMaterial-1].Diffuse[0],
 					&Model->Material[Model->NumMaterial-1].Diffuse[1],
 					&Model->Material[Model->NumMaterial-1].Diffuse[2])!=3)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "Ks ", 3)==0)
@@ -171,7 +172,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 					&Model->Material[Model->NumMaterial-1].Specular[0],
 					&Model->Material[Model->NumMaterial-1].Specular[1],
 					&Model->Material[Model->NumMaterial-1].Specular[2])!=3)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "Ke ", 3)==0)
@@ -182,7 +183,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 					&Model->Material[Model->NumMaterial-1].Emission[0],
 					&Model->Material[Model->NumMaterial-1].Emission[1],
 					&Model->Material[Model->NumMaterial-1].Emission[2])!=3)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "Ns ", 3)==0)
@@ -191,7 +192,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 			{
 				if(sscanf(buff, "Ns %f",
 					&Model->Material[Model->NumMaterial-1].Shininess)!=1)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "map_Kd ", 7)==0)
@@ -199,7 +200,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 			if(Model->Material)
 			{
 				if(sscanf(buff, "map_Kd %s", Model->Material[Model->NumMaterial-1].Texture)!=1)
-					return 0;
+					return false;
 			}
 		}
 	}
@@ -217,7 +218,7 @@ int32_t LoadMTL(ModelOBJ_t *Model, const char *Filename)
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 // Apparently Windows CRT lib doesn't have this?
@@ -237,7 +238,7 @@ char *strrstr(const char *haystack, const char *needle)
 	}
 }
 
-int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
+bool LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 {
 	FILE *fp;
 	char buff[512];
@@ -247,7 +248,7 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 	uint32_t ni[3]={ 0, 0, 0 };
 
 	if(!(fp=fopen(Filename, "r")))
-		return 0;
+		return false;
 
 	memset(Model, 0, sizeof(ModelOBJ_t));
 
@@ -270,7 +271,7 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 				memset(&Model->Mesh[Model->NumMesh-1], 0, sizeof(MeshOBJ_t));
 
 				if(sscanf(buff, "o %s", Model->Mesh[Model->NumMesh-1].Name)!=1)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "usemtl ", 7)==0)
@@ -278,13 +279,13 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 			if(Model->Mesh)
 			{
 				if(sscanf(buff, "usemtl %s", Model->Mesh[Model->NumMesh-1].MaterialName)!=1)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "mtllib ", 7)==0)
 		{
 			if(sscanf(buff, "mtllib %s", Model->MaterialFilename)!=1)
-				return 0;
+				return false;
 		}
 		else if(strncmp(buff, "v ", 2)==0)
 		{
@@ -301,7 +302,7 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 					&Model->Vertex[3*(Model->NumVertex-1)+0],
 					&Model->Vertex[3*(Model->NumVertex-1)+1],
 					&Model->Vertex[3*(Model->NumVertex-1)+2])!=3)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "vt ", 3)==0)
@@ -318,7 +319,7 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 				if(sscanf(buff, "vt %f %f",
 					&Model->UV[2*(NumUV-1)+0],
 					&Model->UV[2*(NumUV-1)+1])!=2)
-					return 0;
+					return false;
 			}
 		}
 		else if(strncmp(buff, "f ", 2)==0)
@@ -359,7 +360,7 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 									&vi[0],
 									&vi[1],
 									&vi[2])!=3)
-									return 0;
+									return false;
 							}
 						}
 					}
@@ -383,14 +384,14 @@ int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename)
 	ptr=strrstr(nameNoExt, ".");
 
 	if(ptr==NULL)
-		return 1;
+		return false;
 
 	ptr[0]='\0';
 
 	strcat(nameNoExt, ".mtl");
 	LoadMTL(Model, nameNoExt);
 
-	return 1;
+	return true;
 }
 
 // Free memory allocated for the model

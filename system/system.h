@@ -2,6 +2,7 @@
 #define __SYSTEM_H__
 
 #ifdef WIN32
+#include <Windows.h>
 #define DBGPRINTF(...) { char buf[512]; snprintf(buf, sizeof(buf), __VA_ARGS__); OutputDebugString(buf); }
 #else
 #define DBGPRINTF(...) { fprintf(stderr, __VA_ARGS__); }

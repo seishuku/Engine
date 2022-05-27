@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <malloc.h>
 #include "../opengl/opengl.h"
 #include "../system/system.h"

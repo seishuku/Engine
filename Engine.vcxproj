@@ -288,6 +288,8 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="audio\audio.c" />
+    <ClCompile Include="audio\wave.c" />
     <ClCompile Include="camera\camera.c" />
     <ClCompile Include="engine.c">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -322,15 +324,12 @@
     <ClCompile Include="system\win32.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
+    <ClInclude Include="audio\audio.h" />
     <ClInclude Include="camera\camera.h" />
-    <ClInclude Include="font.h" />
-    <ClInclude Include="fontdata.h" />
     <ClInclude Include="font\font.h" />
     <ClInclude Include="font\fontdata.h" />
     <ClInclude Include="gl_objects.h" />
     <ClInclude Include="image\image.h" />
-    <ClInclude Include="math.h" />
     <ClInclude Include="math\math.h" />
     <ClInclude Include="model\3ds.h" />
     <ClInclude Include="model\3ds_gl.h" />

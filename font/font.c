@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "../opengl/opengl.h"
 #include "../math/math.h"
@@ -27,7 +28,7 @@ GLuint Font_VAO=0, Font_VBO=0;
 GLuint Font_Instanced=0;
 
 // Initialization flag
-uint8_t Font_Init=1;
+bool Font_Init=true;
 
 // Window width/height from main app.
 extern int32_t Width, Height;
@@ -199,7 +200,7 @@ void Font_Print(float x, float y, char *string, ...)
 		glEnableVertexAttribArray(2);
 
 		// Done with init
-		Font_Init=0;
+		Font_Init=false;
 	}
 
 	// Update instance data

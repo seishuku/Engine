@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include "image.h"
@@ -29,7 +30,7 @@ uint32_t Int32Swap(const uint32_t l)
 	return ((uint32_t)b1<<24)+((uint32_t)b2<<16)+((uint32_t)b3<<8)+((uint32_t)b4<<0);
 }
 
-int32_t QOI_Load(const char *Filename, Image_t *Image)
+bool QOI_Load(const char *Filename, Image_t *Image)
 {
 	FILE *stream=NULL;
 	uint32_t magic=0;
@@ -42,7 +43,7 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 	uint32_t run=0;
 
 	if(!(stream=fopen(Filename, "rb")))
-		return 0;
+		return false;
 
 	fread(&magic, 1, 4, stream);
 	magic=Int32Swap(magic);
@@ -57,7 +58,7 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 	fread(&colorspace, 1, 1, stream);
 
 	if(width==0||height==0||channels<3||channels>4||colorspace>1||magic!=QOI_MAGIC)
-		return 0;
+		return false;
 
 	Image->Width=width;
 	Image->Height=height;
@@ -65,7 +66,7 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 	Image->Data=(uint8_t *)malloc(width*height*channels);
 
 	if(!Image->Data)
-		return 0;
+		return false;
 
 	memset(index, 0, 64*4);
 	bytes[0]=0;
@@ -127,5 +128,5 @@ int32_t QOI_Load(const char *Filename, Image_t *Image)
 
 	fclose(stream);
 
-	return 1;
+	return true;
 }

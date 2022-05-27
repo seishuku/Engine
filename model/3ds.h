@@ -37,7 +37,7 @@ typedef struct
 	Mesh3DS_t *Mesh;
 } Model3DS_t;
 
-int32_t Load3DS(Model3DS_t *Model, char *Filename);
+bool Load3DS(Model3DS_t *Model, char *Filename);
 void Free3DS(Model3DS_t *Model);
 
 #endif

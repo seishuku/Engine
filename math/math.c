@@ -166,55 +166,61 @@ float Vec3_GetAngle(const vec3 Vector1, const vec3 Vector2)
 	return acosf(Vec3_Dot(Vector1, Vector2)/(Len1*Len2));
 }
 
-void Vec2_Normalize(vec2 v)
+float Vec2_Normalize(vec2 v)
 {
 	if(v)
 	{
-		float mag=Vec2_Length(v);
+		float length=Vec2_Length(v);
 
-		if(mag)
+		if(length)
 		{
-			mag=1.0f/mag;
+			float r=1.0f/length;
 
-			v[0]*=mag;
-			v[1]*=mag;
+			Vec2_Muls(v, r);
 		}
+
+		return length;
 	}
+
+	return 0.0f;
 }
 
-void Vec3_Normalize(vec3 v)
+float Vec3_Normalize(vec3 v)
 {
 	if(v)
 	{
-		float mag=Vec3_Length(v);
+		float length=Vec3_Length(v);
 
-		if(mag)
+		if(length)
 		{
-			mag=1.0f/mag;
+			float r=1.0f/length;
 
-			v[0]*=mag;
-			v[1]*=mag;
-			v[2]*=mag;
+			Vec3_Muls(v, r);
 		}
+
+		return length;
 	}
+
+	return 0.0f;
 }
 
-void Vec4_Normalize(vec4 v)
+float Vec4_Normalize(vec4 v)
 {
 	if(v)
 	{
-		float mag=Vec4_Length(v);
+		float length=Vec4_Length(v);
 
-		if(mag)
+		if(length)
 		{
-			mag=1.0f/mag;
+			float r=1.0f/length;
 
-			v[0]*=mag;
-			v[1]*=mag;
-			v[2]*=mag;
-			v[3]*=mag;
+			Vec4_Muls(v, r);
 		}
+
+		return length;
 	}
+
+	return 0.0f;
 }
 
 void Cross(const vec3 v0, const vec3 v1, vec3 n)
@@ -532,7 +538,7 @@ void MatrixInverse(const matrix in, matrix out)
 	memcpy(out, res, sizeof(matrix));
 }
 
-void MatrixTranspose(const float in[16], matrix out)
+void MatrixTranspose(const matrix in, matrix out)
 {
 	matrix res;
 

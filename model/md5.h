@@ -79,10 +79,10 @@ typedef struct
 	MD5_BBox_t *bboxes;			// bounding boxes for each frame
 } MD5_Anim_t;
 
-int32_t LoadMD5(MD5_Model_t *Model, const char *filename);
+bool LoadMD5(MD5_Model_t *Model, const char *filename);
 void FreeMD5(MD5_Model_t *Model);
 void PrepareMesh(MD5_Mesh_t *mesh, const MD5_Joint_t *skeleton, float *vertexArray);
-int32_t LoadAnim(MD5_Anim_t *anim, const char *filename);
+bool LoadAnim(MD5_Anim_t *anim, const char *filename);
 void FreeAnim(MD5_Anim_t *anim);
 void InterpolateSkeletons(const MD5_Anim_t *Anim, const MD5_Joint_t *skelA, const MD5_Joint_t *skelB, float interp, MD5_Joint_t *out);
 

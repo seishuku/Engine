@@ -29,6 +29,7 @@ inline void Vec3_Sets(vec3 a, float b) { a[0]=b; a[1]=b; a[2]=b; }
 inline void  Vec4_Set(vec4 a, float x, float y, float z, float w) { a[0]=(x); a[1]=(y); a[2]=(z); a[3]=(w); }
 inline void Vec4_Setv(vec4 a, vec4 b) { a[0]=b[0]; a[1]=b[1]; a[2]=b[2]; a[3]=b[3]; }
 inline void Vec4_Sets(vec4 a, float b) { a[0]=b; a[1]=b; a[2]=b; a[3]=b; }
+
 inline void  Vec2_Add(vec2 a, float x, float y) { a[0]+=x; a[1]+=y; }
 inline void Vec2_Addv(vec2 a, vec2 b) { a[0]+=b[0]; a[1]+=b[1]; }
 inline void Vec2_Adds(vec2 a, float b) { a[0]+=b; a[1]+=b; }
@@ -38,6 +39,17 @@ inline void Vec3_Adds(vec3 a, float b) { a[0]+=b; a[1]+=b; a[2]+=b; }
 inline void  Vec4_Add(vec4 a, float x, float y, float z, float w) { a[0]+=x; a[1]+=y; a[2]+=z; a[3]+=w; }
 inline void Vec4_Addv(vec4 a, vec4 b) { a[0]+=b[0]; a[1]+=b[1]; a[2]+=b[2]; a[3]+=b[3]; }
 inline void Vec4_Adds(vec4 a, float b) { a[0]+=b; a[1]+=b; a[2]+=b; a[3]+=b; }
+
+inline void  Vec2_Sub(vec2 a, float x, float y) { a[0]-=x; a[1]-=y; }
+inline void Vec2_Subv(vec2 a, vec2 b) { a[0]-=b[0]; a[1]-=b[1]; }
+inline void Vec2_Subs(vec2 a, float b) { a[0]-=b; a[1]-=b; }
+inline void  Vec3_Sub(vec3 a, float x, float y, float z) { a[0]-=x; a[1]-=y; a[2]-=z; }
+inline void Vec3_Subv(vec3 a, vec3 b) { a[0]-=b[0]; a[1]-=b[1]; a[2]-=b[2]; }
+inline void Vec3_Subs(vec3 a, float b) { a[0]-=b; a[1]-=b; a[2]-=b; }
+inline void  Vec4_Sub(vec4 a, float x, float y, float z, float w) { a[0]-=x; a[1]-=y; a[2]-=z; a[3]-=w; }
+inline void Vec4_Subv(vec4 a, vec4 b) { a[0]-=b[0]; a[1]-=b[1]; a[2]-=b[2]; a[3]-=b[3]; }
+inline void Vec4_Subs(vec4 a, float b) { a[0]-=b; a[1]-=b; a[2]-=b; a[3]-=b; }
+
 inline void  Vec2_Mul(vec2 a, float x, float y) { a[0]*=x; a[1]*=y; }
 inline void Vec2_Mulv(vec2 a, vec2 b) { a[0]*=b[0]; a[1]*=b[1]; }
 inline void Vec2_Muls(vec2 a, float b) { a[0]*=b; a[1]*=b; }
@@ -67,9 +79,9 @@ float Vec2_Distance(const vec2 Vector1, const vec2 Vector2);
 float Vec3_Distance(const vec3 Vector1, const vec3 Vector2);
 float Vec4_Distance(const vec4 Vector1, const vec4 Vector2);
 float Vec3_GetAngle(const vec3 Vector1, const vec3 Vector2);
-void Vec2_Normalize(vec2 v);
-void Vec3_Normalize(vec3 v);
-void Vec4_Normalize(vec4 v);
+float Vec2_Normalize(vec2 v);
+float Vec3_Normalize(vec3 v);
+float Vec4_Normalize(vec4 v);
 void Cross(const vec3 v0, const vec3 v1, vec3 n);
 void Lerp(const float a, const float b, const float t, float *out);
 void Vec2_Lerp(const vec2 a, const vec2 b, const float t, vec2 out);

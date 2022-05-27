@@ -58,21 +58,15 @@
     <ClCompile Include="math\math.c">
       <Filter>Source\math</Filter>
     </ClCompile>
+    <ClCompile Include="audio\audio.c">
+      <Filter>Source\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="audio\wave.c">
+      <Filter>Source\audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="font.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="math.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="gl_objects.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="fontdata.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="model\3ds.h">
@@ -119,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="camera\camera.h">
       <Filter>Headers\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\audio.h">
+      <Filter>Headers\audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +169,12 @@
     </Filter>
     <Filter Include="Headers\camera">
       <UniqueIdentifier>{d6861cb8-00f3-45f5-bf03-d45525f2e345}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\audio">
+      <UniqueIdentifier>{27f95183-89b8-4c52-b3e3-22e28ceb4f68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\audio">
+      <UniqueIdentifier>{9fadab17-c696-4b55-8518-fc394868aecb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

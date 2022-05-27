@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <malloc.h>
 #include <string.h>
 #include "math/math.h"
@@ -17,12 +18,15 @@
 #include "model/obj.h"
 #include "model/obj_gl.h"
 #include "model/beam_gl.h"
+#include "audio/audio.h"
 
 #define CAMERA_RECORDING 0
 
 int32_t Width=1280, Height=720;
 
 extern float fps, fFrameTime, fTimeStep, fTime;
+
+Sample_t Hellknight_Idle;
 
 uint32_t Objects[NUM_OBJECTS];
 
@@ -35,7 +39,7 @@ Model_t Pinky;
 Camera_t Camera;
 CameraPath_t CameraPath;
 
-extern int32_t Auto;
+extern bool Auto;
 
 matrix Projection, ModelView, ModelViewInv;
 
@@ -217,6 +221,8 @@ void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+bool retrigger=true;
+
 void Render(void)
 {
 	matrix local;
@@ -235,6 +241,15 @@ void Render(void)
 	//Matrix4x4MultVec3(Hellknight.Anim.bboxes[Hellknight.frame].max, local, max);
 	//int32_t collide=SphereBBOXIntersection(Camera.Position, Camera.Radius, min, max);
 	////
+
+	if(Hellknight.frame==60&&retrigger)
+	{
+		Audio_PlaySample(&Hellknight_Idle, false);
+		retrigger=false;
+	}
+
+	if(Hellknight.frame>100)
+		retrigger=true;
 
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
@@ -259,6 +274,8 @@ void Render(void)
 		CameraInterpolatePath(&CameraPath, &Camera, fTimeStep, ModelView);
 	else
 		CameraUpdate(&Camera, fTimeStep, ModelView);
+
+	Audio_SetListenerOrigin(Camera.Position, Camera.Right);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
@@ -350,14 +367,25 @@ void Render(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
+		Font_Print(0.0f, (float)Height-16.0f, "Frame: %d Num Frame: %d Retrigger: %d", Hellknight.frame, Hellknight.Anim.num_frames, retrigger);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
 
-int32_t Init(void)
+bool Init(void)
 {
+	if(Audio_Init())
+	{
+		if(!Audio_LoadStatic("./assets/hellknight_idle.wav", &Hellknight_Idle))
+			return false;
+
+		Vec3_Set(Hellknight_Idle.xyz, 0.0f, 0.0f, 0.0f);
+	}
+	else
+		return false;
+
 	glDebugMessageCallback(error_callback, NULL);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -382,7 +410,7 @@ int32_t Init(void)
 	CameraInit(&Camera, (float[]) { 0.0f, 0.0f, 0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, (float[3]) { 0.0f, 1.0f, 0.0f });
 #else
 	if(!CameraLoadPath("path.txt", &CameraPath))
-		return 0;
+		return false;
 
 	// Set up camera structs
 	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
@@ -395,20 +423,20 @@ int32_t Init(void)
 		LoadMaterialsOBJ(&Level);
 	}
 	else
-		return 0;
+		return false;
 
 	// Compile/link MD5 skinning compute program
 	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });
 
 	// Load MD5 model meshes
 	if(!LoadMD5Model("./assets/hellknight", &Hellknight))
-		return 0;
+		return false;
 
 	if(!LoadMD5Model("./assets/fatty", &Fatty))
-		return 0;
+		return false;
 
 	if(!LoadMD5Model("./assets/pinky", &Pinky))
-		return 0;
+		return false;
 
 	// Load shaders
 
@@ -464,11 +492,13 @@ int32_t Init(void)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
-	return 1;
+	return true;
 }
 
 void Destroy(void)
 {
+	Audio_Destroy();
+
 	CameraDeletePath(&CameraPath);
 
 	FreeOBJ(&Level);

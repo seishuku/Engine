@@ -39,7 +39,7 @@ typedef struct
 	MeshOBJ_t *Mesh;
 } ModelOBJ_t;
 
-int32_t LoadOBJ(ModelOBJ_t *Model, const char *Filename);
+bool LoadOBJ(ModelOBJ_t *Model, const char *Filename);
 void FreeOBJ(ModelOBJ_t *Model);
 
 #endif

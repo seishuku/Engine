@@ -16,12 +16,12 @@ typedef struct
 
 	float Radius;
 
-	uint8_t key_w, key_s;
-	uint8_t key_a, key_d;
-	uint8_t key_v, key_c;
-	uint8_t key_q, key_e;
-	uint8_t key_up, key_down;
-	uint8_t key_left, key_right;
+	bool key_w, key_s;
+	bool key_a, key_d;
+	bool key_v, key_c;
+	bool key_q, key_e;
+	bool key_up, key_down;
+	bool key_left, key_right;
 } Camera_t;
 
 typedef struct

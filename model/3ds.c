@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
 #include <memory.h>
@@ -109,7 +110,7 @@ void CalculateTangent3DS(Mesh3DS_t *Mesh)
 	}
 }
 
-int32_t Load3DS(Model3DS_t *Model, char *Filename)
+bool Load3DS(Model3DS_t *Model, char *Filename)
 {
 	FILE *Stream=NULL;
 	long Length;
@@ -122,7 +123,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 	float *ColorPtr=NULL;
 
 	if((Stream=fopen(Filename, "rb"))==NULL)
-		return 0;
+		return false;
 
 	fseek(Stream, 0, SEEK_END);
 	Length=ftell(Stream);
@@ -154,7 +155,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 				if(Model->Mesh==NULL)
 				{
 					fclose(Stream);
-					return 0;
+					return false;
 				}
 
 				memset(&Model->Mesh[Model->NumMesh-1], 0, sizeof(Mesh3DS_t));
@@ -188,7 +189,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 					Free3DS(Model);
 					fclose(Stream);
 
-					return 0;
+					return false;
 				}
 
 				fread(Model->Mesh[Model->NumMesh-1].Vertex, sizeof(float), 3*Model->Mesh[Model->NumMesh-1].NumVertex, Stream);
@@ -215,7 +216,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 					Free3DS(Model);
 					fclose(Stream);
 
-					return 0;
+					return false;
 				}
 
 				for(int32_t i=0;i<Model->Mesh[Model->NumMesh-1].NumFace;i++)
@@ -256,7 +257,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 					Free3DS(Model);
 					fclose(Stream);
 
-					return 0;
+					return false;
 				}
 
 				fread(Model->Mesh[Model->NumMesh-1].UV, sizeof(float), 2*Model->Mesh[Model->NumMesh-1].NumVertex, Stream);
@@ -271,7 +272,7 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 				if(Model->Material==NULL)
 				{
 					fclose(Stream);
-					return 0;
+					return false;
 				}
 
 				memset(&Model->Material[Model->NumMaterial-1], 0, sizeof(Material3DS_t));
@@ -419,16 +420,14 @@ int32_t Load3DS(Model3DS_t *Model, char *Filename)
 	for(int32_t i=0;i<Model->NumMesh;i++)
 		CalculateTangent3DS(&Model->Mesh[i]);
 
-	return 1;
+	return true;
 }
 
 void Free3DS(Model3DS_t *Model)
 {
-	int32_t i;
-
 	if(Model->Mesh)
 	{
-		for(i=0;i<Model->NumMesh;i++)
+		for(int32_t i=0;i<Model->NumMesh;i++)
 		{
 			FREE(Model->Mesh[i].Vertex);
 			FREE(Model->Mesh[i].UV);

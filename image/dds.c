@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
 #include "image.h"
@@ -227,7 +228,7 @@ void Flip(uint8_t *image, int32_t width, int32_t height, int32_t size, int32_t f
 	}
 }
 
-int32_t DDS_Load(const char *Filename, Image_t *Image)
+bool DDS_Load(const char *Filename, Image_t *Image)
 {
 	DDS_Header_t dds;
 	uint32_t magic;
@@ -235,14 +236,14 @@ int32_t DDS_Load(const char *Filename, Image_t *Image)
 	int32_t size;
 
 	if((stream=fopen(Filename, "rb"))==NULL)
-		return 0;
+		return false;
 
 	fread(&magic, sizeof(uint32_t), 1, stream);
 
 	if(magic!=DDS_MAGIC)
 	{
 		fclose(stream);
-		return 0;
+		return false;
 	}
 
 	fread(&dds, sizeof(DDS_Header_t), 1, stream);
@@ -265,7 +266,7 @@ int32_t DDS_Load(const char *Filename, Image_t *Image)
 
 			default:
 				fclose(stream);
-				return 0;
+				return false;
 		}
 	}
 	else
@@ -279,7 +280,7 @@ int32_t DDS_Load(const char *Filename, Image_t *Image)
 			else
 			{
 				fclose(stream);
-				return 0;
+				return false;
 			}
 		}
 	}
@@ -300,12 +301,12 @@ int32_t DDS_Load(const char *Filename, Image_t *Image)
 	Image->Data=(uint8_t *)malloc(sizeof(uint8_t)*size);
 
 	if(Image->Data==NULL)
-		return 0;
+		return false;
 
 	fread(Image->Data, sizeof(uint8_t), size, stream);
 	fclose(stream);
 
 	Flip(Image->Data, Image->Width, Image->Height, size, Image->Depth);
 
-	return 1;
+	return true;
 }

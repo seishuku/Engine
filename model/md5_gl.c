@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "../opengl/opengl.h"
 #include "../math/math.h"
@@ -95,6 +96,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 				Model->Anim.skelFrames[Model->nextframe][i].pos,
 				interp, pos
 			);
+
 			*fPtr++=pos[0];
 			*fPtr++=pos[1];
 			*fPtr++=pos[2];

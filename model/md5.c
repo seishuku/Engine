@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "../system/system.h"
 #include "../math/math.h"
@@ -53,7 +54,7 @@ void Quat_rotatePoint(const float q[4], const float in[3], float *out)
 	out[2]=final[2];
 }
 
-int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
+bool LoadMD5(MD5_Model_t *mdl, const char *filename)
 {
 	FILE *fp;
 	char buff[512];
@@ -62,7 +63,7 @@ int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
 	int32_t i, j;
 
 	if(!(fp=fopen(filename, "rb")))
-		return 0;
+		return false;
 
 	while(!feof(fp))
 	{
@@ -76,7 +77,7 @@ int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
 				// Wrong version
 				fprintf(stderr, "Wrong model version\n");
 				fclose(fp);
-				return 0;
+				return false;
 			}
 		}
 		else if(sscanf(buff, " numJoints %d", &mdl->num_joints)==1)
@@ -335,21 +336,19 @@ int32_t LoadMD5(MD5_Model_t *mdl, const char *filename)
 
 	fclose(fp);
 
-	return 1;
+	return true;
 }
 
 // Free memory allocated for the model
 void FreeMD5(MD5_Model_t *Model)
 {
-	int32_t i;
-
 	if(Model->baseSkel)
 		FREE(Model->baseSkel);
 
 	if(Model->meshes)
 	{
 		/* Free mesh data */
-		for(i=0;i<Model->num_meshes;i++)
+		for(int32_t i=0;i<Model->num_meshes;i++)
 		{
 			if(Model->meshes[i].vertices)
 				FREE(Model->meshes[i].vertices);
@@ -431,7 +430,7 @@ void PrepareMesh(MD5_Mesh_t *mesh, const MD5_Joint_t *skeleton, float *vertexArr
 }
 
 // Load an MD5 animation from file.
-int32_t LoadAnim(MD5_Anim_t *anim, const char *filename)
+bool LoadAnim(MD5_Anim_t *anim, const char *filename)
 {
 	FILE *fp=NULL;
 	char buff[512];
@@ -444,7 +443,7 @@ int32_t LoadAnim(MD5_Anim_t *anim, const char *filename)
 	int32_t i;
 
 	if(!(fp=fopen(filename, "rb")))
-		return 0;
+		return false;
 
 	while(!feof(fp))
 	{
@@ -458,7 +457,7 @@ int32_t LoadAnim(MD5_Anim_t *anim, const char *filename)
 				// Wrong version
 				fprintf(stderr, "Error: bad animation version\n");
 				fclose(fp);
-				return 0;
+				return false;
 			}
 		}
 		else if(sscanf(buff, " numFrames %d", &anim->num_frames)==1)
@@ -609,27 +608,21 @@ int32_t LoadAnim(MD5_Anim_t *anim, const char *filename)
 	if(jointInfos)
 		FREE(jointInfos);
 
-	return 1;
+	return true;
 }
 
 // Free memory allocated for animation.
 void FreeAnim(MD5_Anim_t *anim)
 {
-	int32_t i;
-
 	if(anim->skelFrames)
 	{
-		for(i=0;i<anim->num_frames;++i)
-		{
-			if(anim->skelFrames[i])
-				FREE(anim->skelFrames[i]);
-		}
+		for(int32_t i=0;i<anim->num_frames;++i)
+			FREE(anim->skelFrames[i]);
 
 		FREE(anim->skelFrames);
 	}
 
-	if(anim->bboxes)
-		FREE(anim->bboxes);
+	FREE(anim->bboxes);
 }
 
 void InterpolateSkeletons(const MD5_Anim_t *Anim, const MD5_Joint_t *skelA, const MD5_Joint_t *skelB, float interp, MD5_Joint_t *out)

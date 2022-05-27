@@ -32,10 +32,10 @@ typedef struct
 	uint8_t *Data;
 } Image_t;
 
-int32_t DDS_Load(const char *Filename, Image_t *Image);
-int32_t TGA_Load(const char *Filename, Image_t *Image);
-int32_t TGA_Write(const char *filename, Image_t *Image, int32_t rle);
-int32_t QOI_Load(const char *Filename, Image_t *Image);
+bool DDS_Load(const char *Filename, Image_t *Image);
+bool TGA_Load(const char *Filename, Image_t *Image);
+bool TGA_Write(const char *filename, Image_t *Image, bool rle);
+bool QOI_Load(const char *Filename, Image_t *Image);
 
 uint32_t Image_Upload(const char *Filename, uint32_t Flags);
 

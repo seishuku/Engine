@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <malloc.h>
 #include <string.h>
 #include "image.h"
@@ -35,15 +36,15 @@ void rle_read(uint8_t *row, int32_t width, int32_t bpp, FILE *stream)
 	}
 }
 
-int32_t rle_type(uint8_t *data, uint16_t pos, uint16_t width, uint8_t bpp)
+bool rle_type(uint8_t *data, uint16_t pos, uint16_t width, uint8_t bpp)
 {
 	if(!memcmp(data+bpp*pos, data+bpp*(pos+1), bpp))
 	{
 		if(!memcmp(data+bpp*(pos+1), data+bpp*(pos+2), bpp))
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 void rle_write(uint8_t *row, int32_t width, int32_t bpp, FILE *stream)
@@ -105,7 +106,7 @@ void rle_write(uint8_t *row, int32_t width, int32_t bpp, FILE *stream)
 	}
 }
 
-int32_t TGA_Write(const char *filename, Image_t *Image, int32_t rle)
+bool TGA_Write(const char *filename, Image_t *Image, bool rle)
 {
 	FILE *stream;
 	uint8_t IDLength=0;
@@ -158,10 +159,10 @@ int32_t TGA_Write(const char *filename, Image_t *Image, int32_t rle)
 
 	fclose(stream);
 
-	return 1;
+	return true;
 }
 
-int32_t TGA_Load(const char *Filename, Image_t *Image)
+bool TGA_Load(const char *Filename, Image_t *Image)
 {
 	FILE *stream=NULL;
 	uint8_t *ptr;
@@ -176,7 +177,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 	int32_t i, bpp;
 
 	if((stream=fopen(Filename, "rb"))==NULL)
-		return 0;
+		return false;
 
 	fread(&IDLength, sizeof(uint8_t), 1, stream);
 	fread(&ColorMapType, sizeof(uint8_t), 1, stream);
@@ -202,7 +203,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 
 		default:
 			fclose(stream);
-			return 0;
+			return false;
 	}
 
 	switch(Depth)
@@ -216,7 +217,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 			Image->Data=(uint8_t *)malloc(Width*Height*bpp);
 
 			if(Image->Data==NULL)
-				return 0;
+				return false;
 
 			if(ImageType==10||ImageType==11)
 			{
@@ -229,7 +230,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 
 		default:
 			fclose(stream);
-			return 0;
+			return false;
 	}
 
 	fclose(stream);
@@ -242,7 +243,7 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 		if(Buffer==NULL)
 		{
 			FREE(Image->Data);
-			return 0;
+			return false;
 		}
 
 		for(i=0;i<Height;i++)
@@ -257,5 +258,5 @@ int32_t TGA_Load(const char *Filename, Image_t *Image)
 	Image->Height=Height;
 	Image->Depth=Depth;
 
-	return 1;
+	return true;
 }
