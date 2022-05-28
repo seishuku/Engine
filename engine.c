@@ -242,13 +242,15 @@ void Render(void)
 	//int32_t collide=SphereBBOXIntersection(Camera.Position, Camera.Radius, min, max);
 	////
 
+	// Trigger sound playback at frame 60, retrigger locks it out so it doesn't rapid fire the sound.
 	if(Hellknight.frame==60&&retrigger)
 	{
 		Audio_PlaySample(&Hellknight_Idle, false);
 		retrigger=false;
 	}
 
-	if(Hellknight.frame>100)
+	// Reset trigger lock so it will play again on next loop.
+	if(Hellknight.frame>61)
 		retrigger=true;
 
 	UpdateAnimation(&Hellknight, fTimeStep);
@@ -367,7 +369,6 @@ void Render(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
-		Font_Print(0.0f, (float)Height-16.0f, "Frame: %d Num Frame: %d Retrigger: %d", Hellknight.frame, Hellknight.Anim.num_frames, retrigger);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
 		glDisable(GL_BLEND);
