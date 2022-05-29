@@ -1769,8 +1769,10 @@ int CreateContext(GLContext_t *Context, int Color, int Depth, int Stencil, int A
 			ContextAttribs[i++]=WGL_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=6;
 		}
 
+#ifdef DEBUG
 		ContextAttribs[i++]=WGL_CONTEXT_FLAGS_ARB;
-		ContextAttribs[i++]=WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+		ContextAttribs[i++]=WGL_CONTEXT_DEBUG_BIT_ARB;
+#endif
 		ContextAttribs[i++]=WGL_CONTEXT_PROFILE_MASK_ARB;
 		ContextAttribs[i++]=WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
 		ContextAttribs[i++]=0;
@@ -1939,8 +1941,10 @@ int CreateContext(GLContext_t *Context, int Color, int Depth, int Stencil, int A
 			ContextAttribs[i++]=GLX_CONTEXT_MINOR_VERSION_ARB;	ContextAttribs[i++]=6;
 		}
 
+#ifdef DEBUG
 		ContextAttribs[i++]=GLX_CONTEXT_FLAGS_ARB;
-		ContextAttribs[i++]=GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+		ContextAttribs[i++]=GLX_CONTEXT_DEBUG_BIT_ARB;
+#endif
 		ContextAttribs[i++]=GLX_CONTEXT_PROFILE_MASK_ARB;
 		ContextAttribs[i++]=GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
 		ContextAttribs[i++]=0;

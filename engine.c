@@ -298,11 +298,11 @@ void Render(void)
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_POS], 1, Light4_Pos);
 	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_KD], 1, Light4_Kd);
 
-	glUniform3fv(0, 1, BeamStart0);
-	glUniform3fv(1, 1, BeamEnd0);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START0], 1, BeamStart0);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END0], 1, BeamEnd0);
 
-	glUniform3fv(2, 1, BeamStart1);
-	glUniform3fv(3, 1, BeamEnd1);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START1], 1, BeamStart1);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END1], 1, BeamEnd1);
 
 	// Projection matrix
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_PROJ], 1, GL_FALSE, Projection);
@@ -460,6 +460,10 @@ bool Init(void)
 	Objects[GLSL_LIGHT_LIGHT3_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light3_Kd");
 	Objects[GLSL_LIGHT_LIGHT4_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Pos");
 	Objects[GLSL_LIGHT_LIGHT4_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Kd");
+	Objects[GLSL_LIGHT_BEAM_START0]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_Start0");
+	Objects[GLSL_LIGHT_BEAM_END0]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_End0");
+	Objects[GLSL_LIGHT_BEAM_START1]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_Start1");
+	Objects[GLSL_LIGHT_BEAM_END1]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_End1");
 
 	// Build program for generating depth cube map
 	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/distance_v.glsl", "./shaders/distance_f.glsl", "./shaders/distance_g.glsl", NULL });

@@ -24,11 +24,11 @@ uniform vec4 Light3_Kd;
 uniform vec4 Light4_Pos;
 uniform vec4 Light4_Kd;
 
-layout(location=0) uniform vec3 Start1;
-layout(location=1) uniform vec3 End1;
+uniform vec3 Beam_Start0;
+uniform vec3 Beam_End0;
 
-layout(location=2) uniform vec3 Start2;
-layout(location=3) uniform vec3 End2;
+uniform vec3 Beam_Start1;
+uniform vec3 Beam_End1;
 
 layout(location=0) out vec4 Output;
 
@@ -145,7 +145,7 @@ void main()
 	temp+=(Base.xyz*l3_diffuse+(l3_specular*Specular))*l3_atten*(1.0-l3_volume.w)+(l3_volume.w*Light3_Kd.xyz);
 	temp+=(Base.xyz*l4_diffuse+(l4_specular*Specular))*l4_atten*(1.0-l4_volume.w)+(l4_volume.w*Light4_Kd.xyz);
 
-	vec3 Line=ClosestPointOnSegment(Position, Start1, End1)-Position;
+	vec3 Line=ClosestPointOnSegment(Position, Beam_Start0, Beam_End0)-Position;
 	vec3 Light=normalize(Line);
 
 	vec3 NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
@@ -156,7 +156,7 @@ void main()
 
 	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
 
-	Line=ClosestPointOnSegment(Position, Start2, End2)-Position;
+	Line=ClosestPointOnSegment(Position, Beam_Start1, Beam_End1)-Position;
 	Light=normalize(Line);
 
 	NdotL=vec3(1.0, 1.0, 1.0)*max(0.0, dot(n, Light));
