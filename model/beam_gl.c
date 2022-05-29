@@ -140,3 +140,8 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 	//glDrawElements(GL_TRIANGLES, triangleCount*3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
+
+void DestroyBeam(void)
+{
+	FREE(BeamVB);
+}

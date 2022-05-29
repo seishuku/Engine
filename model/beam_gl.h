@@ -3,5 +3,6 @@
 
 int32_t InitBeam(void);
 void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float radius);
+void DestroyBeam(void);
 
 #endif

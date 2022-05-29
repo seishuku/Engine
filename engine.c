@@ -498,7 +498,11 @@ bool Init(void)
 
 void Destroy(void)
 {
+	FREE(Hellknight_Idle.data);
+
 	Audio_Destroy();
+
+	DestroyBeam();
 
 	CameraDeletePath(&CameraPath);
 
