@@ -16,7 +16,7 @@ kernel void add_density_velocity(global float *u0, global float *v0, global floa
 	d0[IX(x, y, z, width, height, depth)]+=den;
 }
 
-void lin_solve(float *x, float *x0, float a, float c, int iter)
+void lin_solve(global float *x, global float *x0, float a, float c, int iter)
 {
 	int i=get_global_id(0);
 	int j=get_global_id(1);
