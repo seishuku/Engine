@@ -72,7 +72,7 @@ void main()
 
     while(ray_length>0.0&&ray_length<steps)
     {
-        float intensity=pow(texture(Volume, position).r, 0.25);
+        float intensity=pow(texture(Volume, position).r, 0.5);
 
         vec4 c=ramp(intensity);
 

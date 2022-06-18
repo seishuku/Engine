@@ -384,10 +384,8 @@ void Render(void)
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	DrawModel3DS(&Box);
 	DrawSkybox();
 	glFrontFace(GL_CW);
-//	DrawModel3DS(&Box);
 	DrawSkybox();
 	glDisable(GL_BLEND);
 	glFrontFace(GL_CCW);
@@ -498,9 +496,9 @@ bool Init(void)
 
 	glGenTextures(1, &Objects[TEXTURE_FLUID]);
 	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, Fluid.w, Fluid.h, Fluid.d, 0, GL_RED, GL_FLOAT, NULL);
