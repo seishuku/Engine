@@ -19,6 +19,8 @@
 #include "model/obj_gl.h"
 #include "model/beam_gl.h"
 #include "audio/audio.h"
+#include "opencl/opencl.h"
+#include "fluid/fluid3d.h"
 
 #define CAMERA_RECORDING 0
 
@@ -29,6 +31,10 @@ extern float fps, fFrameTime, fTimeStep, fTime;
 Sample_t Hellknight_Idle;
 
 uint32_t Objects[NUM_OBJECTS];
+
+Fluid3D_t Fluid;
+
+Model3DS_t Box;
 
 ModelOBJ_t Level;
 
@@ -227,6 +233,15 @@ void Render(void)
 {
 	matrix local;
 
+	Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 10.0f, 0.0f, 0.0f, 4.0f);
+
+	Fluid3D_AddDensityVelocity(&Fluid, Fluid.w-5, (Fluid.h/2), Fluid.d/2, -10.0f, 0.0f, 0.0f, 4.0f);
+
+	Fluid3D_Step(&Fluid, fTimeStep);
+
+	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, Fluid.w, Fluid.h, Fluid.d, 0, GL_RED, GL_FLOAT, Fluid.den);
+
 	for(int32_t i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
@@ -243,15 +258,15 @@ void Render(void)
 	////
 
 	// Trigger sound playback at frame 60, retrigger locks it out so it doesn't rapid fire the sound.
-	if(Hellknight.frame==60&&retrigger)
-	{
-		Audio_PlaySample(&Hellknight_Idle, false);
-		retrigger=false;
-	}
+	//if(Hellknight.frame==60&&retrigger)
+	//{
+	//	Audio_PlaySample(&Hellknight_Idle, false);
+	//	retrigger=false;
+	//}
 
 	// Reset trigger lock so it will play again on next loop.
-	if(Hellknight.frame>61)
-		retrigger=true;
+	//if(Hellknight.frame>61)
+	//	retrigger=true;
 
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
@@ -356,6 +371,27 @@ void Render(void)
 	glDisable(GL_BLEND);
 	/////
 
+	glUseProgram(Objects[GLSL_VOL_SHADER]);
+	glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
+
+	glUniform3f(0, (float)Width, (float)Height, 90.0f);
+
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
+	glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	DrawModel3DS(&Box);
+	DrawSkybox();
+	glFrontFace(GL_CW);
+//	DrawModel3DS(&Box);
+	DrawSkybox();
+	glDisable(GL_BLEND);
+	glFrontFace(GL_CCW);
+
 	glActiveTexture(GL_TEXTURE0);
 
 	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
@@ -426,6 +462,12 @@ bool Init(void)
 	else
 		return false;
 
+	// Load the "level" Alias/Wavefront model
+	if(Load3DS(&Box, "./assets/box.3ds"))
+		BuildVBO3DS(&Box);
+	else
+		return false;
+
 	// Compile/link MD5 skinning compute program
 	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });
 
@@ -443,6 +485,26 @@ bool Init(void)
 
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
+
+	// Volume rendering shader
+	Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });
+	glUseProgram(Objects[GLSL_VOL_SHADER]);
+	Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
+	Objects[GLSL_VOL_MV]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "mv");
+	Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
+
+	if(!Fluid3D_Init(&Fluid, 256, 256, 256, 0.0f, 0.0f))
+		return false;
+
+	glGenTextures(1, &Objects[TEXTURE_FLUID]);
+	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, Fluid.w, Fluid.h, Fluid.d, 0, GL_RED, GL_FLOAT, NULL);
+
 
 	// General lighting shader
 	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL/*"./shaders/tbnvis_g.glsl"*/, NULL });
@@ -502,6 +564,8 @@ bool Init(void)
 
 void Destroy(void)
 {
+	Fluid3D_Destroy(&Fluid);
+
 	FREE(Hellknight_Idle.data);
 
 	Audio_Destroy();

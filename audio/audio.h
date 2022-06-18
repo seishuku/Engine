@@ -5,7 +5,7 @@
 
 typedef struct
 {
-    int16_t *data;
+    uint16_t *data;
     uint32_t pos, len;
     vec3 xyz;
 } Sample_t;

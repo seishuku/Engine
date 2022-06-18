@@ -305,11 +305,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="fluid\fluid3d.c" />
     <ClCompile Include="font\font.c" />
     <ClCompile Include="image\dds.c" />
     <ClCompile Include="image\image.c" />
     <ClCompile Include="image\qoi.c" />
     <ClCompile Include="image\tga.c" />
+    <ClCompile Include="math\fft.c" />
     <ClCompile Include="math\math.c" />
     <ClCompile Include="model\3ds.c" />
     <ClCompile Include="model\3ds_gl.c" />
@@ -320,16 +322,19 @@
     <ClCompile Include="model\obj_gl.c" />
     <ClCompile Include="model\quad_gl.c" />
     <ClCompile Include="model\skybox_gl.c" />
+    <ClCompile Include="opencl\opencl.c" />
     <ClCompile Include="opengl\opengl.c" />
     <ClCompile Include="system\win32.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio\audio.h" />
     <ClInclude Include="camera\camera.h" />
+    <ClInclude Include="fluid\fluid3d.h" />
     <ClInclude Include="font\font.h" />
     <ClInclude Include="font\fontdata.h" />
     <ClInclude Include="gl_objects.h" />
     <ClInclude Include="image\image.h" />
+    <ClInclude Include="math\fft.h" />
     <ClInclude Include="math\math.h" />
     <ClInclude Include="model\3ds.h" />
     <ClInclude Include="model\3ds_gl.h" />
@@ -339,14 +344,16 @@
     <ClInclude Include="model\obj.h" />
     <ClInclude Include="model\obj_gl.h" />
     <ClInclude Include="model\skybox_gl.h" />
+    <ClInclude Include="opencl\opencl.h" />
     <ClInclude Include="opengl\opengl.h" />
     <ClInclude Include="system\system.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fluid\fluid3d.cl" />
     <None Include="shaders\beam_f.glsl" />
     <None Include="shaders\beam_v.glsl" />
-    <None Include="shaders\cube_f.glsl" />
-    <None Include="shaders\cube_v.glsl" />
+    <None Include="shaders\vol_f.glsl" />
+    <None Include="shaders\vol_v.glsl" />
     <None Include="shaders\distance_f.glsl" />
     <None Include="shaders\distance_g.glsl" />
     <None Include="shaders\distance_v.glsl" />

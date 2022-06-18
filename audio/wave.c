@@ -32,27 +32,33 @@ void Resample(void *in, int inwidth, int inrate, int inlength, int16_t *out, int
     }
 }
 
-// Load a WAVE sound file, this should search for chunks, not blindly load.
+// Load a WAVE sound file, this *probably* should search for chunks, not blindly load... Whatever.
 // This also will only accept PCM audio streams and mono, ideally stereo isn't needed
 // because most sound effcts will be panned/spatialized into stereo for "3D" audio.
 bool Audio_LoadStatic(char *Filename, Sample_t *Sample)
 {
     FILE *stream=NULL;
-    uint32_t riff_magic, wave_magic, fmt_magic, data_magic;
-    uint16_t format;
-    uint16_t channels;
-    uint32_t frequency;
-    uint16_t sample;
-    uint32_t length;
+    uint32_t riff_magic=0, wave_magic=0, fmt_magic=0, data_magic=0;
+    uint16_t format=0;
+    uint16_t channels=0;
+    uint32_t frequency=0;
+    uint16_t sample=0;
+    uint32_t length=0;
+    uint32_t fileSize=0, RIFFsize=0;
 
     if((stream=fopen(Filename, "rb"))==NULL)
         return 0;
 
+    // This should match the RIFF chuck size
+    fseek(stream, 0, SEEK_END);
+    fileSize=ftell(stream)-(sizeof(uint32_t)*2);
+    fseek(stream, 0, SEEK_SET);
+
     // Header
     fread(&riff_magic, sizeof(uint32_t), 1, stream);    // RIFF magic marker ("RIFF")
-    fseek(stream, sizeof(uint32_t), SEEK_CUR);          // File size
+    fread(&RIFFsize, sizeof(uint32_t), 1, stream);      // RIFF chuck size
 
-    if(riff_magic!=RIFF_MAGIC)
+    if(riff_magic!=RIFF_MAGIC&&fileSize!=RIFFsize)
     {
         fclose(stream);
         return 0;
@@ -100,7 +106,8 @@ bool Audio_LoadStatic(char *Filename, Sample_t *Sample)
 
     fread(&length, sizeof(uint32_t), 1, stream);        // Length of data block
 
-    int16_t *buffer=(int16_t *)malloc(length);
+    // Allocate memory for data
+    uint8_t *buffer=(uint8_t *)malloc(length);
 
     if(buffer==NULL)
     {
@@ -108,15 +115,18 @@ bool Audio_LoadStatic(char *Filename, Sample_t *Sample)
         return 0;
     }
 
+    // Read in the audio data
     fread(buffer, 1, length, stream);
 
     fclose(stream);
 
+    // Divide by sample size, so that legnth is the number of actual samples, not the data length.
     length/=sample>>3;
 
-    // Covert to match primary buffer sampling rate
+    // Convert to match primary buffer sampling rate.
     uint32_t outputSize=(uint32_t)(length/((float)frequency/SAMPLE_RATE));
 
+    // Allocate memory for new resampled audio buffer.
     int16_t *resampled=(int16_t *)malloc(sizeof(int16_t)*outputSize);
 
     if(resampled==NULL)
@@ -125,10 +135,13 @@ bool Audio_LoadStatic(char *Filename, Sample_t *Sample)
         return 0;
     }
 
+    // Resample the audio buffer
     Resample(buffer, sample>>3, frequency, length, resampled, SAMPLE_RATE);
 
+    // Free the original buffer
     FREE(buffer);
 
+    // Assign pointers and other data
     Sample->data=resampled;
     Sample->len=outputSize;
     Sample->pos=0;

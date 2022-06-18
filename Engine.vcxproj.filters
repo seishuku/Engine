@@ -64,6 +64,15 @@
     <ClCompile Include="audio\wave.c">
       <Filter>Source\audio</Filter>
     </ClCompile>
+    <ClCompile Include="math\fft.c">
+      <Filter>Source\math</Filter>
+    </ClCompile>
+    <ClCompile Include="opencl\opencl.c">
+      <Filter>Source\opencl</Filter>
+    </ClCompile>
+    <ClCompile Include="fluid\fluid3d.c">
+      <Filter>Source\fluid</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -116,6 +125,15 @@
     </ClInclude>
     <ClInclude Include="audio\audio.h">
       <Filter>Headers\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="math\fft.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="fluid\fluid3d.h">
+      <Filter>Headers\fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="opencl\opencl.h">
+      <Filter>Headers\opencl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +194,18 @@
     <Filter Include="Source\audio">
       <UniqueIdentifier>{9fadab17-c696-4b55-8518-fc394868aecb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\fluid">
+      <UniqueIdentifier>{9dd159e8-a559-4a0d-a4ab-dbb73e6fae81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\opencl">
+      <UniqueIdentifier>{8ec2d120-0dcc-45bb-921c-98440aec5391}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\opencl">
+      <UniqueIdentifier>{ed875db9-7ddc-4e13-8623-8cfe9515a06a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\fluid">
+      <UniqueIdentifier>{78339d38-167e-4216-9024-09e7095e5e06}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\distance_f.glsl">
@@ -202,10 +232,10 @@
     <None Include="shaders\distance_g.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\cube_f.glsl">
+    <None Include="shaders\vol_f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\cube_v.glsl">
+    <None Include="shaders\vol_v.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\beam_f.glsl">
@@ -215,6 +245,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\tbnvis_g.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="fluid\fluid3d.cl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

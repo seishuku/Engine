@@ -188,7 +188,7 @@ void Font_Print(float x, float y, char *string, ...)
 		// Allocate buffer for instance data
 		glGenBuffers(1, &Font_Instanced);
 		glBindBuffer(GL_ARRAY_BUFFER, Font_Instanced);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_DYNAMIC_READ);
 
 		// Set instance data
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*7, (char *)0);
@@ -205,7 +205,7 @@ void Font_Print(float x, float y, char *string, ...)
 
 	// Update instance data
 	glBindBuffer(GL_ARRAY_BUFFER, Font_Instanced);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_DYNAMIC_READ);
 	verts=(float *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 
 	if(verts==NULL)
