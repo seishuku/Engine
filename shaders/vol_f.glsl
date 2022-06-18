@@ -48,7 +48,7 @@ vec4 ramp(float t)
 const vec3 top=vec3(1.0, 1.0, 1.0);
 const vec3 bottom=vec3(-1.0, -1.0, -1.0);
 
-layout(location=0) uniform vec3 fSize;
+uniform vec3 fSize;
 
 void main()
 {

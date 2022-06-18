@@ -375,7 +375,7 @@ void Render(void)
 	glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
 	glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
 
-	glUniform3f(0, (float)Width, (float)Height, 90.0f);
+	glUniform3f(Objects[GLSL_VOL_FSIZE], (float)Width, (float)Height, 90.0f);
 
 	MatrixIdentity(local);
 	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
@@ -490,6 +490,7 @@ bool Init(void)
 	Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
 	Objects[GLSL_VOL_MV]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "mv");
 	Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
+	Objects[GLSL_VOL_FSIZE]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "fSize");
 
 	if(!Fluid3D_Init(&Fluid, 256, 256, 256, 0.0f, 0.0f))
 		return false;
