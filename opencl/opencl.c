@@ -107,21 +107,15 @@ cl_program OpenCL_LoadProgam(OpenCLContext_t *Context, const char *Filename)
 	fclose(Stream);
 
 	cl_program Program=clCreateProgramWithSource(Context->Context, 1, &Buffer, &Length, &Error);
+	DBGPRINTF("%s clCreateProgram - %s\n", Filename, clGetErrorString(Error));
 
-	DBGPRINTF("%s - %s\n", Filename, clGetErrorString(Error));
-	
-	clBuildProgram(Program, 1, Context->Devices, NULL, NULL, NULL);
+	Error=clBuildProgram(Program, 1, &Context->Devices[0], "-cl-std=CL2.0", NULL, NULL);
+	DBGPRINTF("%s clBuildProgram - %s\n", Filename, clGetErrorString(Error));
 
 	clGetProgramBuildInfo(Program, Context->Devices[0], CL_PROGRAM_BUILD_LOG, 0, NULL, &Length);
-
-	cl_char *build_log=(cl_char *)malloc((Length+1));
-
-	// Second call to get the log
+	cl_char *build_log=(cl_char *)calloc(Length+1, sizeof(cl_char));
 	clGetProgramBuildInfo(Program, Context->Devices[0], CL_PROGRAM_BUILD_LOG, Length, build_log, NULL);
-	
-	build_log[Length]='\0';
-
-	DBGPRINTF("%s - %s\n", Filename, build_log);
+	DBGPRINTF("%s CL_PROGRAM_BUILD_LOG - %s\n", Filename, build_log);
 
 	free(build_log);
 
@@ -171,7 +165,15 @@ int OpenCL_Init(OpenCLContext_t *Context)
 		clGetDeviceIDs(Platform, CL_DEVICE_TYPE_GPU, Context->NumDevices, Context->Devices, NULL);
 	}
 
-	Context->Context=clCreateContext(NULL, 1, Context->Devices, NULL, NULL, NULL);
+	cl_context_properties Properties[]=
+	{
+		CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
+		CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
+		CL_CONTEXT_PLATFORM, (cl_context_properties)Platform,
+		0
+	};
+
+	Context->Context=clCreateContext(Properties, 1, Context->Devices, NULL, NULL, NULL);
 	Context->CommandQueue=clCreateCommandQueueWithProperties(Context->Context, Context->Devices[0], 0, NULL);
 
 	return 1;
@@ -181,4 +183,6 @@ void OpenCL_Destroy(OpenCLContext_t *Context)
 {
 	clReleaseCommandQueue(Context->CommandQueue);
 	clReleaseContext(Context->Context);
+
+	free(Context->Devices);
 }

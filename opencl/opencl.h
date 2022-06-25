@@ -4,6 +4,7 @@
 #define CL_TARGET_OPENCL_VERSION 220
 
 #include <cl/cl.h>
+#include <cl/cl_gl.h>
 
 typedef struct
 {

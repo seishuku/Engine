@@ -34,8 +34,6 @@ uint32_t Objects[NUM_OBJECTS];
 
 Fluid3D_t Fluid;
 
-Model3DS_t Box;
-
 ModelOBJ_t Level;
 
 Model_t Hellknight;
@@ -233,14 +231,15 @@ void Render(void)
 {
 	matrix local;
 
-	Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 10.0f, 0.0f, 0.0f, 4.0f);
+	clEnqueueAcquireGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
 
-	Fluid3D_AddDensityVelocity(&Fluid, Fluid.w-5, (Fluid.h/2), Fluid.d/2, -10.0f, 0.0f, 0.0f, 4.0f);
+	Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 1.0f, 0.0f, 0.0f, 0.5f);
+	Fluid3D_AddDensityVelocity(&Fluid, Fluid.w-5, (Fluid.h/2), Fluid.d/2, -1.0f, 0.0f, 0.0f, 0.5f);
 
 	Fluid3D_Step(&Fluid, fTimeStep);
 
-	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, Fluid.w, Fluid.h, Fluid.d, 0, GL_RED, GL_FLOAT, Fluid.den);
+	clEnqueueReleaseGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
+	clFlush(Fluid.Context.CommandQueue);
 
 	for(int32_t i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
@@ -292,7 +291,7 @@ void Render(void)
 	else
 		CameraUpdate(&Camera, fTimeStep, ModelView);
 
-	Audio_SetListenerOrigin(Camera.Position, Camera.Right);
+	//Audio_SetListenerOrigin(Camera.Position, Camera.Right);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
@@ -379,16 +378,16 @@ void Render(void)
 
 	MatrixIdentity(local);
 	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
+	MatrixScale(50.0f, 50.0f, 50.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
+
 	glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
+	glBindTextureUnit(1, Objects[TEXTURE_TRANSFER]);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	DrawSkybox();
-	glFrontFace(GL_CW);
-	DrawSkybox();
 	glDisable(GL_BLEND);
-	glFrontFace(GL_CCW);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -460,12 +459,6 @@ bool Init(void)
 	else
 		return false;
 
-	// Load the "level" Alias/Wavefront model
-	if(Load3DS(&Box, "./assets/box.3ds"))
-		BuildVBO3DS(&Box);
-	else
-		return false;
-
 	// Compile/link MD5 skinning compute program
 	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });
 
@@ -492,17 +485,27 @@ bool Init(void)
 	Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
 	Objects[GLSL_VOL_FSIZE]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "fSize");
 
+	float transferFunc[]=
+	{
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.5f, 1.0f, 1.0f,
+		0.0f, 1.0f, 1.0f, 1.0f,
+		0.0f, 1.0f, 1.0f, 1.0f,
+		0.0f, 0.5f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 0.0f, 0.0f
+	};
+
+	glGenTextures(1, &Objects[TEXTURE_TRANSFER]);
+	glBindTexture(GL_TEXTURE_1D, Objects[TEXTURE_TRANSFER]);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, 8, 0, GL_RGBA, GL_FLOAT, transferFunc);
+
 	if(!Fluid3D_Init(&Fluid, 256, 256, 256, 0.0f, 0.0f))
 		return false;
-
-	glGenTextures(1, &Objects[TEXTURE_FLUID]);
-	glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, Fluid.w, Fluid.h, Fluid.d, 0, GL_RED, GL_FLOAT, NULL);
 
 
 	// General lighting shader

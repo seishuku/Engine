@@ -12,33 +12,33 @@ void DrawSkybox(void)
 
 void BuildSkyboxVBO(void)
 {
-	float scale=25.0f, w=1.0f;
+	float scale=1.0f, w=1.0f, tex_scale=1.0f;
 	float SkyboxVerts[]=
 	{
-		+scale, -scale, -scale, w, +1.0f, -1.0f, -1.0f, //0 Right
-		+scale, -scale, +scale, w, +1.0f, -1.0f, +1.0f,	//1
-		+scale, +scale, +scale, w, +1.0f, +1.0f, +1.0f, //2
-		+scale, +scale, -scale, w, +1.0f, +1.0f, -1.0f, //3
-		-scale, -scale, +scale, w, -1.0f, -1.0f, +1.0f, //4 Left
-		-scale, -scale, -scale, w, -1.0f, -1.0f, -1.0f, //5
-		-scale, +scale, -scale, w, -1.0f, +1.0f, -1.0f, //6
-		-scale, +scale, +scale, w, -1.0f, +1.0f, +1.0f, //7
-		-scale, +scale, -scale, w, -1.0f, +1.0f, -1.0f, //8 Top
-		+scale, +scale, -scale, w, +1.0f, +1.0f, -1.0f, //9
-		+scale, +scale, +scale, w, +1.0f, +1.0f, +1.0f, //10
-		-scale, +scale, +scale, w, -1.0f, +1.0f, +1.0f, //11
-		-scale, -scale, +scale, w, -1.0f, -1.0f, +1.0f, //12 Bottom
-		+scale, -scale, +scale, w, +1.0f, -1.0f, +1.0f, //13
-		+scale, -scale, -scale, w, +1.0f, -1.0f, -1.0f, //14
-		-scale, -scale, -scale, w, -1.0f, -1.0f, -1.0f, //15
-		+scale, -scale, +scale, w, +1.0f, -1.0f, +1.0f, //16 Front
-		-scale, -scale, +scale, w, -1.0f, -1.0f, +1.0f, //17
-		-scale, +scale, +scale, w, -1.0f, +1.0f, +1.0f, //18
-		+scale, +scale, +scale, w, +1.0f, +1.0f, +1.0f, //19
-		-scale, -scale, -scale, w, -1.0f, -1.0f, -1.0f, //20 Back
-		+scale, -scale, -scale, w, +1.0f, -1.0f, -1.0f, //21
-		+scale, +scale, -scale, w, +1.0f, +1.0f, -1.0f, //22
-		-scale, +scale, -scale, w, -1.0f, +1.0f, -1.0f  //23
+		+scale, -scale, -scale, w, +tex_scale, -tex_scale, -tex_scale, //0 Right
+		+scale, -scale, +scale, w, +tex_scale, -tex_scale, +tex_scale, //1
+		+scale, +scale, +scale, w, +tex_scale, +tex_scale, +tex_scale, //2
+		+scale, +scale, -scale, w, +tex_scale, +tex_scale, -tex_scale, //3
+		-scale, -scale, +scale, w, -tex_scale, -tex_scale, +tex_scale, //4 Left
+		-scale, -scale, -scale, w, -tex_scale, -tex_scale, -tex_scale, //5
+		-scale, +scale, -scale, w, -tex_scale, +tex_scale, -tex_scale, //6
+		-scale, +scale, +scale, w, -tex_scale, +tex_scale, +tex_scale, //7
+		-scale, +scale, -scale, w, -tex_scale, +tex_scale, -tex_scale, //8 Top
+		+scale, +scale, -scale, w, +tex_scale, +tex_scale, -tex_scale, //9
+		+scale, +scale, +scale, w, +tex_scale, +tex_scale, +tex_scale, //10
+		-scale, +scale, +scale, w, -tex_scale, +tex_scale, +tex_scale, //11
+		-scale, -scale, +scale, w, -tex_scale, -tex_scale, +tex_scale, //12 Bottom
+		+scale, -scale, +scale, w, +tex_scale, -tex_scale, +tex_scale, //13
+		+scale, -scale, -scale, w, +tex_scale, -tex_scale, -tex_scale, //14
+		-scale, -scale, -scale, w, -tex_scale, -tex_scale, -tex_scale, //15
+		+scale, -scale, +scale, w, +tex_scale, -tex_scale, +tex_scale, //16 Front
+		-scale, -scale, +scale, w, -tex_scale, -tex_scale, +tex_scale, //17
+		-scale, +scale, +scale, w, -tex_scale, +tex_scale, +tex_scale, //18
+		+scale, +scale, +scale, w, +tex_scale, +tex_scale, +tex_scale, //19
+		-scale, -scale, -scale, w, -tex_scale, -tex_scale, -tex_scale, //20 Back
+		+scale, -scale, -scale, w, +tex_scale, -tex_scale, -tex_scale, //21
+		+scale, +scale, -scale, w, +tex_scale, +tex_scale, -tex_scale, //22
+		-scale, +scale, -scale, w, -tex_scale, +tex_scale, -tex_scale  //23
 	};
 	uint16_t SkyboxTris[]=
 	{

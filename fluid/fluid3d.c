@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <math.h>
 #include "../system/system.h"
+#include "../opengl/opengl.h"
 #include "../opencl/opencl.h"
+#include "../gl_objects.h"
 #include "fluid3d.h"
 
 #define IX(x, y, z, sx, sy, sz) (min(sx-1, max(1, (x)))+min(sy-1, max(1, (y)))*sx+min(sz-1, max(1, (z)))*sx*sx)
@@ -67,34 +69,62 @@ bool Fluid3D_Init(Fluid3D_t *Fluid, int width, int height, int depth, float diff
 		Fluid->Program=OpenCL_LoadProgam(&Fluid->Context, "./fluid/fluid3d.cl");
 
 		Fluid->SetDensityVelocity=clCreateKernel(Fluid->Program, "set_density_velocity", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel set_density_velocity %s\n", clGetErrorString(Error));
+
 		Fluid->AddDensityVelocity=clCreateKernel(Fluid->Program, "add_density_velocity", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel add_density_velocity %s\n", clGetErrorString(Error));
+
 		Fluid->Diffuse=clCreateKernel(Fluid->Program, "diffuse", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel diffuse %s\n", clGetErrorString(Error));
+
 		Fluid->Advect=clCreateKernel(Fluid->Program, "advect", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel advect %s\n", clGetErrorString(Error));
+
 		Fluid->Project1=clCreateKernel(Fluid->Program, "project1", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel project1 %s\n", clGetErrorString(Error));
+
 		Fluid->Project2=clCreateKernel(Fluid->Program, "project2", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel project2 %s\n", clGetErrorString(Error));
+
 		Fluid->Project3=clCreateKernel(Fluid->Program, "project3", &Error);
-		DBGPRINTF("%s\n", clGetErrorString(Error));
+		DBGPRINTF("clCreateKernel project3 %s\n", clGetErrorString(Error));
+
+		glGenTextures(1, &Objects[TEXTURE_FLUID]);
+		glBindTexture(GL_TEXTURE_3D, Objects[TEXTURE_FLUID]);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexStorage3D(GL_TEXTURE_3D, 1, GL_R32F, Fluid->w, Fluid->h, Fluid->d);
+
+		Fluid->den=clCreateFromGLTexture(Fluid->Context.Context, CL_MEM_WRITE_ONLY, GL_TEXTURE_3D, 0, Objects[TEXTURE_FLUID], &Error);
+		DBGPRINTF("clCreateFromGLTexture den %s\n", clGetErrorString(Error));
 
 		Fluid->d0=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer d0 %s\n", clGetErrorString(Error));
+
 		Fluid->d1=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer d1 %s\n", clGetErrorString(Error));
+
 		Fluid->u0=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer u0 %s\n", clGetErrorString(Error));
+
 		Fluid->u1=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer u1 %s\n", clGetErrorString(Error));
+
 		Fluid->v0=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer v0 %s\n", clGetErrorString(Error));
+
 		Fluid->v1=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer v1 %s\n", clGetErrorString(Error));
+
 		Fluid->w0=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer w0 %s\n", clGetErrorString(Error));
+
 		Fluid->w1=clCreateBuffer(Fluid->Context.Context, CL_MEM_READ_WRITE, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, NULL, &Error);
+		DBGPRINTF("clCreateBuffer w1 %s\n", clGetErrorString(Error));
 	}
-
-	Fluid->den=calloc(width*height*depth, sizeof(float));
-
-	if(Fluid->den==NULL)
-		return false;
 #endif
 
 	return true;
@@ -112,7 +142,27 @@ void Fluid3D_Destroy(Fluid3D_t *Fluid)
 	free(Fluid->w0);
 	free(Fluid->w1);
 #else
-	free(Fluid->den);
+	clReleaseMemObject(Fluid->den);
+	clReleaseMemObject(Fluid->d0);
+	clReleaseMemObject(Fluid->d1);
+	clReleaseMemObject(Fluid->u0);
+	clReleaseMemObject(Fluid->u1);
+	clReleaseMemObject(Fluid->v0);
+	clReleaseMemObject(Fluid->v1);
+	clReleaseMemObject(Fluid->w0);
+	clReleaseMemObject(Fluid->w1);
+
+	clReleaseKernel(Fluid->SetDensityVelocity);
+	clReleaseKernel(Fluid->AddDensityVelocity);
+	clReleaseKernel(Fluid->Diffuse);
+	clReleaseKernel(Fluid->Advect);
+	clReleaseKernel(Fluid->Project1);
+	clReleaseKernel(Fluid->Project2);
+	clReleaseKernel(Fluid->Project3);
+
+	clReleaseProgram(Fluid->Program);
+
+	OpenCL_Destroy(&Fluid->Context);
 #endif
 }
 
@@ -395,7 +445,7 @@ void Fluid3D_Step(Fluid3D_t *Fluid, float dt)
 	clSetKernelArg(Fluid->Advect, 5, sizeof(cl_float), &dt);
 	clEnqueueNDRangeKernel(Fluid->Context.CommandQueue, Fluid->Advect, 3, NULL, size, NULL, 0, NULL, NULL);
 
-	clEnqueueReadBuffer(Fluid->Context.CommandQueue, Fluid->d0, CL_TRUE, 0, sizeof(float)*Fluid->w*Fluid->h*Fluid->d, Fluid->den, 0, NULL, NULL);
+	clEnqueueCopyBufferToImage(Fluid->Context.CommandQueue, Fluid->d0, Fluid->den, 0, (size_t[]) { 0, 0, 0 }, (size_t[]) { Fluid->w, Fluid->h, Fluid->d }, 0, NULL, NULL);
 #endif
 }
 
@@ -404,7 +454,7 @@ float Fluid3D_GetDensity(Fluid3D_t *Fluid, int x, int y, int z)
 #ifdef FLUID3D_CPU
 	return Fluid->d0[IX(x, y, z, Fluid->w, Fluid->h, Fluid->d)];
 #else
-	return Fluid->den[IX(x, y, z, Fluid->w, Fluid->h, Fluid->d)];
+	return 0.0f;
 #endif
 }
 

@@ -20,6 +20,7 @@ typedef struct
 
 	cl_program Program;
 
+	cl_kernel CopyToTexture;
 	cl_kernel AddDensityVelocity;
 	cl_kernel SetDensityVelocity;
 	cl_kernel Diffuse;
@@ -33,7 +34,7 @@ typedef struct
 	cl_mem v0, v1;
 	cl_mem w0, w1;
 
-	float *den;
+	cl_mem den;
 #endif
 } Fluid3D_t;
 
