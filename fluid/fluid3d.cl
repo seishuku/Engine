@@ -1,4 +1,4 @@
-#define IX(x, y, z, sx, sy, sz) (min(sx-1, max(1, (x)))+min(sy-1, max(1, (y)))*sx+min(sz-1, max(1, (z)))*sx*sx)
+#define IX(x, y, z, sx, sy, sz) (min(sx-1, max(1, (x)))+min(sy-1, max(1, (y)))*sx+(min(sz-1, max(1, (z)))*sx*sy))
 
 kernel void set_density_velocity(global float *u0, global float *v0, global float *w0, global float *d0, int x, int y, int z, float u, float v, float w, float den, int width, int height, int depth)
 {

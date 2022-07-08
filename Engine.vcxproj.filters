@@ -73,6 +73,9 @@
     <ClCompile Include="fluid\fluid3d.c">
       <Filter>Source\fluid</Filter>
     </ClCompile>
+    <ClCompile Include="particle\particle.c">
+      <Filter>Source\particle</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -134,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="opencl\opencl.h">
       <Filter>Headers\opencl</Filter>
+    </ClInclude>
+    <ClInclude Include="particle\particle.h">
+      <Filter>Headers\particle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -206,6 +212,12 @@
     <Filter Include="Headers\fluid">
       <UniqueIdentifier>{78339d38-167e-4216-9024-09e7095e5e06}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\particle">
+      <UniqueIdentifier>{e18cac6a-33de-4452-90f9-3faa7f80e0e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\particle">
+      <UniqueIdentifier>{1e03de03-c579-4694-89fb-82fec104f6a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\distance_f.glsl">
@@ -248,6 +260,15 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="fluid\fluid3d.cl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\particle_f.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\particle_g.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\particle_v.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

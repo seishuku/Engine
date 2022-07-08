@@ -11,13 +11,13 @@ uniform mat4 local;
 
 layout(location=0) out vec4 Output;
 
-const int steps=500;
-const float step_length=1.0/steps;
-
-bool intersectBox(vec3 r_o, vec3 r_d, vec3 boxmin, vec3 boxmax, out float tnear, out float tfar)
+vec2 intersectBox(vec3 r_o, vec3 r_d)
 {
+    const vec3 boxmin=vec3(-1.0, -1.0, -1.0);
+    const vec3 boxmax=vec3(1.0, 1.0, 1.0);
+
     // compute intersection of ray with all six bbox planes
-    vec3 invR = vec3(1.0, 1.0, 1.0)/r_d;
+    vec3 invR = 1.0/r_d;
 
     vec3 tbot=invR*(boxmin-r_o);
     vec3 ttop=invR*(boxmax-r_o);
@@ -27,55 +27,38 @@ bool intersectBox(vec3 r_o, vec3 r_d, vec3 boxmin, vec3 boxmax, out float tnear,
     vec3 tmax=max(ttop, tbot);
 
     // find the largest tmin and the smallest tmax
-    float largest_tmin=max(max(tmin.x, tmin.y), max(tmin.x, tmin.z));
-    float smallest_tmax=min(min(tmax.x, tmax.y), min(tmax.x, tmax.z));
-
-	tnear=largest_tmin;
-	tfar=smallest_tmax;
-
-    if(smallest_tmax>largest_tmin)
-        return true;
-    else
-        return false;
+    return vec2(max(max(tmin.x, tmin.y), max(tmin.x, tmin.z)), min(min(tmax.x, tmax.y), min(tmax.x, tmax.z)));
 }
 
-const vec3 top=vec3(1.0, 1.0, 1.0);
-const vec3 bottom=vec3(-1.0, -1.0, -1.0);
-
-uniform vec3 fSize;
+const int numSteps=500;
 
 void main()
 {
-    float tnear, tfar;
-    vec3 ray_direction=normalize(vec4((2.0*gl_FragCoord.xy/fSize.xy-1.0)*vec2(fSize.x/fSize.y, 1.0), -1.0/tan(radians(fSize.z)/2.0), 0.0)*mv*local).xyz;
-    vec3 ray_origin=-UV;
+    vec3 ray_origin=UV;
+    vec3 ray_direction=normalize(inverse(mv)[3].xyz-Position);
 
-    if(!intersectBox(ray_origin, ray_direction, top, bottom, tnear, tfar))
-    {
-        Output=vec4(0.0);
-        return;
-    }
+    vec2 hit=intersectBox(ray_origin, ray_direction);
 
-    vec4 color=vec4(0.0);
+    if(hit.x<0.0)
+        hit.x=0.0;
 
-    vec3 ray_start=(ray_origin+ray_direction*tnear-bottom)/(top-bottom);
-    vec3 ray_stop=(ray_origin+ray_direction*tfar-bottom)/(top-bottom);
+	vec3 rayStart=ray_origin+ray_direction*hit.x;
+	vec3 rayStop=ray_origin+ray_direction*hit.y;
 
-    vec3 ray=ray_stop-ray_start;
-    float ray_length=length(ray);
-    vec3 step_vector=step_length*ray/ray_length;
+	float dist=distance(rayStop, rayStart);
+	float stepSize=dist/numSteps;
+	vec3 ds=normalize(rayStop-rayStart)*stepSize;
 
-    vec3 pos=ray_start;
+	vec4 color=vec4(0.0);
+	vec3 start=rayStart;
 
-    while(ray_length>0.0&&ray_length<steps)
-    {
-        vec4 c=texture(Transfer, pow(texture(Volume, pos).r, 0.5));
+	for(int i=0;i<numSteps;i++)
+	{
+        vec4 c=texture(Transfer, pow(texture(Volume, start*0.5+0.5).r, 0.5));
 
-        color=mix(color, vec4(c.xyz, 1.0), c.a*0.25);
+        color=mix(color, vec4(c.xyz, 1.0), c.a*1.0);
+        start+=ds;
+	}
 
-        ray_length-=step_length;
-        pos+=step_vector;
-    }
-
-    Output=color;
+	Output=color;
 }

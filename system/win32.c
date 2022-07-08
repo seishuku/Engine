@@ -12,6 +12,7 @@
 #include "../opengl/opengl.h"
 #include "../math/math.h"
 #include "../camera/camera.h"
+#include "../particle/particle.h"
 
 GLContext_t Context;
 
@@ -28,6 +29,10 @@ int32_t Frames=0;
 bool Auto=0;
 
 extern Camera_t Camera;
+
+extern ParticleSystem_t ParticleSystem;
+extern int32_t EmitterID0;
+extern int32_t EmitterID1;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void Render(void);
@@ -264,6 +269,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			switch(wParam)
 			{
+				case 'O':
+					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterID1);
+					break;
+
 				case 'W':
 					Camera.key_w=true;
 					break;

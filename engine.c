@@ -21,6 +21,7 @@
 #include "audio/audio.h"
 #include "opencl/opencl.h"
 #include "fluid/fluid3d.h"
+#include "particle/particle.h"
 
 #define CAMERA_RECORDING 0
 
@@ -32,7 +33,7 @@ Sample_t Hellknight_Idle;
 
 uint32_t Objects[NUM_OBJECTS];
 
-Fluid3D_t Fluid;
+//Fluid3D_t Fluid;
 
 ModelOBJ_t Level;
 
@@ -71,6 +72,10 @@ float BeamEnd1[3]={ 75.0f, 90.0f, -120.0f };
 const float radius=5.0f;
 
 int32_t DynWidth=1024, DynHeight=1024;
+
+ParticleSystem_t ParticleSystem;
+int32_t EmitterID0=-1;
+int32_t EmitterID1=-1;
 
 void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_data)
 {
@@ -231,15 +236,15 @@ void Render(void)
 {
 	matrix local;
 
-	clEnqueueAcquireGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
+	//clEnqueueAcquireGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
 
-	Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 1.0f, 0.0f, 0.0f, 0.5f);
-	Fluid3D_AddDensityVelocity(&Fluid, Fluid.w-5, (Fluid.h/2), Fluid.d/2, -1.0f, 0.0f, 0.0f, 0.5f);
+	//Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 1.0f, 0.0f, 0.0f, 0.5f);
+	//Fluid3D_AddDensityVelocity(&Fluid, Fluid.w-5, (Fluid.h/2), Fluid.d/2, -1.0f, 0.0f, 0.0f, 0.5f);
 
-	Fluid3D_Step(&Fluid, fTimeStep);
+	//Fluid3D_Step(&Fluid, fTimeStep);
 
-	clEnqueueReleaseGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
-	clFlush(Fluid.Context.CommandQueue);
+	//clEnqueueReleaseGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
+	//clFlush(Fluid.Context.CommandQueue);
 
 	for(int32_t i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
@@ -257,15 +262,15 @@ void Render(void)
 	////
 
 	// Trigger sound playback at frame 60, retrigger locks it out so it doesn't rapid fire the sound.
-	//if(Hellknight.frame==60&&retrigger)
-	//{
-	//	Audio_PlaySample(&Hellknight_Idle, false);
-	//	retrigger=false;
-	//}
+	if(Hellknight.frame==60&&retrigger)
+	{
+		Audio_PlaySample(&Hellknight_Idle, false);
+		retrigger=false;
+	}
 
 	// Reset trigger lock so it will play again on next loop.
-	//if(Hellknight.frame>61)
-	//	retrigger=true;
+	if(Hellknight.frame>61)
+		retrigger=true;
 
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
@@ -291,7 +296,7 @@ void Render(void)
 	else
 		CameraUpdate(&Camera, fTimeStep, ModelView);
 
-	//Audio_SetListenerOrigin(Camera.Position, Camera.Right);
+	Audio_SetListenerOrigin(Camera.Position, Camera.Right);
 
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
@@ -370,24 +375,36 @@ void Render(void)
 	glDisable(GL_BLEND);
 	/////
 
-	glUseProgram(Objects[GLSL_VOL_SHADER]);
-	glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
-	glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
+	///// Volume rendering
+	//glUseProgram(Objects[GLSL_VOL_SHADER]);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
 
-	glUniform3f(Objects[GLSL_VOL_FSIZE], (float)Width, (float)Height, 90.0f);
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, 0.0f, 100.0f, local);
+	//MatrixScale(50.0f, 50.0f, 50.0f, local);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
 
-	MatrixIdentity(local);
-	MatrixTranslate(0.0f, 0.0f, 100.0f, local);
-	MatrixScale(50.0f, 50.0f, 50.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
+	//glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
+	//glBindTextureUnit(1, Objects[TEXTURE_TRANSFER]);
 
-	glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
-	glBindTextureUnit(1, Objects[TEXTURE_TRANSFER]);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//DrawSkybox();
+	//glDisable(GL_BLEND);
+	/////
 
+	// FIX ME:
+	// Need to make a function for doing this by emitter ID
+	Vec3_Set(ParticleSystem.Emitter[0].Position, sinf(fTime)*50.0f, 0.0f, cosf(fTime)*50.0f);
+
+	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	DrawSkybox();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	ParticleSystem_Step(&ParticleSystem, fTimeStep);
+	ParticleSystem_Draw(&ParticleSystem);
 	glDisable(GL_BLEND);
+	glDepthMask(GL_TRUE);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -404,12 +421,26 @@ void Render(void)
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
+		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d", ParticleSystem.NumEmitter);
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
 
 bool Init(void)
 {
+	if(ParticleSystem_Init(&ParticleSystem))
+	{
+		EmitterID0=ParticleSystem_AddEmitter(&ParticleSystem, (vec3)
+		{
+			0.0f, 0.0f, 0.0f
+		}, 1000, false);
+
+		EmitterID1=ParticleSystem_AddEmitter(&ParticleSystem, (vec3)
+		{
+			100.0f, 0.0f, 100.0f
+		}, 1000, true);
+	}
+
 	if(Audio_Init())
 	{
 		if(!Audio_LoadStatic("./assets/hellknight_idle.wav", &Hellknight_Idle))
@@ -478,34 +509,33 @@ bool Init(void)
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
 
 	// Volume rendering shader
-	Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });
-	glUseProgram(Objects[GLSL_VOL_SHADER]);
-	Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
-	Objects[GLSL_VOL_MV]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "mv");
-	Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
-	Objects[GLSL_VOL_FSIZE]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "fSize");
+	//Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });
+	//glUseProgram(Objects[GLSL_VOL_SHADER]);
+	//Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
+	//Objects[GLSL_VOL_MV]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "mv");
+	//Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
 
-	float transferFunc[]=
-	{
-		0.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 1.0f,
-		0.0f, 0.5f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f, 1.0f,
-		0.0f, 0.5f, 1.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 1.0f,
-		0.0f, 0.0f, 0.0f, 0.0f
-	};
+	//float transferFunc[]=
+	//{
+	//	0.0f, 0.0f, 0.0f, 0.0f,
+	//	0.0f, 0.0f, 1.0f, 1.0f,
+	//	0.0f, 0.5f, 1.0f, 1.0f,
+	//	0.0f, 1.0f, 1.0f, 1.0f,
+	//	0.0f, 1.0f, 1.0f, 1.0f,
+	//	0.0f, 0.5f, 1.0f, 1.0f,
+	//	0.0f, 0.0f, 1.0f, 1.0f,
+	//	0.0f, 0.0f, 0.0f, 0.0f
+	//};
 
-	glGenTextures(1, &Objects[TEXTURE_TRANSFER]);
-	glBindTexture(GL_TEXTURE_1D, Objects[TEXTURE_TRANSFER]);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, 8, 0, GL_RGBA, GL_FLOAT, transferFunc);
+	//glGenTextures(1, &Objects[TEXTURE_TRANSFER]);
+	//glBindTexture(GL_TEXTURE_1D, Objects[TEXTURE_TRANSFER]);
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, 8, 0, GL_RGBA, GL_FLOAT, transferFunc);
 
-	if(!Fluid3D_Init(&Fluid, 256, 256, 256, 0.0f, 0.0f))
-		return false;
+	//if(!Fluid3D_Init(&Fluid, 128, 128, 128, 0.0f, 0.0f))
+	//	return false;		
 
 
 	// General lighting shader
@@ -566,7 +596,9 @@ bool Init(void)
 
 void Destroy(void)
 {
-	Fluid3D_Destroy(&Fluid);
+	ParticleSystem_Destroy(&ParticleSystem);
+
+//	Fluid3D_Destroy(&Fluid);
 
 	FREE(Hellknight_Idle.data);
 
