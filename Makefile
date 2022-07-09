@@ -18,17 +18,25 @@ OBJS+=image/image.o
 OBJS+=audio/audio.o
 OBJS+=audio/wave.o
 
+# math
+OBJS+=math/math.o
+OBJS+=math/fft.o
+OBJS+=opencl/opencl.o
+OBJS+=fluid/fluid3d.o
+
+# particles
+OBJS+=particle/particle.o
+
 # core stuff
 OBJS+=system/linux_x11.o
 OBJS+=opengl/opengl.o
-OBJS+=math/math.o
 OBJS+=font/font.o
 OBJS+=camera/camera.o
 OBJS+=engine.o
 
 CC=gcc
 CFLAGS=-Wall -O3 -std=c17 -I/usr/X11/include
-LDFLAGS=-L/usr/X11/lib -lGL -lX11 -lm -lportaudio
+LDFLAGS=-L/usr/X11/lib -lGL -lX11 -lm -lportaudio -lOpenCL
 
 all: $(TARGET)
 

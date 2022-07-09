@@ -167,8 +167,13 @@ int OpenCL_Init(OpenCLContext_t *Context)
 
 	cl_context_properties Properties[]=
 	{
+#ifdef WIN32
 		CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
 		CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
+#else
+		CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
+		CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+#endif
 		CL_CONTEXT_PLATFORM, (cl_context_properties)Platform,
 		0
 	};

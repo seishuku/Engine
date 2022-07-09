@@ -8,6 +8,7 @@
 #include "../opengl/opengl.h"
 #include "../math/math.h"
 #include "../camera/camera.h"
+#include "../particle/particle.h"
 #include "system.h"
 
 Display *dpy;
@@ -27,6 +28,9 @@ int32_t Frames=0;
 bool Auto=0;
 
 extern Camera_t Camera;
+
+extern ParticleSystem_t ParticleSystem;
+extern int32_t EmitterIDs[4];
 
 void Render(void);
 bool Init(void);
@@ -113,6 +117,14 @@ void EventLoop(void)
 
 					switch(Keysym)
 					{
+						case XK_Delete:
+							ParticleSystem_DeleteEmitter(&ParticleSystem, EmitterIDs[2]);
+							break;
+					
+						case XK_Return:
+							ParticleSystem_ResetEmitter(&ParticleSystem, EmitterIDs[1]);
+							break;
+
 						case 'w':
 							Camera.key_w=true;
 							break;
