@@ -24,6 +24,8 @@ typedef struct
 
 typedef struct
 {
+	int32_t NextEmitterID;
+
 	uint32_t NumEmitter;
 	ParticleEmitter_t *Emitter;
 

@@ -23,6 +23,7 @@
 #include "opencl/opencl.h"
 #include "fluid/fluid3d.h"
 #include "particle/particle.h"
+#include "lights/lights.h"
 
 #define CAMERA_RECORDING 0
 
@@ -49,26 +50,14 @@ extern bool Auto;
 
 matrix Projection, ModelView, ModelViewInv;
 
-vec4 Light0_Pos={ 0.0f, 50.0f, 200.0f, 1.0f/512.0f };
-vec4 Light0_Kd={ 1.0f, 1.0f, 1.0f, 1.0f };
+Lights_t Lights;
+int32_t LightIDs[8]={ -1, };
 
-vec4 Light1_Pos={ -800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
-vec4 Light1_Kd={ 0.75f, 0.75f, 1.0f, 1.0f };
+vec3 BeamStart0={ -75.0f, -80.0f, -120.0f };
+vec3 BeamEnd0={ -75.0f, 90.0f, -120.0f };
 
-vec4 Light2_Pos={ 800.0f, 80.0f, 800.0f, 1.0f/1024.0f };
-vec4 Light2_Kd={ 0.75f, 1.0f, 1.0f, 1.0f };
-
-vec4 Light3_Pos={ -800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
-vec4 Light3_Kd={ 0.75f, 1.0f, 0.75f, 1.0f };
-
-vec4 Light4_Pos={ 800.0f, 80.0f, -800.0f, 1.0f/1024.0f };
-vec4 Light4_Kd={ 1.0f, 0.75f, 0.75f, 1.0f };
-
-float BeamStart0[3]={ -75.0f, -80.0f, -120.0f };
-float BeamEnd0[3]={ -75.0f, 90.0f, -120.0f };
-
-float BeamStart1[3]={ 75.0f, -80.0f, -120.0f };
-float BeamEnd1[3]={ 75.0f, 90.0f, -120.0f };
+vec3 BeamStart1={ 75.0f, -80.0f, -120.0f };
+vec3 BeamEnd1={ 75.0f, 90.0f, -120.0f };
 
 const float radius=5.0f;
 
@@ -276,10 +265,9 @@ void Render(void)
 	UpdateAnimation(&Fatty, fTimeStep);
 	UpdateAnimation(&Pinky, fTimeStep);
 
-	//Light0_Pos[0]=sinf(fTime)*150.0f;
-	//Light0_Pos[2]=cosf(fTime)*150.0f;
+	Lights_UpdateSSBO(&Lights);
 
-	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Light0_Pos);
+	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Lights.Lights[0].Position);
 		
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -301,33 +289,22 @@ void Render(void)
 	// Select the shader program
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 
-	// Light parameters
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT0_POS], 1, Light0_Pos);
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT0_KD], 1, Light0_Kd);
-
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT1_POS], 1, Light1_Pos);
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT1_KD], 1, Light1_Kd);
-
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT2_POS], 1, Light2_Pos);
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT2_KD], 1, Light2_Kd);
-
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT3_POS], 1, Light3_Pos);
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT3_KD], 1, Light3_Kd);
-
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_POS], 1, Light4_Pos);
-	glUniform4fv(Objects[GLSL_LIGHT_LIGHT4_KD], 1, Light4_Kd);
-
-	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START0], 1, BeamStart0);
-	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END0], 1, BeamEnd0);
-
-	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START1], 1, BeamStart1);
-	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END1], 1, BeamEnd1);
+	// Lighting parameters
+	glUniform1i(Objects[GLSL_LIGHT_NUMLIGHTS], Lights.NumLights);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, Lights.SSBO);
 
 	// Projection matrix
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_PROJ], 1, GL_FALSE, Projection);
 
 	// Global ModelView
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_MV], 1, GL_FALSE, ModelView);
+
+	// Beam area light positions
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START0], 1, BeamStart0);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END0], 1, BeamEnd0);
+
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START1], 1, BeamStart1);
+	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END1], 1, BeamEnd1);
 
 	// Bind correct textures per model
 	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE0]);
@@ -367,14 +344,6 @@ void Render(void)
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModelOBJ(&Level);
 
-	///// Beam stuff
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
-	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
-	glDisable(GL_BLEND);
-	/////
-
 	///// Volume rendering
 	//glUseProgram(Objects[GLSL_VOL_SHADER]);
 	//glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
@@ -394,8 +363,7 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-	// Set emitter 0's position
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
+	///// Particle system stuff
 
 	// Hellknight's local transform matrix
 	MatrixIdentity(local);
@@ -403,15 +371,23 @@ void Render(void)
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 
-	// Hellknight's left and right hand locations (joints 15 and 52), after animation has been updated
+	// Hellknight's left and right hand locations (joints 16 and 53), and mouth
 	// Transform locations into our space and where the hellknight is located
-	vec3 left, right;
-	Matrix4x4MultVec3(&Hellknight.Skel[8*15], local, left);
-	Matrix4x4MultVec3(&Hellknight.Skel[8*52], local, right);
+	vec3 left, right, mouth;
+	Matrix4x4MultVec3(&Hellknight.Skel[8*16], local, left);
+	Matrix4x4MultVec3(&Hellknight.Skel[8*53], local, right);
+	Matrix4x4MultVec3(&Hellknight.Skel[8*31], local, mouth);
+
+	// Attach the fire-like emitter to the mouth
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], mouth);
 
 	// Set the two green sparklers to those locations
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
+
+	Lights_UpdatePosition(&Lights, LightIDs[5], mouth);
+	Lights_UpdatePosition(&Lights, LightIDs[6], left);
+	Lights_UpdatePosition(&Lights, LightIDs[7], right);
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -420,6 +396,15 @@ void Render(void)
 	ParticleSystem_Draw(&ParticleSystem);
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
+	/////
+
+	///// Beam stuff
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
+	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
+	glDisable(GL_BLEND);
+	/////
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -436,7 +421,7 @@ void Render(void)
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
-		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\n\nPress \"enter\" for explosion", ParticleSystem.NumEmitter);
+		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\nNumber of lights: %d\n\nPress \"enter\" for explosion", ParticleSystem.NumEmitter, Lights.NumLights);
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -448,15 +433,15 @@ void HandEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t *Part
 	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
 	Vec3_Set(Particle->vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
 	Vec3_Normalize(Particle->vel);
-	Vec3_Muls(Particle->vel, 10.0f);
+	Vec3_Muls(Particle->vel, 50.0f);
 
-	Particle->life=((float)rand()/RAND_MAX)*0.75f+0.01f;
+	Particle->life=((float)rand()/RAND_MAX)*0.5f+0.01f;
 }
 
 void ExplosionEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t *Particle)
 {
 	// Does a neat helical pattern, similar to Quake 2's railgun
-	const float TwoPi=6.28318f;
+	const float TwoPi=PI*2.0f;
 	const float SeedRadius=10.0f;
 	float fi=(float)Index/NumParticles;
 	float theta=((float)rand()/RAND_MAX)*TwoPi;
@@ -475,6 +460,19 @@ void ExplosionEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t 
 
 bool Init(void)
 {
+	if(Lights_Init(&Lights))
+	{
+		LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 512.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
+		LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1024.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
+		LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1024.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
+		LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1024.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
+		LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1024.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
+
+		LightIDs[5]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 100.0f, (vec4) { 0.12f, 0.03f, 0.0f, 1.0f });
+		LightIDs[6]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+		LightIDs[7]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+	}
+
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
 		EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
@@ -497,14 +495,14 @@ bool Init(void)
 		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		2.0f,
+		4.0f,
 		1000, false, HandEmitterCallback);
 
 		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		2.0f,
+		4.0f,
 		1000, false, HandEmitterCallback);
 	}
 
@@ -611,16 +609,7 @@ bool Init(void)
 	Objects[GLSL_LIGHT_PROJ]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "proj");
 	Objects[GLSL_LIGHT_MV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mv");
 	Objects[GLSL_LIGHT_LOCAL]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "local");
-	Objects[GLSL_LIGHT_LIGHT0_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Pos");
-	Objects[GLSL_LIGHT_LIGHT0_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light0_Kd");
-	Objects[GLSL_LIGHT_LIGHT1_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light1_Pos");
-	Objects[GLSL_LIGHT_LIGHT1_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light1_Kd");
-	Objects[GLSL_LIGHT_LIGHT2_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light2_Pos");
-	Objects[GLSL_LIGHT_LIGHT2_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light2_Kd");
-	Objects[GLSL_LIGHT_LIGHT3_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light3_Pos");
-	Objects[GLSL_LIGHT_LIGHT3_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light3_Kd");
-	Objects[GLSL_LIGHT_LIGHT4_POS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Pos");
-	Objects[GLSL_LIGHT_LIGHT4_KD]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Light4_Kd");
+	Objects[GLSL_LIGHT_NUMLIGHTS]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "NumLights");
 	Objects[GLSL_LIGHT_BEAM_START0]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_Start0");
 	Objects[GLSL_LIGHT_BEAM_END0]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_End0");
 	Objects[GLSL_LIGHT_BEAM_START1]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "Beam_Start1");
@@ -663,6 +652,8 @@ bool Init(void)
 
 void Destroy(void)
 {
+	Lights_Destroy(&Lights);
+
 	ParticleSystem_Destroy(&ParticleSystem);
 
 //	Fluid3D_Destroy(&Fluid);

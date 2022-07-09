@@ -76,6 +76,9 @@
     <ClCompile Include="particle\particle.c">
       <Filter>Source\particle</Filter>
     </ClCompile>
+    <ClCompile Include="lights\lights.c">
+      <Filter>Source\lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -140,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="particle\particle.h">
       <Filter>Headers\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="lights\lights.h">
+      <Filter>Headers\lights</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +223,12 @@
     </Filter>
     <Filter Include="Headers\particle">
       <UniqueIdentifier>{1e03de03-c579-4694-89fb-82fec104f6a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\lights">
+      <UniqueIdentifier>{025444ff-7152-43a6-b35e-703e21e85a8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\lights">
+      <UniqueIdentifier>{63016425-a2da-44dd-b296-cd37c8fcb188}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

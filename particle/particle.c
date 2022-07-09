@@ -5,6 +5,7 @@
 #include "../opengl/opengl.h"
 #include "../image/image.h"
 #include "../math/math.h"
+#include "../camera/camera.h"
 #include "particle.h"
 
 float PartGrav[3]={ 0.0, -9.81f, 0.0 };
@@ -51,8 +52,11 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 	if(System==NULL)
 		return false;
 
-	// ID = last number of emitters (0 base index)
-	int32_t ID=System->NumEmitter;
+	// Pull an ID from the global counter
+	int32_t ID=System->NextEmitterID++;
+
+	// Index for new emitter = Current number of emitters
+	int32_t Index=System->NumEmitter;
 
 	// Increment emitter count and resize emitter memory
 	System->NumEmitter++;
@@ -62,29 +66,29 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 		return -1;
 
 	if(InitCallback==NULL)
-		System->Emitter[ID].InitCallback=NULL;
+		System->Emitter[Index].InitCallback=NULL;
 	else
-		System->Emitter[ID].InitCallback=InitCallback;
+		System->Emitter[Index].InitCallback=InitCallback;
 
 	// Set various flags/parameters
-	System->Emitter[ID].Burst=Burst;
-	System->Emitter[ID].ID=ID;
-	Vec3_Setv(System->Emitter[ID].StartColor, StartColor);
-	Vec3_Setv(System->Emitter[ID].EndColor, EndColor);
-	System->Emitter[ID].ParticleSize=ParticleSize;
+	System->Emitter[Index].Burst=Burst;
+	System->Emitter[Index].ID=ID;
+	Vec3_Setv(System->Emitter[Index].StartColor, StartColor);
+	Vec3_Setv(System->Emitter[Index].EndColor, EndColor);
+	System->Emitter[Index].ParticleSize=ParticleSize;
 
 	// Set number of particles and allocate memory
-	System->Emitter[ID].NumParticles=NumParticles;
-	System->Emitter[ID].Particles=calloc(NumParticles, sizeof(Particle_t));
+	System->Emitter[Index].NumParticles=NumParticles;
+	System->Emitter[Index].Particles=calloc(NumParticles, sizeof(Particle_t));
 
 	// Set emitter position (used when resetting/recycling particles when they die)
-	Vec3_Setv(System->Emitter[ID].Position, Position);
+	Vec3_Setv(System->Emitter[Index].Position, Position);
 
 	// Set initial particle position and life to -1.0 (dead)
-	for(uint32_t i=0;i<System->Emitter[ID].NumParticles;i++)
+	for(uint32_t i=0;i<System->Emitter[Index].NumParticles;i++)
 	{
-		Vec3_Setv(System->Emitter[ID].Particles[i].pos, Position);
-		System->Emitter[ID].Particles[i].life=-1.0f;
+		Vec3_Setv(System->Emitter[Index].Particles[i].pos, Position);
+		System->Emitter[Index].Particles[i].life=-1.0f;
 	}
 
 	// Resize vertex buffers (both system memory and OpenGL buffer)
@@ -105,7 +109,7 @@ void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 
 	for(uint32_t i=0;i<System->NumEmitter;i++)
 	{
-		if(System->Emitter[i].ID==ID&&System->Emitter[i].ID>=0)
+		if(System->Emitter[i].ID==ID)
 		{
 			FREE(System->Emitter[i].Particles);
 			memset(&System->Emitter[i], 0, sizeof(ParticleEmitter_t));
@@ -209,6 +213,8 @@ bool ParticleSystem_Init(ParticleSystem_t *System)
 {
 	if(System==NULL)
 		return false;
+
+	System->NextEmitterID=0;
 
 	System->NumEmitter=0;
 	System->Emitter=NULL;
@@ -350,7 +356,6 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 	glUseProgram(PartShader);
 	glUniformMatrix4fv(0, 1, GL_FALSE, Projection);
 	glUniformMatrix4fv(1, 1, GL_FALSE, ModelView);
-	glUniformMatrix4fv(2, 1, GL_FALSE, Local);
 
 	glBindTextureUnit(0, PartTexture);
 

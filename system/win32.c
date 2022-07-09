@@ -267,11 +267,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Key[wParam]=true;
 
 			switch(wParam)
-			{
-				case VK_DELETE:
-					ParticleSystem_DeleteEmitter(&ParticleSystem, EmitterIDs[2]);
-					break;
-			
+			{			
 				case VK_RETURN:
 					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterIDs[1]);
 					break;

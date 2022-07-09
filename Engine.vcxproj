@@ -311,6 +311,7 @@
     <ClCompile Include="image\image.c" />
     <ClCompile Include="image\qoi.c" />
     <ClCompile Include="image\tga.c" />
+    <ClCompile Include="lights\lights.c" />
     <ClCompile Include="math\fft.c" />
     <ClCompile Include="math\math.c" />
     <ClCompile Include="model\3ds.c" />
@@ -335,6 +336,7 @@
     <ClInclude Include="font\fontdata.h" />
     <ClInclude Include="gl_objects.h" />
     <ClInclude Include="image\image.h" />
+    <ClInclude Include="lights\lights.h" />
     <ClInclude Include="math\fft.h" />
     <ClInclude Include="math\math.h" />
     <ClInclude Include="model\3ds.h" />

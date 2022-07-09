@@ -5,8 +5,6 @@ layout(triangle_strip, max_vertices=4) out;
 
 layout(location=0) uniform mat4 proj;
 layout(location=1) uniform mat4 mv;
-layout(location=2) uniform mat4 local;
-layout(location=3) uniform float uScale;
 
 in vec4 Color[1];
 
@@ -30,22 +28,22 @@ void main()
 		1 *----* 3
 	*/
 
-	gl_Position=proj*mv*local*vec4(Pos-Right*Scale+Up*Scale, 1.0);
+	gl_Position=proj*mv*vec4(Pos-Right*Scale+Up*Scale, 1.0);
 	vUV=vec2(0.0, 1.0);
 	vColor=Color[0];
 	EmitVertex();
 
-	gl_Position=proj*mv*local*vec4(Pos-Right*Scale-Up*Scale, 1.0);
+	gl_Position=proj*mv*vec4(Pos-Right*Scale-Up*Scale, 1.0);
 	vUV=vec2(0.0, 0.0);
 	vColor=Color[0];
 	EmitVertex();
 
-	gl_Position=proj*mv*local*vec4(Pos+Right*Scale+Up*Scale, 1.0);
+	gl_Position=proj*mv*vec4(Pos+Right*Scale+Up*Scale, 1.0);
 	vUV=vec2(1.0, 1.0);
 	vColor=Color[0];
 	EmitVertex();
 
-	gl_Position=proj*mv*local*vec4(Pos+Right*Scale-Up*Scale, 1.0);
+	gl_Position=proj*mv*vec4(Pos+Right*Scale-Up*Scale, 1.0);
 	vUV=vec2(1.0, 0.0);
 	vColor=Color[0];
 	EmitVertex();
