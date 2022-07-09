@@ -397,6 +397,20 @@ void Render(void)
 	// Set emitter 0's position
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
 
+	MatrixIdentity(local);
+	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+
+	vec3 left={ Hellknight.Skel[8*15+0], Hellknight.Skel[8*15+1], Hellknight.Skel[8*15+2] };
+	vec3 right={ Hellknight.Skel[8*52+0], Hellknight.Skel[8*52+1], Hellknight.Skel[8*52+2] };
+
+	Matrix4x4MultVec3(left, local, left);
+	Matrix4x4MultVec3(right, local, right);
+
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
+
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -435,6 +449,16 @@ void EmitterCallback(uint32_t i, vec3 vel, float *life)
 	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
 }
 
+void HandEmitterCallback(uint32_t i, vec3 vel, float *life)
+{
+	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
+	Vec3_Set(vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
+	Vec3_Normalize(vel);
+	Vec3_Muls(vel, 10.0f);
+
+	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
+}
+
 bool Init(void)
 {
 	if(ParticleSystem_Init(&ParticleSystem))
@@ -454,16 +478,16 @@ bool Init(void)
 		10000, true, EmitterCallback);
 
 		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { -50.0f, 0.0f, 100.0f },
+		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		1000, false, EmitterCallback);
+		100, false, HandEmitterCallback);
 
 		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 50.0f, 0.0f, 100.0f },
+		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		1000, false, EmitterCallback);
+		100, false, HandEmitterCallback);
 	}
 
 	if(Audio_Init())
