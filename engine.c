@@ -75,8 +75,7 @@ const float radius=5.0f;
 int32_t DynWidth=1024, DynHeight=1024;
 
 ParticleSystem_t ParticleSystem;
-int32_t EmitterID0=-1;
-int32_t EmitterID1=-1;
+int32_t EmitterIDs[4]={ -1, };
 
 void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_data)
 {
@@ -396,7 +395,7 @@ void Render(void)
 	/////
 
 	// Set emitter 0's position
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterID0, (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -441,17 +440,29 @@ bool Init(void)
 {
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
-		EmitterID0=ParticleSystem_AddEmitter(&ParticleSystem,
+		EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 0.0f }, // Position
-		(vec3) { 0.3f, 0.3f, 0.3f }, // Starting color
+		(vec3) { 0.1f, 0.1f, 0.1f }, // Starting color
 		(vec3) { 0.12f, 0.03f, 0.0f }, // Ending color
 		5000, false, NULL);
 
-		EmitterID1=ParticleSystem_AddEmitter(&ParticleSystem,
+		EmitterIDs[1]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 100.0f },
 		(vec3) { 0.0f, 0.0f, 1.0f },
 		(vec3) { 0.05f, 0.05f, 0.05f },
 		1000, true, Emitter1Callback);
+
+		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { -50.0f, 0.0f, 100.0f },
+		(vec3) { 1.0f, 1.0f, 1.0f },
+		(vec3) { 0.0f, 1.0f, 0.0f },
+		1000, false, Emitter1Callback);
+
+		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { 50.0f, 0.0f, 100.0f },
+		(vec3) { 1.0f, 1.0f, 1.0f },
+		(vec3) { 0.0f, 1.0f, 0.0f },
+		1000, false, Emitter1Callback);
 	}
 
 	if(Audio_Init())

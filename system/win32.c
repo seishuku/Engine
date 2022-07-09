@@ -31,8 +31,7 @@ bool Auto=0;
 extern Camera_t Camera;
 
 extern ParticleSystem_t ParticleSystem;
-extern int32_t EmitterID0;
-extern int32_t EmitterID1;
+extern int32_t EmitterIDs[4];
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void Render(void);
@@ -269,8 +268,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			switch(wParam)
 			{
+				case VK_DELETE:
+					ParticleSystem_DeleteEmitter(&ParticleSystem, EmitterIDs[2]);
+					break;
+			
 				case VK_RETURN:
-					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterID1);
+					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterIDs[1]);
 					break;
 
 				case 'W':

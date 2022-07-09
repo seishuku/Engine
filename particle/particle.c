@@ -45,6 +45,7 @@ bool ParticleSystem_ResizeBuffer(ParticleSystem_t *System)
 	return true;
 }
 
+// Adds a particle emitter to the system
 int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
 {
 	if(System==NULL)
@@ -73,7 +74,7 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 
 	// Set number of particles and allocate memory
 	System->Emitter[ID].NumParticles=NumParticles;
-	System->Emitter[ID].Particles=calloc(NumParticles, sizeof(Particle_t)*NumParticles);
+	System->Emitter[ID].Particles=calloc(NumParticles, sizeof(Particle_t));
 
 	// Set emitter position (used when resetting/recycling particles when they die)
 	Vec3_Setv(System->Emitter[ID].Position, Position);
@@ -92,12 +93,11 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 	return ID;
 }
 
-// FIX ME:
-// This doesn't really remove the emitter from the emitters list,
-// just clears the particles so it doesn't draw/update anymore.
-// Need to resize emitter list to actually remove it's memory as well.
+// Removes a particle emitter from the system
 void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 {
+	bool found=false;
+
 	// Return if ID isn't valid
 	if(ID<0||System==NULL)
 		return;
@@ -106,16 +106,42 @@ void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 	{
 		if(System->Emitter[i].ID==ID&&System->Emitter[i].ID>=0)
 		{
-			System->Emitter[i].NumParticles=0;
 			FREE(System->Emitter[i].Particles);
+			memset(&System->Emitter[i], 0, sizeof(ParticleEmitter_t));
+			System->Emitter[i].ID=-1;
+			found=true;
 			break;
 		}
 	}
+
+	// ID wasn't found, return out of function
+	if(!found)
+		return;
+
+	// Otherwise, resize the emitter list
+	// (this feels dumb, is there a better way to do this?)
+	ParticleEmitter_t *NewEmitters=malloc(sizeof(ParticleEmitter_t)*(System->NumEmitter-1));
+
+	if(NewEmitters==NULL)
+		return;
+
+	// Walk the list and copy only valid IDs
+	for(uint32_t i=0, j=0;i<System->NumEmitter;i++)
+	{
+		if(System->Emitter[i].ID>=0)
+			memcpy(&NewEmitters[j++], &System->Emitter[i], sizeof(ParticleEmitter_t));
+	}
+
+	// Free and reassign memory pointers
+	FREE(System->Emitter);
+	System->Emitter=NewEmitters;
+	System->NumEmitter--;
 
 	// Resize vertex buffers (both system memory and OpenGL buffer)
 	ParticleSystem_ResizeBuffer(System);
 }
 
+// Resets the emitter to the initial parameters (mostly for a "burst" trigger)
 void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 {
 	// Return if ID isn't valid
@@ -290,7 +316,7 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 				*Array++=System->Emitter[i].Particles[j].pos[1];
 				*Array++=System->Emitter[i].Particles[j].pos[2];
 				*Array++=1.0f;
-				Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life+0.3f, Color);
+				Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life, Color);
 				*Array++=Color[0];
 				*Array++=Color[1];
 				*Array++=Color[2];
