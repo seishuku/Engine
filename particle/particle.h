@@ -7,7 +7,7 @@ typedef struct
 	vec3 pos, vel;
 } Particle_t;
 
-typedef void (*ParticleInitCallback)(uint32_t Index, vec3 Velocity, float *life);
+typedef void (*ParticleInitCallback)(uint32_t Index, uint32_t NumParticles, Particle_t *Particle);
 
 typedef struct
 {

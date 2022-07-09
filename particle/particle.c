@@ -158,18 +158,22 @@ void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 				// Only reset dead particles, limit "total reset" weirdness
 				if(System->Emitter[i].Particles[j].life<0.0f)
 				{
-
-					// Set particle start position to emitter position
-					Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
-
 					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
 					if(System->Emitter[i].InitCallback)
-						System->Emitter[i].InitCallback(j, System->Emitter[i].Particles[j].vel, &System->Emitter[i].Particles[j].life);
+					{
+						System->Emitter[i].InitCallback(j, System->Emitter[i].NumParticles, &System->Emitter[i].Particles[j]);
+
+						// Add particle emitter position to the calculated position
+						Vec3_Addv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
+					}
 					else
 					{
 						float SeedRadius=30.0f;
 						float theta=((float)rand()/RAND_MAX)*2.0f*PI;
 						float r=((float)rand()/RAND_MAX)*SeedRadius;
+
+						// Set particle start position to emitter position
+						Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
 
 						System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
 						System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
@@ -254,17 +258,22 @@ void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 				// Otherwise run the math for the particle system motion.
 				if(System->Emitter[i].Particles[j].life<0.0f&&!System->Emitter[i].Burst)
 				{
-					// Set particle start position to emitter position
-					Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
-
 					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
 					if(System->Emitter[i].InitCallback)
-						System->Emitter[i].InitCallback(j, System->Emitter[i].Particles[j].vel, &System->Emitter[i].Particles[j].life);
+					{
+						System->Emitter[i].InitCallback(j, System->Emitter[i].NumParticles, &System->Emitter[i].Particles[j]);
+
+						// Add particle emitter position to the calculated position
+						Vec3_Addv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
+					}
 					else
 					{
 						float SeedRadius=30.0f;
 						float theta=((float)rand()/RAND_MAX)*2.0f*PI;
 						float r=((float)rand()/RAND_MAX)*SeedRadius;
+
+						// Set particle start position to emitter position
+						Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
 
 						System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
 						System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;

@@ -403,13 +403,11 @@ void Render(void)
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 
-	// Hellknight's left and right hand locations, after animation has been updated
-	vec3 left={ Hellknight.Skel[8*15+0], Hellknight.Skel[8*15+1], Hellknight.Skel[8*15+2] };
-	vec3 right={ Hellknight.Skel[8*52+0], Hellknight.Skel[8*52+1], Hellknight.Skel[8*52+2] };
-
+	// Hellknight's left and right hand locations (joints 15 and 52), after animation has been updated
 	// Transform locations into our space and where the hellknight is located
-	Matrix4x4MultVec3(left, local, left);
-	Matrix4x4MultVec3(right, local, right);
+	vec3 left, right;
+	Matrix4x4MultVec3(&Hellknight.Skel[8*15], local, left);
+	Matrix4x4MultVec3(&Hellknight.Skel[8*52], local, right);
 
 	// Set the two green sparklers to those locations
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
@@ -443,24 +441,36 @@ void Render(void)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void EmitterCallback(uint32_t i, vec3 vel, float *life)
+void HandEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t *Particle)
 {
-	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
-	Vec3_Set(vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
-	Vec3_Normalize(vel);
-	Vec3_Muls(vel, 100.0f);
+	Vec3_Sets(Particle->pos, 0.0f);
 
-	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
+	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
+	Vec3_Set(Particle->vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
+	Vec3_Normalize(Particle->vel);
+	Vec3_Muls(Particle->vel, 10.0f);
+
+	Particle->life=((float)rand()/RAND_MAX)*0.75f+0.01f;
 }
 
-void HandEmitterCallback(uint32_t i, vec3 vel, float *life)
+void ExplosionEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t *Particle)
 {
-	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
-	Vec3_Set(vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
-	Vec3_Normalize(vel);
-	Vec3_Muls(vel, 10.0f);
+	// Does a neat helical pattern, similar to Quake 2's railgun
+	const float TwoPi=6.28318f;
+	const float SeedRadius=10.0f;
+	float fi=(float)Index/NumParticles;
+	float theta=((float)rand()/RAND_MAX)*TwoPi;
+	float r=((float)rand()/RAND_MAX)*SeedRadius;
 
-	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
+	Particle->pos[0]=fi*200.0f-100.0f;
+	Particle->pos[1]=sinf(fi*TwoPi*8.0f)*50.0f;
+	Particle->pos[2]=cosf(fi*TwoPi*8.0f)*50.0f;
+
+	Particle->vel[0]=r*sinf(theta);
+	Particle->vel[1]=((float)rand()/RAND_MAX)*50.0f;
+	Particle->vel[2]=r*cosf(theta);
+
+	Particle->life=((float)rand()/RAND_MAX)*0.999f+0.001f;
 }
 
 bool Init(void)
@@ -471,7 +481,7 @@ bool Init(void)
 		(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
 		(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
 		(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
-		8.0f,
+		8.0f,							// Particle size
 		5000,							// Number of particles
 		false,							// "burst" (ResetEmitter triggers)
 		NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
@@ -481,7 +491,7 @@ bool Init(void)
 		(vec3) { 0.0f, 0.0f, 1.0f },
 		(vec3) { 0.05f, 0.05f, 0.05f },
 		8.0f,
-		10000, true, EmitterCallback);
+		10000, true, ExplosionEmitterCallback);
 
 		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 0.0f },
