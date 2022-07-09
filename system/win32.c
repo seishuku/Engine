@@ -269,7 +269,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			switch(wParam)
 			{
-				case 'O':
+				case VK_RETURN:
 					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterID1);
 					break;
 

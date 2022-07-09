@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <malloc.h>
@@ -394,9 +395,8 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-	// FIX ME:
-	// Need to make a function for doing this by emitter ID
-	Vec3_Set(ParticleSystem.Emitter[0].Position, sinf(fTime)*50.0f, 0.0f, cosf(fTime)*50.0f);
+	// Set emitter 0's position
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterID0, (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -421,24 +421,37 @@ void Render(void)
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
-		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d", ParticleSystem.NumEmitter);
+		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\n\nPress \"enter\" for explosion", ParticleSystem.NumEmitter);
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+}
+
+void Emitter1Callback(uint32_t i, vec3 vel, float *life)
+{
+	// Simple -1.0 to 1.0 random pattern, fairly short lifespan.
+
+	vel[0]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
+	vel[1]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
+	vel[2]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
+
+	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
 }
 
 bool Init(void)
 {
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
-		EmitterID0=ParticleSystem_AddEmitter(&ParticleSystem, (vec3)
-		{
-			0.0f, 0.0f, 0.0f
-		}, 1000, false);
+		EmitterID0=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { 0.0f, 0.0f, 0.0f }, // Position
+		(vec3) { 0.3f, 0.3f, 0.3f }, // Starting color
+		(vec3) { 0.12f, 0.03f, 0.0f }, // Ending color
+		5000, false, NULL);
 
-		EmitterID1=ParticleSystem_AddEmitter(&ParticleSystem, (vec3)
-		{
-			100.0f, 0.0f, 100.0f
-		}, 1000, true);
+		EmitterID1=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { 0.0f, 0.0f, 100.0f },
+		(vec3) { 0.0f, 0.0f, 1.0f },
+		(vec3) { 0.05f, 0.05f, 0.05f },
+		1000, true, Emitter1Callback);
 	}
 
 	if(Audio_Init())

@@ -7,51 +7,18 @@
 #include "../math/math.h"
 #include "particle.h"
 
-const float PartGrav[3]={ 0.0, -9.81f, 0.0 };
-
-const float PartColor1[3]={ 0.3f, 0.3f, 0.3f };
-const float PartColor2[3]={ 0.125f, 0.03125f, 0.0f };
+float PartGrav[3]={ 0.0, -9.81f, 0.0 };
 
 GLuint PartShader=0;
 GLuint PartTexture=0;
 
 extern matrix Projection, ModelView;
 
-int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, uint32_t NumParticles, bool Burst)
+// Resizes the OpenGL vertex buffer and system memory vertex buffer
+bool ParticleSystem_ResizeBuffer(ParticleSystem_t *System)
 {
-	int32_t ID=System->NumEmitter;
-
-	System->NumEmitter++;
-
-	System->Emitter=realloc(System->Emitter, sizeof(ParticleEmitter_t)*System->NumEmitter);
-
-	if(System->Emitter==NULL)
-		return -1;
-
-	System->Emitter[ID].Burst=Burst;
-	System->Emitter[ID].ID=ID;
-	System->Emitter[ID].NumParticles=NumParticles;
-
-	System->Emitter[ID].Particles=calloc(NumParticles, sizeof(Particle_t)*NumParticles);
-
-	Vec3_Setv(System->Emitter[ID].Position, Position);
-
-	for(uint32_t i=0;i<System->Emitter[ID].NumParticles;i++)
-	{
-		//Vec3_Setv(System->Emitter[ID].Particles[i].pos, Position);
-		//float SeedRadius=30.0f;
-		//float theta=((float)rand()/RAND_MAX)*2.0f*PI;
-		//float r=((float)rand()/RAND_MAX)*SeedRadius;
-
-		//System->Emitter[ID].Particles[i].vel[0]=r*sinf(theta);
-		//System->Emitter[ID].Particles[i].vel[1]=((float)rand()/RAND_MAX)*100.0f;
-		//System->Emitter[ID].Particles[i].vel[2]=r*cosf(theta);
-
-		//System->Emitter[ID].Particles[i].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
-
-		Vec3_Setv(System->Emitter[ID].Particles[i].pos, Position);
-		System->Emitter[ID].Particles[i].life=-1.0f;
-	}
+	if(System==NULL)
+		return false;
 
 	uint32_t Count=0;
 
@@ -73,6 +40,53 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, uint3
 	System->ParticleArray=calloc(Count, sizeof(float)*8);
 
 	if(System->ParticleArray==NULL)
+		return false;
+
+	return true;
+}
+
+int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
+{
+	if(System==NULL)
+		return false;
+
+	// ID = last number of emitters (0 base index)
+	int32_t ID=System->NumEmitter;
+
+	// Increment emitter count and resize emitter memory
+	System->NumEmitter++;
+	System->Emitter=realloc(System->Emitter, sizeof(ParticleEmitter_t)*System->NumEmitter);
+
+	if(System->Emitter==NULL)
+		return -1;
+
+	if(InitCallback==NULL)
+		System->Emitter[ID].InitCallback=NULL;
+	else
+		System->Emitter[ID].InitCallback=InitCallback;
+
+	// Set various flags/parameters
+	System->Emitter[ID].Burst=Burst;
+	System->Emitter[ID].ID=ID;
+	Vec3_Setv(System->Emitter[ID].StartColor, StartColor);
+	Vec3_Setv(System->Emitter[ID].EndColor, EndColor);
+
+	// Set number of particles and allocate memory
+	System->Emitter[ID].NumParticles=NumParticles;
+	System->Emitter[ID].Particles=calloc(NumParticles, sizeof(Particle_t)*NumParticles);
+
+	// Set emitter position (used when resetting/recycling particles when they die)
+	Vec3_Setv(System->Emitter[ID].Position, Position);
+
+	// Set initial particle position and life to -1.0 (dead)
+	for(uint32_t i=0;i<System->Emitter[ID].NumParticles;i++)
+	{
+		Vec3_Setv(System->Emitter[ID].Particles[i].pos, Position);
+		System->Emitter[ID].Particles[i].life=-1.0f;
+	}
+
+	// Resize vertex buffers (both system memory and OpenGL buffer)
+	if(!ParticleSystem_ResizeBuffer(System))
 		return -1;
 
 	return ID;
@@ -84,7 +98,8 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, uint3
 // Need to resize emitter list to actually remove it's memory as well.
 void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 {
-	if(ID<0)
+	// Return if ID isn't valid
+	if(ID<0||System==NULL)
 		return;
 
 	for(uint32_t i=0;i<System->NumEmitter;i++)
@@ -96,27 +111,46 @@ void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 			break;
 		}
 	}
+
+	// Resize vertex buffers (both system memory and OpenGL buffer)
+	ParticleSystem_ResizeBuffer(System);
 }
 
 void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 {
+	// Return if ID isn't valid
+	if(ID<0||System==NULL)
+		return;
+
 	for(uint32_t i=0;i<System->NumEmitter;i++)
 	{
 		if(System->Emitter[i].ID==ID)
 		{
 			for(uint32_t j=0;j<System->Emitter[i].NumParticles;j++)
 			{
-				float SeedRadius=30.0f;
-				float theta=((float)rand()/RAND_MAX)*2.0f*PI;
-				float r=((float)rand()/RAND_MAX)*SeedRadius;
+				// Only reset dead particles, limit "total reset" weirdness
+				if(System->Emitter[i].Particles[j].life<0.0f)
+				{
 
-				Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
+					// Set particle start position to emitter position
+					Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
 
-				System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
-				System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
-				System->Emitter[i].Particles[j].vel[2]=r*cosf(theta);
+					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
+					if(System->Emitter[i].InitCallback)
+						System->Emitter[i].InitCallback(j, System->Emitter[i].Particles[j].vel, &System->Emitter[i].Particles[j].life);
+					else
+					{
+						float SeedRadius=30.0f;
+						float theta=((float)rand()/RAND_MAX)*2.0f*PI;
+						float r=((float)rand()/RAND_MAX)*SeedRadius;
 
-				System->Emitter[i].Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
+						System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
+						System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
+						System->Emitter[i].Particles[j].vel[2]=r*cosf(theta);
+
+						System->Emitter[i].Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
+					}
+				}
 			}
 
 			return;
@@ -124,8 +158,27 @@ void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 	}
 }
 
+void ParticleSystem_SetEmitterPosition(ParticleSystem_t *System, int32_t ID, vec3 Position)
+{
+	// Return if ID isn't valid
+	if(ID<0||System==NULL)
+		return;
+
+	for(uint32_t i=0;i<System->NumEmitter;i++)
+	{
+		if(System->Emitter[i].ID==ID)
+		{
+			Vec3_Setv(System->Emitter[i].Position, Position);
+			return;
+		}
+	}
+}
+
 bool ParticleSystem_Init(ParticleSystem_t *System)
 {
+	if(System==NULL)
+		return false;
+
 	System->NumEmitter=0;
 	System->Emitter=NULL;
 
@@ -141,7 +194,6 @@ bool ParticleSystem_Init(ParticleSystem_t *System)
 
 	glGenBuffers(1, &System->PartVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, System->PartVBO);
-	glBufferData(GL_ARRAY_BUFFER, 1, NULL, GL_STREAM_DRAW);
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*8, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
@@ -159,37 +211,52 @@ bool ParticleSystem_Init(ParticleSystem_t *System)
 
 void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 {
+	if(System==NULL)
+		return;
+
 	for(uint32_t i=0;i<System->NumEmitter;i++)
 	{
+		// Only if an active ID
 		if(System->Emitter[i].ID>=0)
 		{
 			for(uint32_t j=0;j<System->Emitter[i].NumParticles;j++)
 			{
 				System->Emitter[i].Particles[j].life-=dt*0.75f;
 
+				// If the particle is dead and isn't a one shot (burst), restart it...
+				// Otherwise run the math for the particle system motion.
 				if(System->Emitter[i].Particles[j].life<0.0f&&!System->Emitter[i].Burst)
 				{
-					float SeedRadius=30.0f;
-					float theta=((float)rand()/RAND_MAX)*2.0f*PI;
-					float r=((float)rand()/RAND_MAX)*SeedRadius;
-
+					// Set particle start position to emitter position
 					Vec3_Setv(System->Emitter[i].Particles[j].pos, System->Emitter[i].Position);
 
-					System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
-					System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
-					System->Emitter[i].Particles[j].vel[2]=r*cosf(theta);
+					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
+					if(System->Emitter[i].InitCallback)
+						System->Emitter[i].InitCallback(j, System->Emitter[i].Particles[j].vel, &System->Emitter[i].Particles[j].life);
+					else
+					{
+						float SeedRadius=30.0f;
+						float theta=((float)rand()/RAND_MAX)*2.0f*PI;
+						float r=((float)rand()/RAND_MAX)*SeedRadius;
 
-					System->Emitter[i].Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
+						System->Emitter[i].Particles[j].vel[0]=r*sinf(theta);
+						System->Emitter[i].Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
+						System->Emitter[i].Particles[j].vel[2]=r*cosf(theta);
+
+						System->Emitter[i].Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
+					}
 				}
 				else
 				{
-					System->Emitter[i].Particles[j].pos[0]+=(System->Emitter[i].Particles[j].vel[0]*dt);
-					System->Emitter[i].Particles[j].pos[1]+=(System->Emitter[i].Particles[j].vel[1]*dt);
-					System->Emitter[i].Particles[j].pos[2]+=(System->Emitter[i].Particles[j].vel[2]*dt);
+					vec3 temp;
 
-					System->Emitter[i].Particles[j].vel[0]+=(PartGrav[0]*dt);
-					System->Emitter[i].Particles[j].vel[1]+=(PartGrav[1]*dt);
-					System->Emitter[i].Particles[j].vel[2]+=(PartGrav[2]*dt);
+					Vec3_Setv(temp, System->Emitter[i].Particles[j].vel);
+					Vec3_Muls(temp, dt);
+					Vec3_Addv(System->Emitter[i].Particles[j].pos, temp);
+
+					Vec3_Setv(temp, PartGrav);
+					Vec3_Muls(temp, dt);
+					Vec3_Addv(System->Emitter[i].Particles[j].vel, temp);
 				}
 			}
 		}
@@ -198,6 +265,9 @@ void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 
 void ParticleSystem_Draw(ParticleSystem_t *System)
 {
+	if(System==NULL)
+		return;
+
 	matrix Local;
 	uint32_t Count=0;
 
@@ -220,7 +290,7 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 				*Array++=System->Emitter[i].Particles[j].pos[1];
 				*Array++=System->Emitter[i].Particles[j].pos[2];
 				*Array++=1.0f;
-				Vec3_Lerp(PartColor1, PartColor2, System->Emitter[i].Particles[j].life+0.3f, Color);
+				Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life+0.3f, Color);
 				*Array++=Color[0];
 				*Array++=Color[1];
 				*Array++=Color[2];
@@ -247,6 +317,9 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 
 void ParticleSystem_Destroy(ParticleSystem_t *System)
 {
+	if(System==NULL)
+		return;
+
 	glDeleteProgram(PartShader);
 
 	glDeleteTextures(1, &PartTexture);
