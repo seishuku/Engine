@@ -425,13 +425,12 @@ void Render(void)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void Emitter1Callback(uint32_t i, vec3 vel, float *life)
+void EmitterCallback(uint32_t i, vec3 vel, float *life)
 {
-	// Simple -1.0 to 1.0 random pattern, fairly short lifespan.
-
-	vel[0]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
-	vel[1]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
-	vel[2]=(((float)rand()/RAND_MAX)*2.0f-1.0f)*100.0f;
+	// Simple -1.0 to 1.0 random spherical pattern, scaled by 100, fairly short lifespan.
+	Vec3_Set(vel, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f, ((float)rand()/RAND_MAX)*2.0f-1.0f);
+	Vec3_Normalize(vel);
+	Vec3_Muls(vel, 100.0f);
 
 	*life=((float)rand()/RAND_MAX)*0.75f+0.01f;
 }
@@ -441,28 +440,30 @@ bool Init(void)
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
 		EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f }, // Position
-		(vec3) { 0.1f, 0.1f, 0.1f }, // Starting color
-		(vec3) { 0.12f, 0.03f, 0.0f }, // Ending color
-		5000, false, NULL);
+		(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
+		(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
+		(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
+		5000,							// Number of particles
+		false,							// "burst" (ResetEmitter triggers)
+		NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
 
 		EmitterIDs[1]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 100.0f },
 		(vec3) { 0.0f, 0.0f, 1.0f },
 		(vec3) { 0.05f, 0.05f, 0.05f },
-		1000, true, Emitter1Callback);
+		10000, true, EmitterCallback);
 
 		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { -50.0f, 0.0f, 100.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		1000, false, Emitter1Callback);
+		1000, false, EmitterCallback);
 
 		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 50.0f, 0.0f, 100.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		1000, false, Emitter1Callback);
+		1000, false, EmitterCallback);
 	}
 
 	if(Audio_Init())

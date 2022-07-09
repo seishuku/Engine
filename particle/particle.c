@@ -274,15 +274,18 @@ void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 				}
 				else
 				{
-					vec3 temp;
+					if(System->Emitter[i].Particles[j].life>0.0f)
+					{
+						vec3 temp;
 
-					Vec3_Setv(temp, System->Emitter[i].Particles[j].vel);
-					Vec3_Muls(temp, dt);
-					Vec3_Addv(System->Emitter[i].Particles[j].pos, temp);
+						Vec3_Setv(temp, System->Emitter[i].Particles[j].vel);
+						Vec3_Muls(temp, dt);
+						Vec3_Addv(System->Emitter[i].Particles[j].pos, temp);
 
-					Vec3_Setv(temp, PartGrav);
-					Vec3_Muls(temp, dt);
-					Vec3_Addv(System->Emitter[i].Particles[j].vel, temp);
+						Vec3_Setv(temp, PartGrav);
+						Vec3_Muls(temp, dt);
+						Vec3_Addv(System->Emitter[i].Particles[j].vel, temp);
+					}
 				}
 			}
 		}
@@ -310,19 +313,23 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 		{
 			for(uint32_t j=0;j<System->Emitter[i].NumParticles;j++)
 			{
-				vec3 Color;
+				// Only draw ones that are alive still
+				if(System->Emitter[i].Particles[j].life>0.0f)
+				{
+					vec3 Color;
 
-				*Array++=System->Emitter[i].Particles[j].pos[0];
-				*Array++=System->Emitter[i].Particles[j].pos[1];
-				*Array++=System->Emitter[i].Particles[j].pos[2];
-				*Array++=1.0f;
-				Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life, Color);
-				*Array++=Color[0];
-				*Array++=Color[1];
-				*Array++=Color[2];
-				*Array++=System->Emitter[i].Particles[j].life;
+					*Array++=System->Emitter[i].Particles[j].pos[0];
+					*Array++=System->Emitter[i].Particles[j].pos[1];
+					*Array++=System->Emitter[i].Particles[j].pos[2];
+					*Array++=1.0f;
+					Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life, Color);
+					*Array++=Color[0];
+					*Array++=Color[1];
+					*Array++=Color[2];
+					*Array++=System->Emitter[i].Particles[j].life;
 
-				Count++;
+					Count++;
+				}
 			}
 		}
 	}
