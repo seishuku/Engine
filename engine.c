@@ -397,17 +397,21 @@ void Render(void)
 	// Set emitter 0's position
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], (vec3) { sinf(fTime*4.0f)*50.0f, 0.0f, cosf(fTime*4.0f)*50.0f });
 
+	// Hellknight's local transform matrix
 	MatrixIdentity(local);
 	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 
+	// Hellknight's left and right hand locations, after animation has been updated
 	vec3 left={ Hellknight.Skel[8*15+0], Hellknight.Skel[8*15+1], Hellknight.Skel[8*15+2] };
 	vec3 right={ Hellknight.Skel[8*52+0], Hellknight.Skel[8*52+1], Hellknight.Skel[8*52+2] };
 
+	// Transform locations into our space and where the hellknight is located
 	Matrix4x4MultVec3(left, local, left);
 	Matrix4x4MultVec3(right, local, right);
 
+	// Set the two green sparklers to those locations
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
 
@@ -467,6 +471,7 @@ bool Init(void)
 		(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
 		(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
 		(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
+		8.0f,
 		5000,							// Number of particles
 		false,							// "burst" (ResetEmitter triggers)
 		NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
@@ -475,19 +480,22 @@ bool Init(void)
 		(vec3) { 0.0f, 0.0f, 100.0f },
 		(vec3) { 0.0f, 0.0f, 1.0f },
 		(vec3) { 0.05f, 0.05f, 0.05f },
+		8.0f,
 		10000, true, EmitterCallback);
 
 		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		100, false, HandEmitterCallback);
+		2.0f,
+		1000, false, HandEmitterCallback);
 
 		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
 		(vec3) { 0.0f, 0.0f, 0.0f },
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
-		100, false, HandEmitterCallback);
+		2.0f,
+		1000, false, HandEmitterCallback);
 	}
 
 	if(Audio_Init())

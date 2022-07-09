@@ -6,6 +6,7 @@ layout(triangle_strip, max_vertices=4) out;
 layout(location=0) uniform mat4 proj;
 layout(location=1) uniform mat4 mv;
 layout(location=2) uniform mat4 local;
+layout(location=3) uniform float uScale;
 
 in vec4 Color[1];
 
@@ -14,7 +15,7 @@ out vec4 vColor;
 
 void main()
 {
-	float Scale=8.0*Color[0].w;		// Quad size.
+	float Scale=gl_in[0].gl_Position.w*Color[0].w;		// Quad size.
 	vec3 Pos=gl_in[0].gl_Position.xyz;	// Incoming vertex data.
 	vec3 Right=vec3(mv[0].x, mv[1].x, mv[2].x);
 	vec3 Up=vec3(mv[0].y, mv[1].y, mv[2].y);

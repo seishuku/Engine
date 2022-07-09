@@ -46,7 +46,7 @@ bool ParticleSystem_ResizeBuffer(ParticleSystem_t *System)
 }
 
 // Adds a particle emitter to the system
-int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
+int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, float ParticleSize, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
 {
 	if(System==NULL)
 		return false;
@@ -71,6 +71,7 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 	System->Emitter[ID].ID=ID;
 	Vec3_Setv(System->Emitter[ID].StartColor, StartColor);
 	Vec3_Setv(System->Emitter[ID].EndColor, EndColor);
+	System->Emitter[ID].ParticleSize=ParticleSize;
 
 	// Set number of particles and allocate memory
 	System->Emitter[ID].NumParticles=NumParticles;
@@ -321,7 +322,7 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 					*Array++=System->Emitter[i].Particles[j].pos[0];
 					*Array++=System->Emitter[i].Particles[j].pos[1];
 					*Array++=System->Emitter[i].Particles[j].pos[2];
-					*Array++=1.0f;
+					*Array++=System->Emitter[i].ParticleSize;
 					Vec3_Lerp(System->Emitter[i].StartColor, System->Emitter[i].EndColor, System->Emitter[i].Particles[j].life, Color);
 					*Array++=Color[0];
 					*Array++=Color[1];
