@@ -4,6 +4,7 @@
 #include "../opengl/opengl.h"
 #include "../math/math.h"
 #include "../system/system.h"
+#include "../gl_objects.h"
 #include "lights.h"
 
 int32_t Lights_Add(Lights_t *Lights, vec3 Position, float Radius, vec4 Kd)
@@ -136,10 +137,25 @@ void Lights_UpdateKd(Lights_t *Lights, int32_t ID, vec4 Kd)
 	}
 }
 
+extern int32_t DynSize;
+
+static uint32_t oldNumLights=0;
+
 void Lights_UpdateSSBO(Lights_t *Lights)
 {
+	// Need to reallocate the distance map cube array if the
+	// light count changes, but *only* if the count changes.
+	// This is kinda hacky.
+	if(oldNumLights!=Lights->NumLights)
+	{
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, Objects[TEXTURE_DISTANCE]);
+		glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*Lights->NumLights, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Lights->SSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Light_t)*Lights->NumLights, Lights->Lights, GL_STREAM_DRAW);
+
+	oldNumLights=Lights->NumLights;
 }
 
 bool Lights_Init(Lights_t *Lights)

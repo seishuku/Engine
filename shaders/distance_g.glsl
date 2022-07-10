@@ -7,13 +7,15 @@ uniform mat4 proj;
 uniform mat4 mv[6];
 uniform mat4 local;
 
+uniform int index;
+
 out vec4 Position;
 
 void main()
 {
     for(int i=0;i<6;i++)
     {
-        gl_Layer=i;
+        gl_Layer=6*index+i;
 
         for(int j=0;j<3;j++)
         {

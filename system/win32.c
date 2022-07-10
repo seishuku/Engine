@@ -3,6 +3,7 @@
 #include <intrin.h>
 #include <crtdbg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -13,6 +14,7 @@
 #include "../math/math.h"
 #include "../camera/camera.h"
 #include "../particle/particle.h"
+#include "../lights/lights.h"
 
 GLContext_t Context;
 
@@ -31,7 +33,10 @@ bool Auto=0;
 extern Camera_t Camera;
 
 extern ParticleSystem_t ParticleSystem;
-extern int32_t EmitterIDs[4];
+extern int32_t EmitterIDs[6];
+
+extern Lights_t Lights;
+extern int32_t LightIDs[10];
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void Render(void);
@@ -267,7 +272,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Key[wParam]=true;
 
 			switch(wParam)
-			{			
+			{
+				case 'O':
+					Lights_Add(&Lights, 
+					(vec3)
+					{
+						(((float)rand()/RAND_MAX)*2.0f-1.0f)*500.0f,
+						(((float)rand()/RAND_MAX)*2.0f-1.0f)*50.0f,
+						(((float)rand()/RAND_MAX)*2.0f-1.0f)*500.0f
+					}, 300.0f,
+					(vec4)
+					{
+						(float)rand()/RAND_MAX,
+						(float)rand()/RAND_MAX,
+						(float)rand()/RAND_MAX,
+						1.0f
+					});
+					break;
+
 				case VK_RETURN:
 					ParticleSystem_ResetEmitter(&ParticleSystem, EmitterIDs[1]);
 					break;

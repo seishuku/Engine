@@ -51,7 +51,7 @@ extern bool Auto;
 matrix Projection, ModelView, ModelViewInv;
 
 Lights_t Lights;
-int32_t LightIDs[8]={ -1, };
+int32_t LightIDs[10];
 
 vec3 BeamStart0={ -75.0f, -80.0f, -120.0f };
 vec3 BeamEnd0={ -75.0f, 90.0f, -120.0f };
@@ -61,10 +61,10 @@ vec3 BeamEnd1={ 75.0f, 90.0f, -120.0f };
 
 const float radius=5.0f;
 
-int32_t DynWidth=1024, DynHeight=1024;
+int32_t DynSize=1024;
 
 ParticleSystem_t ParticleSystem;
-int32_t EmitterIDs[4]={ -1, };
+int32_t EmitterIDs[6];
 
 void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_data)
 {
@@ -152,69 +152,78 @@ void UpdateLineChart(const float val)
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
 }
 
-void UpdateShadow(GLuint texture, GLuint buffer, const vec3 pos)
+void UpdateShadow(GLuint buffer)
 {
 	matrix proj, mv[6], local;
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
-	glViewport(0, 0, DynWidth, DynHeight);
+	glViewport(0, 0, DynSize, DynSize);
 	MatrixIdentity(proj);
-	MatrixInfPerspective(90.0f, (float)DynWidth/DynHeight, 0.01f, 0, proj);
+	MatrixInfPerspective(90.0f, 1.0f, 0.01f, 0, proj);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	MatrixIdentity(mv[0]);
-	MatrixLookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
+	for(uint32_t i=0;i<Lights.NumLights;i++)
+	{
+		vec4 pos;
 
-	MatrixIdentity(mv[1]);
-	MatrixLookAt(pos, (vec3) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[1]);
+		Vec3_Setv(pos, Lights.Lights[i].Position);
+		pos[3]=Lights.Lights[i].Radius;
 
-	MatrixIdentity(mv[2]);
-	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, 1.0f }, mv[2]);
+		MatrixIdentity(mv[0]);
+		MatrixLookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
 
-	MatrixIdentity(mv[3]);
-	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, -1.0f }, mv[3]);
+		MatrixIdentity(mv[1]);
+		MatrixLookAt(pos, (vec3) { pos[0]-1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[1]);
 
-	MatrixIdentity(mv[4]);
-	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[4]);
+		MatrixIdentity(mv[2]);
+		MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, 1.0f }, mv[2]);
 
-	MatrixIdentity(mv[5]);
-	MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
+		MatrixIdentity(mv[3]);
+		MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]-1.0f, pos[2]+0.0f }, (vec3) { 0.0f, 0.0f, -1.0f }, mv[3]);
 
-	// Select the shader program
-	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
+		MatrixIdentity(mv[4]);
+		MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]+1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[4]);
 
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_PROJ], 1, GL_FALSE, proj);
+		MatrixIdentity(mv[5]);
+		MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
 
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_MV], 6, GL_FALSE, (float *)mv);
+		// Select the shader program
+		glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 
-	glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_PROJ], 1, GL_FALSE, proj);
 
-	// Render models
-	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModelMD5(&Hellknight.Model);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_MV], 6, GL_FALSE, (float *)mv);
 
-	MatrixIdentity(local);
-	MatrixTranslate(-100.0f, -100.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModelMD5(&Fatty.Model);
+		glUniform4fv(Objects[GLSL_DISTANCE_LIGHTPOS], 1, pos);
+		glUniform1i(Objects[GLSL_DISTANCE_INDEX], i);
 
-	MatrixIdentity(local);
-	MatrixTranslate(100.0f, -100.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModelMD5(&Pinky.Model);
+		// Render models
+		MatrixIdentity(local);
+		MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		DrawModelMD5(&Hellknight.Model);
 
-	MatrixIdentity(local);
-	glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-	DrawModelOBJ(&Level);
+		MatrixIdentity(local);
+		MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
+		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		DrawModelMD5(&Fatty.Model);
+
+		MatrixIdentity(local);
+		MatrixTranslate(700.0f, -100.0f, -700.0f, local);
+		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		DrawModelMD5(&Pinky.Model);
+
+		MatrixIdentity(local);
+		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		DrawModelOBJ(&Level);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -267,7 +276,7 @@ void Render(void)
 
 	Lights_UpdateSSBO(&Lights);
 
-	UpdateShadow(Objects[TEXTURE_DISTANCE0], Objects[BUFFER_DISTANCE0], Lights.Lights[0].Position);
+	UpdateShadow(Objects[BUFFER_DISTANCE]);
 		
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -307,7 +316,7 @@ void Render(void)
 	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END1], 1, BeamEnd1);
 
 	// Bind correct textures per model
-	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE0]);
+	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE]);
 
 	// Render model
 	MatrixIdentity(local);
@@ -321,7 +330,7 @@ void Render(void)
 	DrawModelMD5(&Hellknight.Model);
 
 	MatrixIdentity(local);
-	MatrixTranslate(-100.0f, -100.0f, 0.0f, local);
+	MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
@@ -331,7 +340,7 @@ void Render(void)
 	DrawModelMD5(&Fatty.Model);
 
 	MatrixIdentity(local);
-	MatrixTranslate(100.0f, -100.0f, 0.0f, local);
+	MatrixTranslate(700.0f, -100.0f, -700.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
@@ -388,6 +397,16 @@ void Render(void)
 	Lights_UpdatePosition(&Lights, LightIDs[5], mouth);
 	Lights_UpdatePosition(&Lights, LightIDs[6], left);
 	Lights_UpdatePosition(&Lights, LightIDs[7], right);
+
+	vec3 temp;
+
+	Vec3_Set(temp, -700.0f+sinf(fTime*4.0f)*50.0f, -50.0f+sinf(fTime*2.0f)*50.0f, -700.0f+cosf(fTime*4.0f)*50.0f);
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[4], temp);
+	Lights_UpdatePosition(&Lights, LightIDs[8], temp);
+
+	Vec3_Set(temp, 700.0f+sinf(fTime*4.0f)*100.0f, -50.0f+sinf(fTime*2.0f)*20.0f, -700.0f+cosf(fTime*4.0f)*100.0f);
+	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[5], temp);
+	Lights_UpdatePosition(&Lights, LightIDs[9], temp);
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
@@ -462,15 +481,18 @@ bool Init(void)
 {
 	if(Lights_Init(&Lights))
 	{
-		LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 512.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
-		LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1024.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
-		LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1024.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
-		LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1024.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
-		LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1024.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
+		LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 500.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
+		LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
+		LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
+		LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
+		LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
 
 		LightIDs[5]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 100.0f, (vec4) { 0.12f, 0.03f, 0.0f, 1.0f });
 		LightIDs[6]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
 		LightIDs[7]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+
+		LightIDs[8]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
+		LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
 	}
 
 	if(ParticleSystem_Init(&ParticleSystem))
@@ -503,6 +525,20 @@ bool Init(void)
 		(vec3) { 1.0f, 1.0f, 1.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f },
 		4.0f,
+		1000, false, HandEmitterCallback);
+
+		EmitterIDs[4]=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { 0.0f, 0.0f, 0.0f },
+		(vec3) { 1.0f, 1.0f, 1.0f },
+		(vec3) { 0.1f, 0.1f, 1.0f },
+		8.0f,
+		1000, false, NULL);
+
+		EmitterIDs[5]=ParticleSystem_AddEmitter(&ParticleSystem,
+		(vec3) { 0.0f, 0.0f, 0.0f },
+		(vec3) { 1.0f, 1.0f, 1.0f },
+		(vec3) { 0.1f, 0.1f, 1.0f },
+		8.0f,
 		1000, false, HandEmitterCallback);
 	}
 
@@ -622,20 +658,22 @@ bool Init(void)
 	Objects[GLSL_DISTANCE_MV]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mv");
 	Objects[GLSL_DISTANCE_LOCAL]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "local");
 	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
+	Objects[GLSL_DISTANCE_INDEX]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "index");
 
 	// Genereate texture and frame buffer for the depth cube map
-	glGenTextures(1, &Objects[TEXTURE_DISTANCE0]);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, Objects[TEXTURE_DISTANCE0]);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	for(int32_t i=0;i<6;i++)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT32, DynWidth, DynHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glGenTextures(1, &Objects[TEXTURE_DISTANCE]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, Objects[TEXTURE_DISTANCE]);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, DynSize, DynSize, Lights.NumLights*6);
+	glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*Lights.NumLights, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE0]);
-	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE0]);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE0], 0);
+	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE]);
+	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE]);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE], 0);
 
 	// Disable drawing, we're only interested in depth information
 	glDrawBuffer(GL_NONE);
