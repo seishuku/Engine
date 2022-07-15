@@ -150,7 +150,7 @@ void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
 					if(Emitter->InitCallback)
 					{
-						Emitter->InitCallback(j, (uint32_t)List_GetCount(&System->Emitters), &Emitter->Particles[j]);
+						Emitter->InitCallback(j, Emitter->NumParticles, &Emitter->Particles[j]);
 
 						// Add particle emitter position to the calculated position
 						Vec3_Addv(Emitter->Particles[j].pos, Emitter->Position);
