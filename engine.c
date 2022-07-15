@@ -22,6 +22,7 @@
 #include "audio/audio.h"
 #include "opencl/opencl.h"
 #include "fluid/fluid3d.h"
+#include "utils/list.h"
 #include "particle/particle.h"
 #include "lights/lights.h"
 
@@ -157,18 +158,26 @@ void UpdateShadow(GLuint buffer)
 	matrix proj, mv[6], local;
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
+	glCullFace(GL_FRONT);
+
 	glViewport(0, 0, DynSize, DynSize);
 	MatrixIdentity(proj);
 	MatrixInfPerspective(90.0f, 1.0f, 0.01f, 0, proj);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	for(uint32_t i=0;i<Lights.NumLights;i++)
+	// Select the shader program
+	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
+
+	glUniformMatrix4fv(Objects[GLSL_DISTANCE_PROJ], 1, GL_FALSE, proj);
+
+	for(uint32_t i=0;i<List_GetCount(&Lights.Lights);i++)
 	{
+		Light_t *Light=List_GetPointer(&Lights.Lights, i);
 		vec4 pos;
 
-		Vec3_Setv(pos, Lights.Lights[i].Position);
-		pos[3]=Lights.Lights[i].Radius;
+		Vec3_Setv(pos, Light->Position);
+		pos[3]=Light->Radius;
 
 		MatrixIdentity(mv[0]);
 		MatrixLookAt(pos, (vec3) { pos[0]+1.0f, pos[1]+0.0f, pos[2]+0.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[0]);
@@ -187,11 +196,6 @@ void UpdateShadow(GLuint buffer)
 
 		MatrixIdentity(mv[5]);
 		MatrixLookAt(pos, (vec3) { pos[0]+0.0f, pos[1]+0.0f, pos[2]-1.0f }, (vec3) { 0.0f, -1.0f, 0.0f }, mv[5]);
-
-		// Select the shader program
-		glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
-
-		glUniformMatrix4fv(Objects[GLSL_DISTANCE_PROJ], 1, GL_FALSE, proj);
 
 		glUniformMatrix4fv(Objects[GLSL_DISTANCE_MV], 6, GL_FALSE, (float *)mv);
 
@@ -224,6 +228,8 @@ void UpdateShadow(GLuint buffer)
 		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
 		DrawModelOBJ(&Level);
 	}
+
+	glCullFace(GL_BACK);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -299,7 +305,7 @@ void Render(void)
 	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 
 	// Lighting parameters
-	glUniform1i(Objects[GLSL_LIGHT_NUMLIGHTS], Lights.NumLights);
+	glUniform1i(Objects[GLSL_LIGHT_NUMLIGHTS], (GLint)List_GetCount(&Lights.Lights));
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, Lights.SSBO);
 
 	// Projection matrix
@@ -440,7 +446,7 @@ void Render(void)
 		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
-		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\nNumber of lights: %d\n\nPress \"enter\" for explosion", ParticleSystem.NumEmitter, Lights.NumLights);
+		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\nNumber of lights: %d\n\nPress \"enter\" for explosion", List_GetCount(&ParticleSystem.Emitters), List_GetCount(&Lights.Lights));
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -668,8 +674,10 @@ bool Init(void)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	//glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, DynSize, DynSize, Lights.NumLights*6);
-	glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*Lights.NumLights, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*(GLsizei)List_GetCount(&Lights.Lights), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE]);
 	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE]);

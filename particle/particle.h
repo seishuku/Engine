@@ -26,8 +26,7 @@ typedef struct
 {
 	int32_t NextEmitterID;
 
-	uint32_t NumEmitter;
-	ParticleEmitter_t *Emitter;
+	List_t Emitters;
 
 	uint32_t PartVAO, PartVBO;
 	float *ParticleArray;

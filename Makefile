@@ -33,6 +33,7 @@ OBJS+=opengl/opengl.o
 OBJS+=font/font.o
 OBJS+=camera/camera.o
 OBJS+=lights/lights.o
+OBJS+=utils/list.o
 OBJS+=engine.o
 
 CC=gcc

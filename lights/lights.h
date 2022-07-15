@@ -16,8 +16,7 @@ typedef struct
 {
 	int32_t NextLightID;
 
-	uint8_t NumLights;
-	Light_t *Lights;
+	List_t Lights;
 
 	uint32_t SSBO;
 } Lights_t;

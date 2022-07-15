@@ -79,6 +79,9 @@
     <ClCompile Include="lights\lights.c">
       <Filter>Source\lights</Filter>
     </ClCompile>
+    <ClCompile Include="utils\list.c">
+      <Filter>Source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="lights\lights.h">
       <Filter>Headers\lights</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\list.h">
+      <Filter>Headers\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -229,6 +235,12 @@
     </Filter>
     <Filter Include="Headers\lights">
       <UniqueIdentifier>{63016425-a2da-44dd-b296-cd37c8fcb188}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\utils">
+      <UniqueIdentifier>{0512ab7d-7994-4793-be54-2220f4a05da4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\utils">
+      <UniqueIdentifier>{1db3079f-12d8-4d04-9d71-2492b71c963a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

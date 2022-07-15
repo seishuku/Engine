@@ -327,6 +327,7 @@
     <ClCompile Include="opengl\opengl.c" />
     <ClCompile Include="particle\particle.c" />
     <ClCompile Include="system\win32.c" />
+    <ClCompile Include="utils\list.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio\audio.h" />
@@ -351,6 +352,7 @@
     <ClInclude Include="opengl\opengl.h" />
     <ClInclude Include="particle\particle.h" />
     <ClInclude Include="system\system.h" />
+    <ClInclude Include="utils\list.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fluid\fluid3d.cl" />
