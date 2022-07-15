@@ -149,8 +149,7 @@ void UpdateLineChart(const float val)
 	}
 
 	// Update the vertex buffer
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
+	glNamedBufferSubData(VBO, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
 }
 
 void UpdateShadow(GLuint buffer)
@@ -240,6 +239,7 @@ void Render(void)
 {
 	matrix local;
 
+	///// 3D Fluid simulation
 	//clEnqueueAcquireGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
 
 	//Fluid3D_AddDensityVelocity(&Fluid, 5, (Fluid.h/2), Fluid.d/2, 1.0f, 0.0f, 0.0f, 0.5f);
@@ -249,6 +249,7 @@ void Render(void)
 
 	//clEnqueueReleaseGLObjects(Fluid.Context.CommandQueue, 1, &Fluid.den, 0, NULL, NULL);
 	//clFlush(Fluid.Context.CommandQueue);
+	/////
 
 	for(int32_t i=0;i<Level.NumMesh;i++)
 		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
@@ -321,7 +322,7 @@ void Render(void)
 	glUniform3fv(Objects[GLSL_LIGHT_BEAM_START1], 1, BeamStart1);
 	glUniform3fv(Objects[GLSL_LIGHT_BEAM_END1], 1, BeamEnd1);
 
-	// Bind correct textures per model
+	// Bind distance texture array for shadows
 	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE]);
 
 	// Render model
@@ -358,25 +359,6 @@ void Render(void)
 	MatrixIdentity(local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 	DrawModelOBJ(&Level);
-
-	///// Volume rendering
-	//glUseProgram(Objects[GLSL_VOL_SHADER]);
-	//glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
-	//glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
-
-	//MatrixIdentity(local);
-	//MatrixTranslate(0.0f, 0.0f, 100.0f, local);
-	//MatrixScale(50.0f, 50.0f, 50.0f, local);
-	//glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
-
-	//glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
-	//glBindTextureUnit(1, Objects[TEXTURE_TRANSFER]);
-
-	//glEnable(GL_BLEND);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//DrawSkybox();
-	//glDisable(GL_BLEND);
-	/////
 
 	///// Particle system stuff
 
@@ -431,7 +413,24 @@ void Render(void)
 	glDisable(GL_BLEND);
 	/////
 
-	glActiveTexture(GL_TEXTURE0);
+	///// Volume rendering
+	//glUseProgram(Objects[GLSL_VOL_SHADER]);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_PROJ], 1, GL_FALSE, Projection);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_MV], 1, GL_FALSE, ModelView);
+
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, 0.0f, 100.0f, local);
+	//MatrixScale(50.0f, 50.0f, 50.0f, local);
+	//glUniformMatrix4fv(Objects[GLSL_VOL_LOCAL], 1, GL_FALSE, local);
+
+	//glBindTextureUnit(0, Objects[TEXTURE_FLUID]);
+	//glBindTextureUnit(1, Objects[TEXTURE_TRANSFER]);
+
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//DrawSkybox();
+	//glDisable(GL_BLEND);
+	/////
 
 	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
 
@@ -567,16 +566,19 @@ bool Init(void)
 
 	BuildSkyboxVBO();
 
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	/// Line chart buffers
+	glCreateVertexArrays(1, &VAO);
 
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(VAO, 0, 0);
+	glEnableVertexArrayAttrib(VAO, 0);
+
+	glCreateBuffers(1, &VBO);
 	memset(lines, 0, sizeof(float)*3*NUM_SAMPLES+3);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*NUM_SAMPLES+3, lines, GL_STREAM_DRAW);
+	glNamedBufferData(VBO, sizeof(float)*3*NUM_SAMPLES+3, lines, GL_STREAM_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(0);
+	glVertexArrayVertexBuffer(VAO, 0, VBO, 0, sizeof(float)*3);
+	///
 
 #if CAMERA_RECORDING
 	CameraInit(&Camera, (float[]) { 0.0f, 0.0f, 0.0f }, (float[]) { 0.0f, 0.0f, 1.0f }, (float[3]) { 0.0f, 1.0f, 0.0f });
@@ -615,7 +617,7 @@ bool Init(void)
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
 
-	// Volume rendering shader
+	///// Volume rendering stuff
 	//Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });
 	//glUseProgram(Objects[GLSL_VOL_SHADER]);
 	//Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
@@ -642,7 +644,8 @@ bool Init(void)
 	//glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, 8, 0, GL_RGBA, GL_FLOAT, transferFunc);
 
 	//if(!Fluid3D_Init(&Fluid, 128, 128, 128, 0.0f, 0.0f))
-	//	return false;		
+	//	return false;
+	/////
 
 
 	// General lighting shader
@@ -667,21 +670,19 @@ bool Init(void)
 	Objects[GLSL_DISTANCE_INDEX]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "index");
 
 	// Genereate texture and frame buffer for the depth cube map
-	glGenTextures(1, &Objects[TEXTURE_DISTANCE]);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, Objects[TEXTURE_DISTANCE]);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	//glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, DynSize, DynSize, Lights.NumLights*6);
-	glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*(GLsizei)List_GetCount(&Lights.Lights), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &Objects[TEXTURE_DISTANCE]);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTextureStorage3D(Objects[TEXTURE_DISTANCE], 1, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*(GLsizei)List_GetCount(&Lights.Lights));
 
-	glGenFramebuffers(1, &Objects[BUFFER_DISTANCE]);
+	glCreateFramebuffers(1, &Objects[BUFFER_DISTANCE]);
 	glBindFramebuffer(GL_FRAMEBUFFER, Objects[BUFFER_DISTANCE]);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE], 0);
+	glNamedFramebufferTexture(Objects[BUFFER_DISTANCE], GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE], 0);
 
 	// Disable drawing, we're only interested in depth information
 	glDrawBuffer(GL_NONE);
@@ -704,9 +705,10 @@ void Destroy(void)
 
 //	Fluid3D_Destroy(&Fluid);
 
-	FREE(Hellknight_Idle.data);
-
 	Audio_Destroy();
+	// Side note: Be sure to free audio data *after* sound system shutdown,
+	// it might still be trying to read the data... >_>
+	FREE(Hellknight_Idle.data);
 
 	DestroyBeam();
 

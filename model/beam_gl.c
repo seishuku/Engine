@@ -23,26 +23,28 @@ int32_t InitBeam(void)
 
 	BeamShader=CreateShaderProgram((ProgNames_t) { "./shaders/beam_v.glsl", "./shaders/beam_f.glsl", NULL, NULL });
 
-	glGenVertexArrays(1, &BeamVAO);
-	glBindVertexArray(BeamVAO);
+	glCreateVertexArrays(1, &BeamVAO);
 
-	glGenBuffers(1, &BeamVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4)*vertexCount, NULL, GL_STREAM_DRAW);
+	glCreateBuffers(1, &BeamVBO);
+	glNamedBufferData(BeamVBO, sizeof(vec4)*vertexCount, NULL, GL_STREAM_DRAW);
 
 	BeamVB=(float *)malloc(sizeof(vec4)*vertexCount);
 
 	if(!BeamVB)
 		return 0;
 
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(0);
+	glVertexArrayVertexBuffer(BeamVAO, 0, BeamVBO, 0, sizeof(vec4));
 
-	glGenBuffers(1, &BeamEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BeamEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*3*triangleCount, NULL, GL_STATIC_DRAW);
+	glVertexArrayAttribFormat(BeamVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(BeamVAO, 0, 0);
+	glEnableVertexArrayAttrib(BeamVAO, 0);
 
-	uint16_t *pTris=glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+	glCreateBuffers(1, &BeamEBO);
+	glNamedBufferData(BeamEBO, sizeof(uint16_t)*3*triangleCount, NULL, GL_STATIC_DRAW);
+
+	glVertexArrayElementBuffer(BeamVAO, BeamEBO);
+
+	uint16_t *pTris=glMapNamedBuffer(BeamEBO, GL_WRITE_ONLY);
 
 	if(pTris)
 	{
@@ -70,7 +72,7 @@ int32_t InitBeam(void)
 			}
 		}
 
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		glUnmapNamedBuffer(BeamEBO);
 	}
 	else
 		return 0;
@@ -116,8 +118,7 @@ void DrawBeam(const vec3 start, const vec3 end, const vec3 color, const float ra
 			}
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, BeamVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec4)*vertexCount, BeamVB);
+		glNamedBufferSubData(BeamVBO, 0, sizeof(vec4)*vertexCount, BeamVB);
 	}
 
 	glUseProgram(BeamShader);

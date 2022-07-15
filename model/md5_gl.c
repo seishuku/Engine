@@ -25,39 +25,53 @@ void BuildVBOMD5(MD5_Model_t *Model)
 {
 	for(int32_t i=0;i<Model->num_meshes;i++)
 	{
-		glGenBuffers(1, &Model->meshes[i].WeightID);
-		glBindBuffer(GL_ARRAY_BUFFER, Model->meshes[i].WeightID);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(MD5_Weight_t)*Model->meshes[i].num_weights, Model->meshes[i].weights, GL_STATIC_COPY);
+		glCreateBuffers(1, &Model->meshes[i].WeightID);
+		glNamedBufferData(Model->meshes[i].WeightID, sizeof(MD5_Weight_t)*Model->meshes[i].num_weights, Model->meshes[i].weights, GL_STATIC_COPY);
 
-		glGenBuffers(1, &Model->meshes[i].VertID);
-		glBindBuffer(GL_ARRAY_BUFFER, Model->meshes[i].VertID);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(MD5_Vertex_t)*Model->meshes[i].num_verts, Model->meshes[i].vertices, GL_STATIC_COPY);
+		glCreateBuffers(1, &Model->meshes[i].VertID);
+		glNamedBufferData(Model->meshes[i].VertID, sizeof(MD5_Vertex_t)*Model->meshes[i].num_verts, Model->meshes[i].vertices, GL_STATIC_COPY);
 
-		glGenVertexArrays(1, &Model->meshes[i].VAO);
-		glBindVertexArray(Model->meshes[i].VAO);
+		// Create the vertex array object
+		glCreateVertexArrays(1, &Model->meshes[i].VAO);
 
-		glGenBuffers(1, &Model->meshes[i].FinalVertID);
-		glBindBuffer(GL_ARRAY_BUFFER, Model->meshes[i].FinalVertID);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*20*Model->meshes[i].num_verts, NULL, GL_STATIC_COPY);
+		// Create vertex buffer object
+		glCreateBuffers(1, &Model->meshes[i].FinalVertID);
 
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*0));	//Vertex
-		glEnableVertexAttribArray(0);
+		// Assign the vertex buffer to the vertex array on binding point 0, and set buffer stride
+		glVertexArrayVertexBuffer(Model->meshes[i].VAO, 0, Model->meshes[i].FinalVertID, 0, sizeof(float)*20);
 
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*4));	//UV
-		glEnableVertexAttribArray(1);
+		// Allocate vertex buffer data
+		glNamedBufferData(Model->meshes[i].FinalVertID, sizeof(float)*20*Model->meshes[i].num_verts, NULL, GL_STATIC_COPY);
 
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4)));	//TANGENT
-		glEnableVertexAttribArray(2);
+		// Vertex
+		glVertexArrayAttribFormat(Model->meshes[i].VAO, 0, 4, GL_FLOAT, GL_FALSE, sizeof(float)*0);
+		glVertexArrayAttribBinding(Model->meshes[i].VAO, 0, 0);
+		glEnableVertexArrayAttrib(Model->meshes[i].VAO, 0);
 
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4)));	//BINORMAL
-		glEnableVertexAttribArray(3);
+		// UV
+		glVertexArrayAttribFormat(Model->meshes[i].VAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*4);
+		glVertexArrayAttribBinding(Model->meshes[i].VAO, 1, 0);
+		glEnableVertexArrayAttrib(Model->meshes[i].VAO, 1);
 
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(float)*20, BUFFER_OFFSET(sizeof(float)*(4+4+4+4)));	//NORMAL
-		glEnableVertexAttribArray(4);
+		// Tangent
+		glVertexArrayAttribFormat(Model->meshes[i].VAO, 2, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4));
+		glVertexArrayAttribBinding(Model->meshes[i].VAO, 2, 0);
+		glEnableVertexArrayAttrib(Model->meshes[i].VAO, 2);
 
-		glGenBuffers(1, &Model->meshes[i].ElemID);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Model->meshes[i].ElemID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
+		// Binormal
+		glVertexArrayAttribFormat(Model->meshes[i].VAO, 3, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4+4));
+		glVertexArrayAttribBinding(Model->meshes[i].VAO, 3, 0);
+		glEnableVertexArrayAttrib(Model->meshes[i].VAO, 3);
+
+		// Normal
+		glVertexArrayAttribFormat(Model->meshes[i].VAO, 4, 4, GL_FLOAT, GL_FALSE, sizeof(float)*(4+4+4+4));
+		glVertexArrayAttribBinding(Model->meshes[i].VAO, 4, 0);
+		glEnableVertexArrayAttrib(Model->meshes[i].VAO, 4);
+
+		// Create index buffer object and assign it
+		glCreateBuffers(1, &Model->meshes[i].ElemID);
+		glNamedBufferData(Model->meshes[i].ElemID, sizeof(uint32_t)*Model->meshes[i].num_tris*3, Model->meshes[i].triangles, GL_STATIC_DRAW);
+		glVertexArrayElementBuffer(Model->meshes[i].VAO, Model->meshes[i].ElemID);
 
 		glBindVertexArray(0);
 	}
@@ -116,8 +130,7 @@ void UpdateAnimation(Model_t *Model, float dt)
 		}
 	}
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Model->SkelSSBO);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float)*8*Model->Anim.num_joints, Model->Skel);
+	glNamedBufferSubData(Model->SkelSSBO, 0, sizeof(float)*8*Model->Anim.num_joints, Model->Skel);
 
 	for(int32_t i=0;i<Model->Model.num_meshes;i++)
 	{
@@ -159,10 +172,8 @@ int32_t LoadMD5Model(const char *Filename, Model_t *Model)
 	if(LoadAnim(&Model->Anim, Anim))
 	{
 		// Generate an SSBO to store the interpolated skeleton
-		glGenBuffers(1, &Model->SkelSSBO);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Model->SkelSSBO);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float)*8*Model->Anim.num_joints, NULL, GL_STREAM_DRAW);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		glCreateBuffers(1, &Model->SkelSSBO);
+		glNamedBufferData(Model->SkelSSBO, sizeof(float)*8*Model->Anim.num_joints, NULL, GL_STREAM_DRAW);
 
 		// Allocate system memory to store interpolated skeleton
 		Model->Skel=(float *)malloc(sizeof(float)*8*Model->Anim.num_joints);

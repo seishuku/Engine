@@ -136,14 +136,23 @@ void Lights_UpdateSSBO(Lights_t *Lights)
 	{
 		oldNumLights=(uint32_t)List_GetCount(&Lights->Lights);
 
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, Objects[TEXTURE_DISTANCE]);
-		glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*(GLsizei)List_GetCount(&Lights->Lights), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		// Immutable texture object have to be deleted and recreated
+		glDeleteTextures(1, &Objects[TEXTURE_DISTANCE]);
+		glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &Objects[TEXTURE_DISTANCE]);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glTextureParameteri(Objects[TEXTURE_DISTANCE], GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTextureStorage3D(Objects[TEXTURE_DISTANCE], 1, GL_DEPTH_COMPONENT32, DynSize, DynSize, 6*(GLsizei)List_GetCount(&Lights->Lights));
+
+		// And re-assign the texture object to the framebuffer object
+		glNamedFramebufferTexture(Objects[BUFFER_DISTANCE], GL_DEPTH_ATTACHMENT, Objects[TEXTURE_DISTANCE], 0);
 	}
 
-	Light_t *Ptr=List_GetPointer(&Lights->Lights, 0);
-
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Lights->SSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Light_t)*List_GetCount(&Lights->Lights), Ptr, GL_STREAM_DRAW);
+	glNamedBufferData(Lights->SSBO, sizeof(Light_t)*List_GetCount(&Lights->Lights), List_GetPointer(&Lights->Lights, 0), GL_STREAM_DRAW);
 }
 
 bool Lights_Init(Lights_t *Lights)
@@ -152,7 +161,7 @@ bool Lights_Init(Lights_t *Lights)
 
 	List_Init(&Lights->Lights, sizeof(Light_t), 10, NULL);
 
-	glGenBuffers(1, &Lights->SSBO);
+	glCreateBuffers(1, &Lights->SSBO);
 
 	return true;
 }
