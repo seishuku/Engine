@@ -152,6 +152,10 @@ void UpdateLineChart(const float val)
 	glNamedBufferSubData(VBO, 0, sizeof(float)*3*NUM_SAMPLES+3, lines);
 }
 
+#include "q2bsp.h"
+
+Q2BSP_Model_t Q2Model;
+
 void UpdateShadow(GLuint buffer)
 {
 	matrix proj, mv[6], local;
@@ -202,30 +206,33 @@ void UpdateShadow(GLuint buffer)
 		glUniform1i(Objects[GLSL_DISTANCE_INDEX], i);
 
 		// Render models
+		//MatrixIdentity(local);
+		//MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+		//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		//glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		//DrawModelMD5(&Hellknight.Model);
+
+		//MatrixIdentity(local);
+		//MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
+		//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		//glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		//DrawModelMD5(&Fatty.Model);
+
+		//MatrixIdentity(local);
+		//MatrixTranslate(700.0f, -100.0f, -700.0f, local);
+		//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+		//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+		//glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
+		//DrawModelMD5(&Pinky.Model);
+
 		MatrixIdentity(local);
-		MatrixTranslate(0.0f, -100.0f, 0.0f, local);
 		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-		DrawModelMD5(&Hellknight.Model);
-
-		MatrixIdentity(local);
-		MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
-		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-		DrawModelMD5(&Fatty.Model);
-
-		MatrixIdentity(local);
-		MatrixTranslate(700.0f, -100.0f, -700.0f, local);
-		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-		DrawModelMD5(&Pinky.Model);
-
-		MatrixIdentity(local);
-		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-		DrawModelOBJ(&Level);
+//		DrawModelOBJ(&Level);
+		DrawQ2BSP(&Q2Model);
 	}
 
 	glCullFace(GL_BACK);
@@ -251,8 +258,8 @@ void Render(void)
 	//clFlush(Fluid.Context.CommandQueue);
 	/////
 
-	for(int32_t i=0;i<Level.NumMesh;i++)
-		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
+//	for(int32_t i=0;i<Level.NumMesh;i++)
+//		CameraCheckCollision(&Camera, Level.Vertex, Level.Mesh[i].Face, Level.Mesh[i].NumFace);
 
 	// Sphere -> BBox intersection testing
 	//float min[3]={ 0.0f, };
@@ -326,39 +333,46 @@ void Render(void)
 	glBindTextureUnit(3, Objects[TEXTURE_DISTANCE]);
 
 	// Render model
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	//glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	//glBindTextureUnit(0, Hellknight.Base);
+	//glBindTextureUnit(1, Hellknight.Specular);
+	//glBindTextureUnit(2, Hellknight.Normal);
+	//DrawModelMD5(&Hellknight.Model);
+
+	//MatrixIdentity(local);
+	//MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
+	//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	//glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+	//glBindTextureUnit(0, Fatty.Base);
+	//glBindTextureUnit(1, Fatty.Specular);
+	//glBindTextureUnit(2, Fatty.Normal);
+	//DrawModelMD5(&Fatty.Model);
+
 	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	//MatrixTranslate(700.0f, -100.0f, -700.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	glBindTextureUnit(0, Hellknight.Base);
-	glBindTextureUnit(1, Hellknight.Specular);
-	glBindTextureUnit(2, Hellknight.Normal);
-	DrawModelMD5(&Hellknight.Model);
+	//glBindTextureUnit(0, Pinky.Base);
+	//glBindTextureUnit(1, Pinky.Specular);
+	//glBindTextureUnit(2, Pinky.Normal);
+	//DrawModelMD5(&Pinky.Model);
 
-	MatrixIdentity(local);
-	MatrixTranslate(-700.0f, -100.0f, -700.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	glBindTextureUnit(0, Fatty.Base);
-	glBindTextureUnit(1, Fatty.Specular);
-	glBindTextureUnit(2, Fatty.Normal);
-	DrawModelMD5(&Fatty.Model);
+//	MatrixIdentity(local);
+//	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
+//	DrawModelOBJ(&Level);
 
-	MatrixIdentity(local);
-	MatrixTranslate(700.0f, -100.0f, -700.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	glBindTextureUnit(0, Pinky.Base);
-	glBindTextureUnit(1, Pinky.Specular);
-	glBindTextureUnit(2, Pinky.Normal);
-	DrawModelMD5(&Pinky.Model);
+	glBindTextureUnit(0, Level.Material[1].TexBaseID);
+	glBindTextureUnit(1, Level.Material[1].TexSpecularID);
+	glBindTextureUnit(2, Level.Material[1].TexNormalID);
+	DrawQ2BSP(&Q2Model);
 
-	MatrixIdentity(local);
-	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	DrawModelOBJ(&Level);
+	DrawSkybox();
 
 	///// Particle system stuff
 
@@ -382,35 +396,35 @@ void Render(void)
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
 
-	Lights_UpdatePosition(&Lights, LightIDs[5], mouth);
-	Lights_UpdatePosition(&Lights, LightIDs[6], left);
-	Lights_UpdatePosition(&Lights, LightIDs[7], right);
+	//Lights_UpdatePosition(&Lights, LightIDs[5], mouth);
+	//Lights_UpdatePosition(&Lights, LightIDs[6], left);
+	//Lights_UpdatePosition(&Lights, LightIDs[7], right);
 
 	vec3 temp;
 
 	Vec3_Set(temp, -700.0f+sinf(fTime*4.0f)*50.0f, -50.0f+sinf(fTime*2.0f)*50.0f, -700.0f+cosf(fTime*4.0f)*50.0f);
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[4], temp);
-	Lights_UpdatePosition(&Lights, LightIDs[8], temp);
+	//Lights_UpdatePosition(&Lights, LightIDs[8], temp);
 
 	Vec3_Set(temp, 700.0f+sinf(fTime*4.0f)*100.0f, -50.0f+sinf(fTime*2.0f)*20.0f, -700.0f+cosf(fTime*4.0f)*100.0f);
 	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[5], temp);
-	Lights_UpdatePosition(&Lights, LightIDs[9], temp);
+	//Lights_UpdatePosition(&Lights, LightIDs[9], temp);
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	ParticleSystem_Step(&ParticleSystem, fTimeStep);
-	ParticleSystem_Draw(&ParticleSystem);
+//	ParticleSystem_Step(&ParticleSystem, fTimeStep);
+//	ParticleSystem_Draw(&ParticleSystem);
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
 	/////
 
 	///// Beam stuff
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
-	DrawBeam(BeamStart1, BeamEnd1, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
-	glDisable(GL_BLEND);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_ONE, GL_ONE);
+	//DrawBeam(BeamStart0, BeamEnd0, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
+	//DrawBeam(BeamStart1, BeamEnd1, (vec3) { 1.0f, 1.0f, 1.0f }, radius);
+	//glDisable(GL_BLEND);
 	/////
 
 	///// Volume rendering
@@ -486,19 +500,21 @@ bool Init(void)
 {
 	if(Lights_Init(&Lights))
 	{
-		LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 500.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
-		LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
-		LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
-		LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
-		LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
+		//LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 500.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
+		//LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
+		//LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
+		//LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
+		//LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
 
-		LightIDs[5]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 100.0f, (vec4) { 0.12f, 0.03f, 0.0f, 1.0f });
-		LightIDs[6]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
-		LightIDs[7]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+		//LightIDs[5]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 100.0f, (vec4) { 0.12f, 0.03f, 0.0f, 1.0f });
+		//LightIDs[6]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+		//LightIDs[7]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
 
-		LightIDs[8]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
-		LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
+		//LightIDs[8]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
+		//LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
 	}
+
+	LoadQ2BSP(&Q2Model, "assets/base1.bsp");
 
 	if(ParticleSystem_Init(&ParticleSystem))
 	{

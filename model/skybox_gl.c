@@ -13,33 +13,38 @@ void DrawSkybox(void)
 
 void BuildSkyboxVBO(void)
 {
-	float scale=1.0f, w=1.0f, tex_scale=1.0f;
+	float scale=10000.0f, w=1.0f, tex_scale=1.0f;
 	vec4 SkyboxVerts[]=
 	{
-		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, //0 Right
-		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, //1
-		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, //2
-		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, //3
-		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, //4 Left
-		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, //5
-		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }, //6
-		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, //7
-		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }, //8 Top
-		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, //9
-		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, //10
-		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, //11
-		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, //12 Bottom
-		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, //13
-		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, //14
-		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, //15
-		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, //16 Front
-		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, //17
-		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, //18
-		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, //19
-		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, //20 Back
-		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, //21
-		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, //22
-		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }  //23
+		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, //0 Right
+		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, //1
+		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, //2
+		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, //3
+
+		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, //4 Left
+		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, //5
+		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, //6
+		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, //7
+
+		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f,-1.0f, 0.0f, 0.0f }, //8 Top
+		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f,-1.0f, 0.0f, 0.0f }, //9
+		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f,-1.0f, 0.0f, 0.0f }, //10
+		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f,-1.0f, 0.0f, 0.0f }, //11
+
+		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, //12 Bottom
+		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, //13
+		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, //14
+		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, //15
+
+		{ +scale, -scale, +scale, w }, { +tex_scale, -tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, //16 Front
+		{ -scale, -scale, +scale, w }, { -tex_scale, -tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, //17
+		{ -scale, +scale, +scale, w }, { -tex_scale, +tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, //18
+		{ +scale, +scale, +scale, w }, { +tex_scale, +tex_scale, +tex_scale, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f,-1.0f, 0.0f }, //19
+
+		{ -scale, -scale, -scale, w }, { -tex_scale, -tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, //20 Back
+		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, //21
+		{ +scale, +scale, -scale, w }, { +tex_scale, +tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, //22
+		{ -scale, +scale, -scale, w }, { -tex_scale, +tex_scale, -tex_scale, 0.0f }, {-1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }  //23
 	};
 	uint16_t SkyboxTris[]=
 	{
@@ -64,10 +69,25 @@ void BuildSkyboxVBO(void)
 	glVertexArrayAttribBinding(SkyboxVAO, 1, 0);
 	glEnableVertexArrayAttrib(SkyboxVAO, 1);
 
+	// Tangent
+	glVertexArrayAttribFormat(SkyboxVAO, 2, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*2);
+	glVertexArrayAttribBinding(SkyboxVAO, 2, 0);
+	glEnableVertexArrayAttrib(SkyboxVAO, 2);
+
+	// Binormal
+	glVertexArrayAttribFormat(SkyboxVAO, 3, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*3);
+	glVertexArrayAttribBinding(SkyboxVAO, 3, 0);
+	glEnableVertexArrayAttrib(SkyboxVAO, 3);
+
+	// Normal
+	glVertexArrayAttribFormat(SkyboxVAO, 4, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*4);
+	glVertexArrayAttribBinding(SkyboxVAO, 4, 0);
+	glEnableVertexArrayAttrib(SkyboxVAO, 4);
+
 	// Create vertex buffer object
 	glCreateBuffers(1, &SkyboxVBO);
-	glNamedBufferData(SkyboxVBO, sizeof(vec4)*2*24, SkyboxVerts, GL_STATIC_DRAW);
-	glVertexArrayVertexBuffer(SkyboxVAO, 0, SkyboxVBO, 0, sizeof(vec4)*2);
+	glNamedBufferData(SkyboxVBO, sizeof(vec4)*5*24, SkyboxVerts, GL_STATIC_DRAW);
+	glVertexArrayVertexBuffer(SkyboxVAO, 0, SkyboxVBO, 0, sizeof(vec4)*5);
 
 	// Create element buffer object
 	glCreateBuffers(1, &SkyboxEBO);

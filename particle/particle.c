@@ -282,13 +282,13 @@ void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 					{
 						vec3 temp;
 
-						Vec3_Setv(temp, Emitter->Particles[j].vel);
-						Vec3_Muls(temp, dt);
-						Vec3_Addv(Emitter->Particles[j].pos, temp);
-
 						Vec3_Setv(temp, PartGrav);
 						Vec3_Muls(temp, dt);
 						Vec3_Addv(Emitter->Particles[j].vel, temp);
+
+						Vec3_Setv(temp, Emitter->Particles[j].vel);
+						Vec3_Muls(temp, dt);
+						Vec3_Addv(Emitter->Particles[j].pos, temp);
 					}
 				}
 			}

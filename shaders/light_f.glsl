@@ -95,7 +95,7 @@ void main()
 		float lAtten=max(0.0, 1.0-length(lPos*Lights[i].Position.w));
 
 		// Shadow map compare, divide the light distance by the radius to match the depth map distance space
-		float Shadow=texture(TexDistance, vec4(-lPos, i), length(lPos)*Lights[i].Position.w);
+		float Shadow=texture(TexDistance, vec4(-lPos, i), (length(lPos)*Lights[i].Position.w));
 
 		// Now we can normalize the light position vector
 		lPos=normalize(lPos);
@@ -104,17 +104,17 @@ void main()
 		vec3 lDiffuse=Lights[i].Kd.rgb*max(0.0, dot(lPos, n));
 
 		// Specular = Ks*((R.L)^n)*(N.L)*Gloss
-		vec3 lSpecular=vec3(1.0, 1.0, 1.0)*max(0.0, pow(dot(lPos, r), 16.0)*dot(lPos, n));
+		vec3 lSpecular=Lights[i].Kd.rgb*max(0.0, pow(dot(lPos, r), 16.0)*dot(lPos, n));
 
 		// Light 0 is the only that is a spotlight
 		// Multiply it with attenuation, so it mixes in with everything else correctly
-		if(i==0)
-			lAtten*=SpotLight(lPos, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
+//		if(i==0)
+//			lAtten*=SpotLight(lPos, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
 
 		// I=(base*diffuse+specular)*shadow*attenuation*lightvolumeatten+volumelight
 		temp+=(Base.xyz*lDiffuse+(lSpecular*Specular))*Shadow*lAtten*(1.0-lVolume.w)+(lVolume.w*Lights[i].Kd.xyz);
 	}
-
+/*
 	// Beam area light stuff
 	vec3 Line=ClosestPointOnSegment(Position, Beam_Start0, Beam_End0)-Position;
 	vec3 Light=normalize(Line);
@@ -136,7 +136,7 @@ void main()
 	radius=1.0/75.0;
 	falloff=max(0.0, 1.0-length(Line*radius));
 
-	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;
+	temp+=(Base.xyz*NdotL+(RdotL*Specular))*falloff;*/
 	////
 
 	Output=vec4(temp, 1.0);

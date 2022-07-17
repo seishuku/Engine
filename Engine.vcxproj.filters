@@ -82,6 +82,9 @@
     <ClCompile Include="utils\list.c">
       <Filter>Source\utils</Filter>
     </ClCompile>
+    <ClCompile Include="q2bsp.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -152,6 +155,9 @@
     </ClInclude>
     <ClInclude Include="utils\list.h">
       <Filter>Headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="q2bsp.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

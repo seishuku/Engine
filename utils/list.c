@@ -151,6 +151,22 @@ void *List_GetBufferPointer(List_t *List)
 	return NULL;
 }
 
+bool List_ShrinkFit(List_t *List)
+{
+	if(List==NULL)
+		return false;
+
+	void *temp=realloc(List->Buffer, List->Size);
+
+	if(temp==NULL)
+		return false;
+
+	List->Buffer=temp;
+	List->bufSize=List->Size;
+
+	return true;
+}
+
 void List_Clear(List_t *List)
 {
 	if(List==NULL)

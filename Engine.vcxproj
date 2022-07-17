@@ -326,6 +326,7 @@
     <ClCompile Include="opencl\opencl.c" />
     <ClCompile Include="opengl\opengl.c" />
     <ClCompile Include="particle\particle.c" />
+    <ClCompile Include="q2bsp.c" />
     <ClCompile Include="system\win32.c" />
     <ClCompile Include="utils\list.c" />
   </ItemGroup>
@@ -351,6 +352,7 @@
     <ClInclude Include="opencl\opencl.h" />
     <ClInclude Include="opengl\opengl.h" />
     <ClInclude Include="particle\particle.h" />
+    <ClInclude Include="q2bsp.h" />
     <ClInclude Include="system\system.h" />
     <ClInclude Include="utils\list.h" />
   </ItemGroup>
