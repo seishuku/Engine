@@ -34,8 +34,6 @@ int32_t Lights_Add(Lights_t *Lights, vec3 Position, float Radius, vec4 Kd)
 
 void Lights_Del(Lights_t *Lights, int32_t ID)
 {
-	bool found=false;
-
 	// Return if ID isn't valid
 	if(ID<0||Lights==NULL)
 		return;

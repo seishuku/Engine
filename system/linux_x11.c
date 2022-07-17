@@ -8,6 +8,7 @@
 #include "../opengl/opengl.h"
 #include "../math/math.h"
 #include "../camera/camera.h"
+#include "../utils/list.h"
 #include "../particle/particle.h"
 #include "system.h"
 

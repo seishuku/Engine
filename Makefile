@@ -7,6 +7,7 @@ OBJS+=model/md5.o model/md5_gl.o
 OBJS+=model/beam_gl.o
 OBJS+=model/quad_gl.o
 OBJS+=model/skybox_gl.o
+OBJS+=q2bsp.o
 
 # image loading
 OBJS+=image/qoi.o
