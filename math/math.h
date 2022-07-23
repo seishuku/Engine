@@ -64,6 +64,16 @@ float fsinf(const float v);
 float fcosf(const float v);
 float ftanf(const float x);
 
+inline float deg2rad(float x)
+{
+	return x*PI/180.0f;
+}
+
+inline float rad2deg(float x)
+{
+	return 180.0f*x/PI;
+}
+
 float fact(const int32_t n);
 
 uint32_t NextPower2(uint32_t value);

@@ -23,7 +23,7 @@ struct Light_t
 	vec4 Kd;
 };
 
-layout(std430, binding=0) buffer layoutLights
+layout(std430, binding=0) readonly buffer layoutLights
 {
 	Light_t Lights[];
 };
@@ -95,7 +95,7 @@ void main()
 		float lAtten=max(0.0, 1.0-length(lPos*Lights[i].Position.w));
 
 		// Shadow map compare, divide the light distance by the radius to match the depth map distance space
-		float Shadow=texture(TexDistance, vec4(-lPos, i), (length(lPos)*Lights[i].Position.w));
+		float Shadow=texture(TexDistance, vec4(-lPos, i), (length(lPos)*Lights[i].Position.w)+0.001);
 
 		// Now we can normalize the light position vector
 		lPos=normalize(lPos);
@@ -112,7 +112,7 @@ void main()
 //			lAtten*=SpotLight(lPos, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
 
 		// I=(base*diffuse+specular)*shadow*attenuation*lightvolumeatten+volumelight
-		temp+=(Base.xyz*lDiffuse+(lSpecular*Specular))*Shadow*lAtten*(1.0-lVolume.w)+(lVolume.w*Lights[i].Kd.xyz);
+		temp+=(Base.xyz*lDiffuse+(lSpecular*Base.w))*Shadow*lAtten*(1.0-lVolume.w)+(lVolume.w*Lights[i].Kd.xyz);
 	}
 /*
 	// Beam area light stuff

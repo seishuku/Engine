@@ -2,15 +2,23 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "system/system.h"
 #include "math/math.h"
 #include "utils/list.h"
 #include "lights/lights.h"
 #include "opengl/opengl.h"
+#include "image/image.h"
 #include "q2bsp.h"
 
-#define IDBSPHEADER	(('P'<<24)+('S'<<16)+('B'<<8)+'I')
-#define BSPVERSION	38
+#define IDBSPHEADER			(('P'<<24)+('S'<<16)+('B'<<8)+'I')
+#define BSPVERSION			38
+
+#define	SURF_PLANEBACK		0x02
+#define	SURF_DRAWSKY		0x04
+#define SURF_DRAWTURB		0x10
+#define SURF_DRAWBACKGROUND	0x40
+#define SURF_UNDERWATER		0x80
 
 typedef struct
 {
@@ -75,10 +83,13 @@ typedef struct
 
 extern Lights_t Lights;
 
-GLuint BSPVAO;
-GLuint BSPVertex;
-GLuint BSPUV;
-GLuint BSPElement;
+typedef struct
+{
+	int8_t TextureName[32];
+	GLuint TexBaseID;
+	GLuint TexSpecularID;
+	GLuint TexNormalID;
+} TextureItem_t;
 
 bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 {
@@ -126,122 +137,209 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 	fread(Edges, 1, Header.Edges.Length, Stream);
 	/////
 
-	///// Build index list and triangulate
-	List_t VertexList;
-
-	List_Init(&VertexList, sizeof(float)*20, 0, NULL);
+	// NumMesh = number of TextureInfo struct, geometry is grouped by texture
+	Model->NumMesh=Header.TextureInfo.Length/sizeof(Q2BSP_TextureInfo_t);
+	Model->Mesh=(Q2BSP_Mesh_t *)malloc(sizeof(Q2BSP_Mesh_t)*Model->NumMesh);
 
 	uint32_t NumFaces=Header.Faces.Length/sizeof(Q2BSP_Face_t);
 
-	for(uint32_t i=0;i<NumFaces;i++)
-	{
-		Q2BSP_Face_t *face=&Faces[i];
-		Q2BSP_TextureInfo_t *texInfo=&TextureInfo[face->Texture_Info];
+	///// Build mesh geometry
+	List_t VertexList, TextureList;
+	char buf[512];
 
-		if(strstr(texInfo->Texture_Name, "trigger")||texInfo->flags&4)
+	List_Init(&VertexList, sizeof(float)*20, 0, NULL);
+	List_Init(&TextureList, sizeof(TextureItem_t), 0, NULL);
+
+	for(uint32_t i=0;i<Model->NumMesh;i++)
+	{
+		Q2BSP_TextureInfo_t *texInfo=&TextureInfo[i];
+
+		// Ignore anything that's flagged as a trigger, clip, sky, or water surfaces
+		if(strstr(texInfo->Texture_Name, "trigger")||
+		   strstr(texInfo->Texture_Name, "clip")||
+		   texInfo->flags&SURF_DRAWSKY||
+		   texInfo->flags&SURF_DRAWTURB)
 			continue;
 
-		int32_t edgeIdx=FaceEdges[face->First_Edge];
-		float *vert0=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
-		vec2 tex0={ (Vec3_Dot(vert0, texInfo->U_Axis)+texInfo->U_Offset)/128.0f, (Vec3_Dot(vert0, texInfo->V_Axis)+texInfo->V_Offset)/128.0f };
+		TextureItem_t *Item=NULL;
 
-		for(int j=1;j<face->Num_Edges-1;j++)
+		for(int j=0;j<List_GetCount(&TextureList);j++)
 		{
-			edgeIdx=FaceEdges[face->First_Edge+j+1];
-			float *vert1=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
-			vec2 tex1={ (Vec3_Dot(vert1, texInfo->U_Axis)+texInfo->U_Offset)/128.0f, (Vec3_Dot(vert1, texInfo->V_Axis)+texInfo->V_Offset)/128.0f };
+			Item=List_GetPointer(&TextureList, j);
 
-			edgeIdx=FaceEdges[face->First_Edge+j];
-			float *vert2=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
-			vec2 tex2={ (Vec3_Dot(vert2, texInfo->U_Axis)+texInfo->U_Offset)/128.0f, (Vec3_Dot(vert2, texInfo->V_Axis)+texInfo->V_Offset)/128.0f };
-
-			vec3 v0, v1, t, b, n;
-			vec2 uv0, uv1;
-			float r;
-
-			Vec3_Setv(v0, vert1);
-			Vec3_Subv(v0, vert0);
-
-			Vec2_Setv(uv0, tex1);
-			Vec2_Subv(uv0, tex0);
-
-			Vec3_Setv(v1, vert2);
-			Vec3_Subv(v1, vert0);
-
-			Vec2_Setv(uv1, tex2);
-			Vec2_Subv(uv1, tex0);
-
-			r=1.0f/(uv0[0]*uv1[1]-uv1[0]*uv0[1]);
-
-			t[0]=(uv1[1]*v0[0]-uv0[1]*v1[0])*r;
-			t[1]=(uv1[1]*v0[1]-uv0[1]*v1[1])*r;
-			t[2]=(uv1[1]*v0[2]-uv0[1]*v1[2])*r;
-			Vec3_Normalize(t);
-
-			b[0]=(uv0[0]*v1[0]-uv1[0]*v0[0])*r;
-			b[1]=(uv0[0]*v1[1]-uv1[0]*v0[1])*r;
-			b[2]=(uv0[0]*v1[2]-uv1[0]*v0[2])*r;
-			Vec3_Normalize(b);
-
-			Cross(v0, v1, n);
-			Vec3_Normalize(n);
-
-			List_Add(&VertexList, (float[20])
-			{
-				vert0[0], vert0[1], vert0[2], 1.0f,
-				tex0[0], tex0[1], 0.0f, 0.0f,
-				t[0], t[1], t[2], 0.0f,
-				b[0], b[1], b[2], 0.0f,
-				n[0], n[1], n[2], 0.0f
-			});
-
-			List_Add(&VertexList, (float[20])
-			{
-				vert1[0], vert1[1], vert1[2], 1.0f,
-				tex1[0], tex1[1], 0.0f, 0.0f,
-				t[0], t[1], t[2], 0.0f,
-				b[0], b[1], b[2], 0.0f,
-				n[0], n[1], n[2], 0.0f
-			});
-
-			List_Add(&VertexList, (float[20])
-			{
-				vert2[0], vert2[1], vert2[2], 1.0f,
-				tex2[0], tex2[1], 0.0f, 0.0f,
-				t[0], t[1], t[2], 0.0f,
-				b[0], b[1], b[2], 0.0f,
-				n[0], n[1], n[2], 0.0f
-			});
+			if(strncmp(Item->TextureName, texInfo->Texture_Name, 32)==0)
+				break; // Found the texture
+			else
+				Item=NULL; // Texture not found
 		}
+
+		if(Item)
+		{
+			// Texture was found, so use those IDs
+			Model->Mesh[i].TexBaseID=Item->TexBaseID;
+			Model->Mesh[i].TexSpecularID=Item->TexSpecularID;
+			Model->Mesh[i].TexNormalID=Item->TexNormalID;
+		}
+		else
+		{
+			// Texture was not found, load the texture and add it to the list
+
+			snprintf(buf, 512, "./assets/%s.qoi", texInfo->Texture_Name);
+			Model->Mesh[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+
+			snprintf(buf, 512, "./assets/%s_s.qoi", texInfo->Texture_Name);
+			Model->Mesh[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+
+			snprintf(buf, 512, "./assets/%s_n.qoi", texInfo->Texture_Name);
+			Model->Mesh[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+
+			if(!Model->Mesh[i].TexNormalID)
+			{
+				snprintf(buf, 512, "./assets/%s_b.tga", texInfo->Texture_Name);
+				Model->Mesh[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
+			}
+			else if(!Model->Mesh[i].TexNormalID)
+				Model->Mesh[i].TexNormalID=Image_Upload("./assets/white_b.tga", IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALMAP);
+
+			TextureItem_t ItemToAdd;
+
+			memcpy(ItemToAdd.TextureName, texInfo->Texture_Name, 32);
+			ItemToAdd.TexBaseID=Model->Mesh[i].TexBaseID;
+			ItemToAdd.TexSpecularID=Model->Mesh[i].TexSpecularID;
+			ItemToAdd.TexNormalID=Model->Mesh[i].TexNormalID;
+
+			List_Add(&TextureList, &ItemToAdd);
+		}
+
+		GLuint texWidth=1, texHeight=1;
+
+		glGetTextureLevelParameteriv(Model->Mesh[i].TexBaseID, 0, GL_TEXTURE_WIDTH, &texWidth);
+		glGetTextureLevelParameteriv(Model->Mesh[i].TexBaseID, 0, GL_TEXTURE_HEIGHT, &texHeight);
+
+		for(uint32_t j=0;j<NumFaces;j++)
+		{
+			Q2BSP_Face_t *Face=&Faces[j];
+
+			if(Face->Texture_Info==i)
+			{
+				// Get an index for the first triangle and get a pointer to that vertex
+				int32_t edgeIdx=FaceEdges[Face->First_Edge];
+				float *vert0=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
+				// Calculate a texture coord for that vertex
+				vec2 tex0={ (Vec3_Dot(vert0, texInfo->U_Axis)+texInfo->U_Offset)/texWidth, (Vec3_Dot(vert0, texInfo->V_Axis)+texInfo->V_Offset)/texHeight };
+
+				// Triangulate the remaining vertices for the triangle fan
+				// (not using triangle fans here, this uses the above vertex as the root vertex
+				//     and will be referenced in this loop every time)
+				for(int j=1;j<Face->Num_Edges-1;j++)
+				{
+					// Second vertex in triangle
+					edgeIdx=FaceEdges[Face->First_Edge+j+1];
+					float *vert1=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
+					vec2 tex1={ (Vec3_Dot(vert1, texInfo->U_Axis)+texInfo->U_Offset)/texWidth, (Vec3_Dot(vert1, texInfo->V_Axis)+texInfo->V_Offset)/texHeight };
+
+					// Third vertex in triangle
+					edgeIdx=FaceEdges[Face->First_Edge+j];
+					float *vert2=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
+					vec2 tex2={ (Vec3_Dot(vert2, texInfo->U_Axis)+texInfo->U_Offset)/texWidth, (Vec3_Dot(vert2, texInfo->V_Axis)+texInfo->V_Offset)/texHeight };
+
+					// variables used in calculating tangenet space
+					vec3 v0, v1, t, b, n;
+					vec2 uv0, uv1;
+					float r;
+
+					Vec3_Setv(v0, vert1);
+					Vec3_Subv(v0, vert0);
+
+					Vec2_Setv(uv0, tex1);
+					Vec2_Subv(uv0, tex0);
+
+					Vec3_Setv(v1, vert2);
+					Vec3_Subv(v1, vert0);
+
+					Vec2_Setv(uv1, tex2);
+					Vec2_Subv(uv1, tex0);
+
+					r=1.0f/(uv0[0]*uv1[1]-uv1[0]*uv0[1]);
+
+					t[0]=(uv1[1]*v0[0]-uv0[1]*v1[0])*r;
+					t[1]=(uv1[1]*v0[1]-uv0[1]*v1[1])*r;
+					t[2]=(uv1[1]*v0[2]-uv0[1]*v1[2])*r;
+					Vec3_Normalize(t);
+
+					b[0]=(uv0[0]*v1[0]-uv1[0]*v0[0])*r;
+					b[1]=(uv0[0]*v1[1]-uv1[0]*v0[1])*r;
+					b[2]=(uv0[0]*v1[2]-uv1[0]*v0[2])*r;
+					Vec3_Normalize(b);
+
+					Cross(v0, v1, n);
+					Vec3_Normalize(n);
+
+					// Add the first vertex (root)
+					List_Add(&VertexList, (float[20])
+					{
+						vert0[0], vert0[1], vert0[2], 1.0f, tex0[0], tex0[1], 0.0f, 0.0f, t[0], t[1], t[2], 0.0f, b[0], b[1], b[2], 0.0f, n[0], n[1], n[2], 0.0f
+					});
+
+					// Second
+					List_Add(&VertexList, (float[20])
+					{
+						vert1[0], vert1[1], vert1[2], 1.0f, tex1[0], tex1[1], 0.0f, 0.0f, t[0], t[1], t[2], 0.0f, b[0], b[1], b[2], 0.0f, n[0], n[1], n[2], 0.0f
+					});
+
+					// Third
+					List_Add(&VertexList, (float[20])
+					{
+						vert2[0], vert2[1], vert2[2], 1.0f, tex2[0], tex2[1], 0.0f, 0.0f, t[0], t[1], t[2], 0.0f, b[0], b[1], b[2], 0.0f, n[0], n[1], n[2], 0.0f
+					});
+				}
+			}
+		}
+
+		// Number of triangles is actually NumTris/3, but GL wants number of vertices for drawing
+		Model->Mesh[i].NumTris=(uint32_t)List_GetCount(&VertexList);
+
+		// FIX-ME: the above loop has some "meshes" that have no verts
+		if(Model->Mesh[i].NumTris)
+		{
+			glCreateVertexArrays(1, &Model->Mesh[i].VAO);
+
+			glVertexArrayAttribFormat(Model->Mesh[i].VAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
+			glVertexArrayAttribBinding(Model->Mesh[i].VAO, 0, 0);
+			glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 0);
+
+			glVertexArrayAttribFormat(Model->Mesh[i].VAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(vec4));
+			glVertexArrayAttribBinding(Model->Mesh[i].VAO, 1, 0);
+			glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 1);
+
+			glVertexArrayAttribFormat(Model->Mesh[i].VAO, 2, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*2);
+			glVertexArrayAttribBinding(Model->Mesh[i].VAO, 2, 0);
+			glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 2);
+
+			glVertexArrayAttribFormat(Model->Mesh[i].VAO, 3, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*3);
+			glVertexArrayAttribBinding(Model->Mesh[i].VAO, 3, 0);
+			glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 3);
+
+			glVertexArrayAttribFormat(Model->Mesh[i].VAO, 4, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*4);
+			glVertexArrayAttribBinding(Model->Mesh[i].VAO, 4, 0);
+			glEnableVertexArrayAttrib(Model->Mesh[i].VAO, 4);
+
+			glCreateBuffers(1, &Model->Mesh[i].VBO);
+			glNamedBufferData(Model->Mesh[i].VBO, VertexList.Size, VertexList.Buffer, GL_STATIC_DRAW);
+			glVertexArrayVertexBuffer(Model->Mesh[i].VAO, 0, Model->Mesh[i].VBO, 0, sizeof(float)*20);
+		}
+
+		List_Clear(&VertexList);
 	}
 
-	Model->NumTris=(uint32_t)List_GetCount(&VertexList);
+	//for(int j=0;j<List_GetCount(&TextureList);j++)
+	//{
+	//	TextureItem_t *Item=List_GetPointer(&TextureList, j);
+	//	DBGPRINTF("List #%d Name: %0.32s IDs: %d %d %d\n", j, Item->TextureName, Item->TexBaseID, Item->TexSpecularID, Item->TexNormalID)
+	//}
 
-	glCreateVertexArrays(1, &BSPVAO);
-
-	glVertexArrayAttribFormat(BSPVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(BSPVAO, 0, 0);
-	glEnableVertexArrayAttrib(BSPVAO, 0);
-
-	glVertexArrayAttribFormat(BSPVAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(vec4));
-	glVertexArrayAttribBinding(BSPVAO, 1, 0);
-	glEnableVertexArrayAttrib(BSPVAO, 1);
-
-	glVertexArrayAttribFormat(BSPVAO, 2, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*2);
-	glVertexArrayAttribBinding(BSPVAO, 2, 0);
-	glEnableVertexArrayAttrib(BSPVAO, 2);
-
-	glVertexArrayAttribFormat(BSPVAO, 3, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*3);
-	glVertexArrayAttribBinding(BSPVAO, 3, 0);
-	glEnableVertexArrayAttrib(BSPVAO, 3);
-
-	glVertexArrayAttribFormat(BSPVAO, 4, 4, GL_FLOAT, GL_FALSE, sizeof(vec4)*4);
-	glVertexArrayAttribBinding(BSPVAO, 4, 0);
-	glEnableVertexArrayAttrib(BSPVAO, 4);
-
-	glCreateBuffers(1, &BSPVertex);
-	glNamedBufferData(BSPVertex, VertexList.Size, VertexList.Buffer, GL_STATIC_DRAW);
-	glVertexArrayVertexBuffer(BSPVAO, 0, BSPVertex, 0, sizeof(float)*20);
+	List_Destroy(&TextureList);
+	List_Destroy(&VertexList);
 	/////
 
 	///// Parse the entity list for lights
@@ -255,10 +353,11 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 
 		if(strncmp(buff, "{", 1)==0)
 		{
-			bool IsLight=false, HasTarget=false;
+			bool IsLight=false, HasTarget=false, IsPlayerStart=false;
 			vec3 origin={ 0.0f, 0.0f, 0.0f };
-			float radius=0.0f;;
+			float radius=300.0f;;
 			vec4 color={ 1.0f, 1.0f, 1.0f, 1.0f };
+			float angle=0.0f;
 
 			while((buff[0]!='}')&&!feof(Stream))
 			{
@@ -268,6 +367,12 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 				if(strncmp(buff, "\"classname\" \"light\"", 19)==0)
 				{
 					IsLight=true;
+					continue;
+				}
+
+				if(strncmp(buff, "\"classname\" \"info_player_start\"", 31)==0)
+				{
+					IsPlayerStart=true;
 					continue;
 				}
 
@@ -283,6 +388,9 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 				if(sscanf(buff, "\"light\" \"%f\"", &radius)==1)
 					continue;
 
+				if(sscanf(buff, "\"angle\" \"%f\"", &angle)==1)
+					continue;
+
 				if(sscanf(buff, "\"_color\" \"%f %f %f\"", &color[0], &color[1], &color[2])==3)
 					continue;
 
@@ -292,17 +400,44 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 
 			if(IsLight&&!HasTarget)
 				Lights_Add(&Lights, origin, radius*2, color);
+
+			if(IsPlayerStart)
+			{
+				Vec3_Setv(Model->PlayerOrigin, origin);
+				Model->PlayerDirection=deg2rad(angle);
+			}
 		}
 	}
 	/////
 
 	fclose(Stream);
 
+	// Quick clean up of the memory
+	FREE(Vertex);
+	FREE(FaceEdges);
+	FREE(Faces);
+	FREE(TextureInfo);
+	FREE(Edges);
+
 	return true;
 }
 
 void DrawQ2BSP(Q2BSP_Model_t *Model)
 {
-	glBindVertexArray(BSPVAO);
-	glDrawArrays(GL_TRIANGLES, 0, Model->NumTris);
+	for(uint32_t i=0;i<Model->NumMesh;i++)
+	{
+		if(Model->Mesh[i].NumTris)
+		{
+			glBindTextureUnit(0, Model->Mesh[i].TexBaseID);
+			glBindTextureUnit(1, Model->Mesh[i].TexSpecularID);
+			glBindTextureUnit(2, Model->Mesh[i].TexNormalID);
+			glBindVertexArray(Model->Mesh[i].VAO);
+			glDrawArrays(GL_TRIANGLES, 0, Model->Mesh[i].NumTris);
+		}
+	}
+}
+
+void DestroyQ2BSP(Q2BSP_Model_t *Model)
+{
+	FREE(Model->Mesh);
 }

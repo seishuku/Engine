@@ -367,9 +367,6 @@ void Render(void)
 //	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
 //	DrawModelOBJ(&Level);
 
-	glBindTextureUnit(0, Level.Material[1].TexBaseID);
-	glBindTextureUnit(1, Level.Material[1].TexSpecularID);
-	glBindTextureUnit(2, Level.Material[1].TexNormalID);
 	DrawQ2BSP(&Q2Model);
 
 	DrawSkybox();
@@ -514,7 +511,7 @@ bool Init(void)
 		//LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
 	}
 
-	LoadQ2BSP(&Q2Model, "assets/base1.bsp");
+	LoadQ2BSP(&Q2Model, "assets/test.bsp");
 
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
@@ -603,17 +600,21 @@ bool Init(void)
 		return false;
 
 	// Set up camera structs
-	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
+//	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
+	CameraInit(&Camera,
+		Q2Model.PlayerOrigin,
+		(vec3) { cosf(Q2Model.PlayerDirection), sinf(Q2Model.PlayerDirection), 0.0f },
+		(vec3) { 0.0f, 1.0f, 0.0f });
 #endif
 
 	// Load the "level" Alias/Wavefront model
-	if(LoadOBJ(&Level, "./assets/room.obj"))
-	{
-		BuildVBOOBJ(&Level);
-		LoadMaterialsOBJ(&Level);
-	}
-	else
-		return false;
+	//if(LoadOBJ(&Level, "./assets/room.obj"))
+	//{
+	//	BuildVBOOBJ(&Level);
+	//	LoadMaterialsOBJ(&Level);
+	//}
+	//else
+	//	return false;
 
 	// Compile/link MD5 skinning compute program
 	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });
@@ -730,7 +731,8 @@ void Destroy(void)
 
 	CameraDeletePath(&CameraPath);
 
-	FreeOBJ(&Level);
+//	FreeOBJ(&Level);
+	DestroyQ2BSP(&Q2Model);
 
 	DestroyMD5Model(&Hellknight);
 	DestroyMD5Model(&Fatty);
