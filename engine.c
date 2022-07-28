@@ -242,25 +242,46 @@ void UpdateShadow(GLuint buffer)
 
 bool retrigger=true;
 
-GLuint BezierVAO=0;
+GLuint BezierVAO=0, BezierVBO=0;
 
 void DrawBezier(void)
 {
 	// Control points
-	vec3 ControlPoints[4]=
+	vec4 ControlPoints[]=
 	{
 		{-50.0f, 0.0f, 0.0f },
 		{ -50.0f, 100.0f, 100.0f },
 		{ 50.0f, 100.0f, -100.0f },
+		{ 50.0f, 0.0f, 0.0f },
+
+		{ -50.0f, 0.0f, 0.0f },
+		{ -50.0f, 50.0f, 100.0f },
+		{ 50.0f, 50.0f, -100.0f },
 		{ 50.0f, 0.0f, 0.0f }
 	};
+	const int numCurves=sizeof(ControlPoints)/(sizeof(vec4)*4);
 
 	matrix local;
 
 	// TO-DO: Is this legal for drawing without any actual geometry data?
 	//			It seems to work on my 1080Ti *shrug*
 	if(!BezierVAO)
+	{
 		glCreateVertexArrays(1, &BezierVAO);
+		glVertexArrayAttribFormat(BezierVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
+		glVertexArrayAttribBinding(BezierVAO, 0, 0);
+		glEnableVertexArrayAttrib(BezierVAO, 0);
+	}
+
+	if(!BezierVBO)
+	{
+		glCreateBuffers(1, &BezierVBO);
+		glNamedBufferData(BezierVBO, sizeof(vec4)*4*numCurves, ControlPoints, GL_DYNAMIC_DRAW);
+
+		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec4));
+	}
+	else
+		glNamedBufferSubData(BezierVBO, 0, sizeof(vec4)*4*numCurves, ControlPoints);
 
 	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
 
@@ -270,18 +291,8 @@ void DrawBezier(void)
 	MatrixIdentity(local);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
 
-	// The real data, control points, two fixed end points and two curve control points
-	glUniform3fv(0, 4, (GLfloat *)ControlPoints);
-
 	glBindVertexArray(BezierVAO);
-	glDrawArrays(GL_POINTS, 0, 1);
-
-	ControlPoints[1][1]=50.0f;
-	ControlPoints[2][1]=50.0f;
-	glUniform3fv(0, 4, (GLfloat *)ControlPoints);
-
-	glBindVertexArray(BezierVAO);
-	glDrawArrays(GL_POINTS, 0, 1);
+	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves*4);
 }
 
 void Render(void)
@@ -316,11 +327,11 @@ void Render(void)
 	////
 
 	// Trigger sound playback at frame 60, retrigger locks it out so it doesn't rapid fire the sound.
-	if(Hellknight.frame==60&&retrigger)
-	{
-		Audio_PlaySample(&Hellknight_Idle, false);
-		retrigger=false;
-	}
+	//if(Hellknight.frame==60&&retrigger)
+	//{
+	//	Audio_PlaySample(&Hellknight_Idle, false);
+	//	retrigger=false;
+	//}
 
 	// Reset trigger lock so it will play again on next loop.
 	if(Hellknight.frame>61)
