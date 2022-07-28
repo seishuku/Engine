@@ -242,6 +242,41 @@ void UpdateShadow(GLuint buffer)
 
 bool retrigger=true;
 
+GLuint BezierVAO=0;
+
+void DrawBezier(void)
+{
+	// Control points
+	vec3 ControlPoints[4]=
+	{
+		{-50.0f, 0.0f, 0.0f },
+		{ -50.0f, 100.0f, 100.0f },
+		{ 50.0f, 100.0f, -100.0f },
+		{ 50.0f, 0.0f, 0.0f }
+	};
+
+	matrix local;
+
+	// TO-DO: Is this legal for drawing without any actual geometry data?
+	//			It seems to work on my 1080Ti *shrug*
+	if(!BezierVAO)
+		glCreateVertexArrays(1, &BezierVAO);
+
+	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
+
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
+
+	MatrixIdentity(local);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
+
+	// The real data, control points, two fixed end points and two curve control points
+	glUniform3fv(0, 4, (GLfloat *)ControlPoints);
+
+	glBindVertexArray(BezierVAO);
+	glDrawArrays(GL_POINTS, 0, 1);
+}
+
 void Render(void)
 {
 	matrix local;
@@ -374,44 +409,44 @@ void Render(void)
 	///// Particle system stuff
 
 	// Hellknight's local transform matrix
-	MatrixIdentity(local);
-	MatrixTranslate(0.0f, -100.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
-	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
+	//MatrixIdentity(local);
+	//MatrixTranslate(0.0f, -100.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
+	//MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 
 	// Hellknight's left and right hand locations (joints 16 and 53), and mouth
 	// Transform locations into our space and where the hellknight is located
-	vec3 left, right, mouth;
-	Matrix4x4MultVec3(&Hellknight.Skel[8*16], local, left);
-	Matrix4x4MultVec3(&Hellknight.Skel[8*53], local, right);
-	Matrix4x4MultVec3(&Hellknight.Skel[8*31], local, mouth);
+	//vec3 left, right, mouth;
+	//Matrix4x4MultVec3(&Hellknight.Skel[8*16], local, left);
+	//Matrix4x4MultVec3(&Hellknight.Skel[8*53], local, right);
+	//Matrix4x4MultVec3(&Hellknight.Skel[8*31], local, mouth);
 
 	// Attach the fire-like emitter to the mouth
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], mouth);
+	//ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[0], mouth);
 
 	// Set the two green sparklers to those locations
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
+	//ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[2], left);
+	//ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[3], right);
 
 	//Lights_UpdatePosition(&Lights, LightIDs[5], mouth);
 	//Lights_UpdatePosition(&Lights, LightIDs[6], left);
 	//Lights_UpdatePosition(&Lights, LightIDs[7], right);
 
-	vec3 temp;
+	//vec3 temp;
 
-	Vec3_Set(temp, -700.0f+sinf(fTime*4.0f)*50.0f, -50.0f+sinf(fTime*2.0f)*50.0f, -700.0f+cosf(fTime*4.0f)*50.0f);
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[4], temp);
+	//Vec3_Set(temp, -700.0f+sinf(fTime*4.0f)*50.0f, -50.0f+sinf(fTime*2.0f)*50.0f, -700.0f+cosf(fTime*4.0f)*50.0f);
+	//ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[4], temp);
 	//Lights_UpdatePosition(&Lights, LightIDs[8], temp);
 
-	Vec3_Set(temp, 700.0f+sinf(fTime*4.0f)*100.0f, -50.0f+sinf(fTime*2.0f)*20.0f, -700.0f+cosf(fTime*4.0f)*100.0f);
-	ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[5], temp);
+	//Vec3_Set(temp, 700.0f+sinf(fTime*4.0f)*100.0f, -50.0f+sinf(fTime*2.0f)*20.0f, -700.0f+cosf(fTime*4.0f)*100.0f);
+	//ParticleSystem_SetEmitterPosition(&ParticleSystem, EmitterIDs[5], temp);
 	//Lights_UpdatePosition(&Lights, LightIDs[9], temp);
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//	ParticleSystem_Step(&ParticleSystem, fTimeStep);
-//	ParticleSystem_Draw(&ParticleSystem);
+	ParticleSystem_Step(&ParticleSystem, fTimeStep);
+	ParticleSystem_Draw(&ParticleSystem);
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
 	/////
@@ -443,12 +478,13 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
+	DrawBezier();
 
+	///// Line chart for frame time
+	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_LINE_STRIP, 0, NUM_SAMPLES);
-
-	glBindVertexArray(0);
+	/////
 
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -511,54 +547,54 @@ bool Init(void)
 		//LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
 	}
 
-	LoadQ2BSP(&Q2Model, "assets/test.bsp");
-
 	if(ParticleSystem_Init(&ParticleSystem))
 	{
-		EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
-		(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
-		(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
-		8.0f,							// Particle size
-		5000,							// Number of particles
-		false,							// "burst" (ResetEmitter triggers)
-		NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
+		//EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
+		//(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
+		//(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
+		//8.0f,							// Particle size
+		//5000,							// Number of particles
+		//false,							// "burst" (ResetEmitter triggers)
+		//NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
 
-		EmitterIDs[1]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 100.0f },
-		(vec3) { 0.0f, 0.0f, 1.0f },
-		(vec3) { 0.05f, 0.05f, 0.05f },
-		8.0f,
-		10000, true, ExplosionEmitterCallback);
+		//EmitterIDs[1]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 100.0f },
+		//(vec3) { 0.0f, 0.0f, 1.0f },
+		//(vec3) { 0.05f, 0.05f, 0.05f },
+		//8.0f,
+		//10000, true, ExplosionEmitterCallback);
 
-		EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f },
-		(vec3) { 1.0f, 1.0f, 1.0f },
-		(vec3) { 0.0f, 1.0f, 0.0f },
-		4.0f,
-		1000, false, HandEmitterCallback);
+		//EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 0.0f },
+		//(vec3) { 1.0f, 1.0f, 1.0f },
+		//(vec3) { 0.0f, 1.0f, 0.0f },
+		//4.0f,
+		//1000, false, HandEmitterCallback);
 
-		EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f },
-		(vec3) { 1.0f, 1.0f, 1.0f },
-		(vec3) { 0.0f, 1.0f, 0.0f },
-		4.0f,
-		1000, false, HandEmitterCallback);
+		//EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 0.0f },
+		//(vec3) { 1.0f, 1.0f, 1.0f },
+		//(vec3) { 0.0f, 1.0f, 0.0f },
+		//4.0f,
+		//1000, false, HandEmitterCallback);
 
-		EmitterIDs[4]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f },
-		(vec3) { 1.0f, 1.0f, 1.0f },
-		(vec3) { 0.1f, 0.1f, 1.0f },
-		8.0f,
-		1000, false, NULL);
+		//EmitterIDs[4]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 0.0f },
+		//(vec3) { 1.0f, 1.0f, 1.0f },
+		//(vec3) { 0.1f, 0.1f, 1.0f },
+		//8.0f,
+		//1000, false, NULL);
 
-		EmitterIDs[5]=ParticleSystem_AddEmitter(&ParticleSystem,
-		(vec3) { 0.0f, 0.0f, 0.0f },
-		(vec3) { 1.0f, 1.0f, 1.0f },
-		(vec3) { 0.1f, 0.1f, 1.0f },
-		8.0f,
-		1000, false, HandEmitterCallback);
+		//EmitterIDs[5]=ParticleSystem_AddEmitter(&ParticleSystem,
+		//(vec3) { 0.0f, 0.0f, 0.0f },
+		//(vec3) { 1.0f, 1.0f, 1.0f },
+		//(vec3) { 0.1f, 0.1f, 1.0f },
+		//8.0f,
+		//1000, false, HandEmitterCallback);
 	}
+
+	LoadQ2BSP(&Q2Model, "assets/test.bsp");
 
 	if(Audio_Init())
 	{
@@ -634,9 +670,14 @@ bool Init(void)
 	// Generic debugging shader
 	Objects[GLSL_GENERIC_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/generic_v.glsl", "./shaders/generic_f.glsl", NULL, NULL });
 
+	///// Bezier curve stuff
+	Objects[GLSL_BEZIER_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/bezier_v.glsl", "./shaders/bezier_f.glsl", "./shaders/bezier_g.glsl", NULL });
+	Objects[GLSL_BEZIER_PROJ]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "proj");
+	Objects[GLSL_BEZIER_MV]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "mv");
+	Objects[GLSL_BEZIER_LOCAL]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "local");
+
 	///// Volume rendering stuff
 	//Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });
-	//glUseProgram(Objects[GLSL_VOL_SHADER]);
 	//Objects[GLSL_VOL_PROJ]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "proj");
 	//Objects[GLSL_VOL_MV]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "mv");
 	//Objects[GLSL_VOL_LOCAL]=glGetUniformLocation(Objects[GLSL_VOL_SHADER], "local");
@@ -667,7 +708,6 @@ bool Init(void)
 
 	// General lighting shader
 	Objects[GLSL_LIGHT_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/light_v.glsl", "./shaders/light_f.glsl", NULL/*"./shaders/tbnvis_g.glsl"*/, NULL });
-	glUseProgram(Objects[GLSL_LIGHT_SHADER]);
 	Objects[GLSL_LIGHT_PROJ]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "proj");
 	Objects[GLSL_LIGHT_MV]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "mv");
 	Objects[GLSL_LIGHT_LOCAL]=glGetUniformLocation(Objects[GLSL_LIGHT_SHADER], "local");
@@ -679,7 +719,6 @@ bool Init(void)
 
 	// Build program for generating depth cube map
 	Objects[GLSL_DISTANCE_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/distance_v.glsl", "./shaders/distance_f.glsl", "./shaders/distance_g.glsl", NULL });
-	glUseProgram(Objects[GLSL_DISTANCE_SHADER]);
 	Objects[GLSL_DISTANCE_PROJ]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "proj");
 	Objects[GLSL_DISTANCE_MV]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "mv");
 	Objects[GLSL_DISTANCE_LOCAL]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "local");

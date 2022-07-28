@@ -301,5 +301,14 @@
     <None Include="shaders\particle_v.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\bezier_f.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\bezier_v.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\bezier_g.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -360,6 +360,9 @@
     <None Include="fluid\fluid3d.cl" />
     <None Include="shaders\beam_f.glsl" />
     <None Include="shaders\beam_v.glsl" />
+    <None Include="shaders\bezier_f.glsl" />
+    <None Include="shaders\bezier_g.glsl" />
+    <None Include="shaders\bezier_v.glsl" />
     <None Include="shaders\particle_f.glsl" />
     <None Include="shaders\particle_g.glsl" />
     <None Include="shaders\particle_v.glsl" />

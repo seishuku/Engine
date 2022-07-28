@@ -6,6 +6,7 @@
 #include "system/system.h"
 #include "math/math.h"
 #include "utils/list.h"
+#include "particle/particle.h"
 #include "lights/lights.h"
 #include "opengl/opengl.h"
 #include "image/image.h"
@@ -82,6 +83,7 @@ typedef struct
 } Q2BSP_TextureInfo_t;
 
 extern Lights_t Lights;
+extern ParticleSystem_t ParticleSystem;
 
 typedef struct
 {
@@ -231,15 +233,15 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 				// Triangulate the remaining vertices for the triangle fan
 				// (not using triangle fans here, this uses the above vertex as the root vertex
 				//     and will be referenced in this loop every time)
-				for(int j=1;j<Face->Num_Edges-1;j++)
+				for(int k=1;k<Face->Num_Edges-1;k++)
 				{
 					// Second vertex in triangle
-					edgeIdx=FaceEdges[Face->First_Edge+j+1];
+					edgeIdx=FaceEdges[Face->First_Edge+k+1];
 					float *vert1=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
 					vec2 tex1={ (Vec3_Dot(vert1, texInfo->U_Axis)+texInfo->U_Offset)/texWidth, (Vec3_Dot(vert1, texInfo->V_Axis)+texInfo->V_Offset)/texHeight };
 
 					// Third vertex in triangle
-					edgeIdx=FaceEdges[Face->First_Edge+j];
+					edgeIdx=FaceEdges[Face->First_Edge+k];
 					float *vert2=&Vertex[3*Edges[2*abs(edgeIdx)+(edgeIdx<0?1:0)]];
 					vec2 tex2={ (Vec3_Dot(vert2, texInfo->U_Axis)+texInfo->U_Offset)/texWidth, (Vec3_Dot(vert2, texInfo->V_Axis)+texInfo->V_Offset)/texHeight };
 
@@ -299,7 +301,8 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 		// Number of triangles is actually NumTris/3, but GL wants number of vertices for drawing
 		Model->Mesh[i].NumTris=(uint32_t)List_GetCount(&VertexList);
 
-		// FIX-ME: the above loop has some "meshes" that have no verts
+		// FIX-ME: the above loop has some "meshes" that have no verts,
+		// apparently with Quake levels, there can be texInfo structs that are never referenced.
 		if(Model->Mesh[i].NumTris)
 		{
 			glCreateVertexArrays(1, &Model->Mesh[i].VAO);
@@ -332,12 +335,6 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 		List_Clear(&VertexList);
 	}
 
-	//for(int j=0;j<List_GetCount(&TextureList);j++)
-	//{
-	//	TextureItem_t *Item=List_GetPointer(&TextureList, j);
-	//	DBGPRINTF("List #%d Name: %0.32s IDs: %d %d %d\n", j, Item->TextureName, Item->TexBaseID, Item->TexSpecularID, Item->TexNormalID)
-	//}
-
 	List_Destroy(&TextureList);
 	List_Destroy(&VertexList);
 	/////
@@ -353,11 +350,13 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 
 		if(strncmp(buff, "{", 1)==0)
 		{
-			bool IsLight=false, HasTarget=false, IsPlayerStart=false;
+			bool IsLight=false, IsEmitter=false, IsPlayerStart=false;
 			vec3 origin={ 0.0f, 0.0f, 0.0f };
 			float radius=300.0f;;
 			vec4 color={ 1.0f, 1.0f, 1.0f, 1.0f };
-			float angle=0.0f;
+			vec4 color2={ 1.0f, 1.0f, 1.0f, 1.0f };
+			float angle=0.0f, size=1.0f;
+			uint32_t numParticles=1000;
 
 			while((buff[0]!='}')&&!feof(Stream))
 			{
@@ -376,9 +375,9 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 					continue;
 				}
 
-				if(strncmp(buff, "\"target\"", 8)==0)
+				if(strncmp(buff, "\"classname\" \"emitter\"", 21)==0)
 				{
-					HasTarget=true;
+					IsEmitter=true;
 					continue;
 				}
 
@@ -391,14 +390,23 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 				if(sscanf(buff, "\"angle\" \"%f\"", &angle)==1)
 					continue;
 
-				if(sscanf(buff, "\"_color\" \"%f %f %f\"", &color[0], &color[1], &color[2])==3)
+				if(sscanf(buff, "\"color\" \"%f %f %f\"", &color[0], &color[1], &color[2])==3)
 					continue;
 
-				if(sscanf(buff, "\"color\" \"%f %f %f\"", &color[0], &color[1], &color[2])==3)
+				if(sscanf(buff, "\"color2\" \"%f %f %f\"", &color2[0], &color2[1], &color2[2])==3)
+					continue;
+
+				if(sscanf(buff, "\"particleSize\" \"%f\"", &size)==1)
+					continue;
+
+				if(sscanf(buff, "\"numParticles\" \"%d\"", &numParticles)==1)
 					continue;
 			}
 
-			if(IsLight&&!HasTarget)
+			if(IsEmitter)
+				ParticleSystem_AddEmitter(&ParticleSystem, origin, color, color2, size, numParticles, false, NULL);
+
+			if(IsLight)
 				Lights_Add(&Lights, origin, radius*2, color);
 
 			if(IsPlayerStart)
