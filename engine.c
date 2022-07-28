@@ -263,8 +263,6 @@ void DrawBezier(void)
 
 	matrix local;
 
-	// TO-DO: Is this legal for drawing without any actual geometry data?
-	//			It seems to work on my 1080Ti *shrug*
 	if(!BezierVAO)
 	{
 		glCreateVertexArrays(1, &BezierVAO);
