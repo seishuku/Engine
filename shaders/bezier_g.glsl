@@ -22,7 +22,7 @@ vec3 Bezier(float t, vec3 p0, vec3 p1, vec3 p2, vec3 p3)
 
 void main()
 {
-	for(int i=0;i<MAXSEG;i++)
+	for(int i=0;i<=MAXSEG;i++)
 	{
 		float t=float(i)/MAXSEG;
 

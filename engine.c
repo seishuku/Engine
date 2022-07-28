@@ -275,6 +275,13 @@ void DrawBezier(void)
 
 	glBindVertexArray(BezierVAO);
 	glDrawArrays(GL_POINTS, 0, 1);
+
+	ControlPoints[1][1]=50.0f;
+	ControlPoints[2][1]=50.0f;
+	glUniform3fv(0, 4, (GLfloat *)ControlPoints);
+
+	glBindVertexArray(BezierVAO);
+	glDrawArrays(GL_POINTS, 0, 1);
 }
 
 void Render(void)
