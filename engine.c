@@ -244,40 +244,59 @@ bool retrigger=true;
 
 GLuint BezierVAO=0, BezierVBO=0;
 
-//void DrawBezier(void)
-//{
-//	matrix local;
-//
-//	if(!BezierVAO)
-//	{
-//		glCreateVertexArrays(1, &BezierVAO);
-//		glVertexArrayAttribFormat(BezierVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
-//		glVertexArrayAttribBinding(BezierVAO, 0, 0);
-//		glEnableVertexArrayAttrib(BezierVAO, 0);
-//	}
-//
-//	if(!BezierVBO)
-//	{
-//		glCreateBuffers(1, &BezierVBO);
-//		glNamedBufferData(BezierVBO, sizeof(vec2)*4*numCurves, List_GetPointer(&TestBezier, 0), GL_DYNAMIC_DRAW);
-//
-//		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec2));
-//	}
-//	else
-//		glNamedBufferSubData(BezierVBO, 0, sizeof(vec2)*4*numCurves, List_GetPointer(&TestBezier, 0));
-//
-//	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
-//
-//	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
-//	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
-//
-//	MatrixIdentity(local);
-//	MatrixTranslate(0.0f, 10.0f, 0.0f, local);
-//	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
-//
-//	glBindVertexArray(BezierVAO);
-//	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves*4);
-//}
+void DrawBezier(void)
+{
+	float ControlPoints[]=
+	{
+		-50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 0.0f, 1.0f,
+		-50.0f, 100.0f, 50.0f, 1.0f,	0.0f, 1.0f, 0.0f, 1.0f,
+		50.0f, 100.0f, -50.0f, 1.0f,	0.0f, 0.0f, 1.0f, 1.0f,
+		50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 1.0f, 1.0f, 1.0f,
+
+		-50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 0.0f, 1.0f,
+		-50.0f, 50.0f, 75.0f, 1.0f,		0.0f, 0.0f, 0.0f, 1.0f,
+		50.0f, 50.0f, -75.0f, 1.0f,		0.0f, 0.0f, 1.0f, 1.0f,
+		50.0f, 0.0f, 0.0f, 1.0f,		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	const int numCurves=sizeof(ControlPoints)/(sizeof(vec4)*2);
+
+	if(!BezierVAO)
+	{
+		glCreateVertexArrays(1, &BezierVAO);
+		glVertexArrayAttribFormat(BezierVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
+		glVertexArrayAttribBinding(BezierVAO, 0, 0);
+		glEnableVertexArrayAttrib(BezierVAO, 0);
+
+		glVertexArrayAttribFormat(BezierVAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(vec4));
+		glVertexArrayAttribBinding(BezierVAO, 1, 0);
+		glEnableVertexArrayAttrib(BezierVAO, 1);
+	}
+
+	if(!BezierVBO)
+	{
+		glCreateBuffers(1, &BezierVBO);
+		glNamedBufferData(BezierVBO, sizeof(vec4)*2*numCurves, ControlPoints, GL_DYNAMIC_DRAW);
+
+		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec4)*2);
+	}
+
+	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
+
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
+
+	matrix local;
+	MatrixIdentity(local);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
+
+	glUniform1ui(Objects[GLSL_BEZIER_NUMSEGMENTS], 100);
+
+	glLineWidth(10.0f);
+	glEnable(GL_LINE_SMOOTH);
+	glBindVertexArray(BezierVAO);
+	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves);
+	glLineWidth(1.0f);
+}
 
 void Render(void)
 {
@@ -318,8 +337,8 @@ void Render(void)
 	//}
 
 	// Reset trigger lock so it will play again on next loop.
-	if(Hellknight.frame>61)
-		retrigger=true;
+	//if(Hellknight.frame>61)
+	//	retrigger=true;
 
 	UpdateAnimation(&Hellknight, fTimeStep);
 	UpdateAnimation(&Fatty, fTimeStep);
@@ -480,7 +499,7 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-//	DrawBezier();
+	DrawBezier();
 
 	///// Line chart for frame time
 	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
@@ -677,6 +696,7 @@ bool Init(void)
 	Objects[GLSL_BEZIER_PROJ]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "proj");
 	Objects[GLSL_BEZIER_MV]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "mv");
 	Objects[GLSL_BEZIER_LOCAL]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "local");
+	Objects[GLSL_BEZIER_NUMSEGMENTS]=glGetUniformLocation(Objects[GLSL_BEZIER_SHADER], "numSegments");
 
 	///// Volume rendering stuff
 	//Objects[GLSL_VOL_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/vol_v.glsl", "./shaders/vol_f.glsl", NULL, NULL });

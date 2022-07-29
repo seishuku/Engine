@@ -1,39 +1,37 @@
 #version 450
 
-// This controls detail level, this could be dynamic
-#define MAXSEG 10
-
 layout(lines_adjacency) in;
-layout(line_strip, max_vertices=MAXSEG+1) out;
+layout(line_strip, max_vertices=128) out;
 
 uniform mat4 proj;
 uniform mat4 mv;
 uniform mat4 local;
 
+// This controls detail level
+uniform uint numSegments;
+
 in vec4 gColor[];
 out vec4 Color;
 
 // Cubic Bezier curve evaluation function
-vec3 Bezier(float t, vec3 p0, vec3 p1, vec3 p2, vec3 p3)
+vec4 Bezier(float t, vec4 p0, vec4 p1, vec4 p2, vec4 p3)
 {
-	vec3 c=3.0*(p1-p0);
-	vec3 b=3.0*(p2-p1)-c;
-	vec3 a=p3-p0-c-b;
+	vec4 c=3.0*(p1-p0);
+	vec4 b=3.0*(p2-p1)-c;
+	vec4 a=p3-p0-c-b;
 
 	return (a*(t*t*t))+(b*(t*t))+(c*t)+p0;
 }
 
 void main()
 {
-	for(int i=0;i<=MAXSEG;i++)
+	for(int i=0;i<=numSegments;i++)
 	{
-		float t=float(i)/MAXSEG;
+		float t=float(i)/numSegments;
 
-		gl_Position=proj*mv*local*vec4(Bezier(t, gl_in[0].gl_Position.xyz,
-								   gl_in[1].gl_Position.xyz,
-								   gl_in[2].gl_Position.xyz,
-								   gl_in[3].gl_Position.xyz), 1.0);
-		Color=gColor[0];
+		Color=Bezier(t, gColor[0], gColor[1], gColor[2], gColor[3]);
+		gl_Position=proj*mv*local*Bezier(t, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
+
 		EmitVertex();
 	}
 

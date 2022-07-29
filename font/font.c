@@ -19,6 +19,8 @@ List_t FontVectors;
 // Initialization flag
 bool FontInit=true;
 
+#define GYLP ('G'|('Y'<<8)|('L'<<16)|('P'<<24))
+
 typedef struct
 {
 	uint32_t Advance;
@@ -38,7 +40,14 @@ bool LoadFontGylphs(Gylph_t *Gylphs, const char *Filename)
 	if(!Stream)
 		return false;
 
-	// Vertical size?
+	uint32_t Magic=0;
+
+	fread(&Magic, sizeof(uint32_t), 1, Stream);
+
+	if(Magic!=GYLP)
+		return false;
+
+	// Vertical size
 	fread(&GylphSize, sizeof(uint32_t), 1, Stream);
 	GylphSize-=2;
 
@@ -177,19 +186,20 @@ void Font_Print(float x, float y, char *string, ...)
 	// Set program and uniforms
 	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
 
-	matrix Projection, ModelView;
-
+	matrix Projection;
 	MatrixIdentity(Projection);
 	MatrixOrtho(0.0f, 1024.0f*0.9f, 0.0f, 576.0f*0.9f, 0.001f, 100.0f, Projection);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
 
+	matrix ModelView;
 	MatrixIdentity(ModelView);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
 
 	matrix local;
 	MatrixIdentity(local);
-//	MatrixTranslate(0.0f, 10.0f, 0.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
+
+	glUniform1ui(Objects[GLSL_BEZIER_NUMSEGMENTS], 10);
 
 	// Draw characters!
 	glBindVertexArray(FontVAO);
