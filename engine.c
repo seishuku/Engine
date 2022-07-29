@@ -49,7 +49,7 @@ CameraPath_t CameraPath;
 
 extern bool Auto;
 
-matrix Projection, ModelView, ModelViewInv;
+matrix Projection, ModelView;
 
 Lights_t Lights;
 int32_t LightIDs[10];
@@ -244,54 +244,40 @@ bool retrigger=true;
 
 GLuint BezierVAO=0, BezierVBO=0;
 
-void DrawBezier(void)
-{
-	// Control points
-	vec4 ControlPoints[]=
-	{
-		{-50.0f, 0.0f, 0.0f },
-		{ -50.0f, 100.0f, 100.0f },
-		{ 50.0f, 100.0f, -100.0f },
-		{ 50.0f, 0.0f, 0.0f },
-
-		{ -50.0f, 0.0f, 0.0f },
-		{ -50.0f, 50.0f, 100.0f },
-		{ 50.0f, 50.0f, -100.0f },
-		{ 50.0f, 0.0f, 0.0f }
-	};
-	const int numCurves=sizeof(ControlPoints)/(sizeof(vec4)*4);
-
-	matrix local;
-
-	if(!BezierVAO)
-	{
-		glCreateVertexArrays(1, &BezierVAO);
-		glVertexArrayAttribFormat(BezierVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
-		glVertexArrayAttribBinding(BezierVAO, 0, 0);
-		glEnableVertexArrayAttrib(BezierVAO, 0);
-	}
-
-	if(!BezierVBO)
-	{
-		glCreateBuffers(1, &BezierVBO);
-		glNamedBufferData(BezierVBO, sizeof(vec4)*4*numCurves, ControlPoints, GL_DYNAMIC_DRAW);
-
-		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec4));
-	}
-	else
-		glNamedBufferSubData(BezierVBO, 0, sizeof(vec4)*4*numCurves, ControlPoints);
-
-	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
-
-	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
-	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
-
-	MatrixIdentity(local);
-	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
-
-	glBindVertexArray(BezierVAO);
-	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves*4);
-}
+//void DrawBezier(void)
+//{
+//	matrix local;
+//
+//	if(!BezierVAO)
+//	{
+//		glCreateVertexArrays(1, &BezierVAO);
+//		glVertexArrayAttribFormat(BezierVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
+//		glVertexArrayAttribBinding(BezierVAO, 0, 0);
+//		glEnableVertexArrayAttrib(BezierVAO, 0);
+//	}
+//
+//	if(!BezierVBO)
+//	{
+//		glCreateBuffers(1, &BezierVBO);
+//		glNamedBufferData(BezierVBO, sizeof(vec2)*4*numCurves, List_GetPointer(&TestBezier, 0), GL_DYNAMIC_DRAW);
+//
+//		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec2));
+//	}
+//	else
+//		glNamedBufferSubData(BezierVBO, 0, sizeof(vec2)*4*numCurves, List_GetPointer(&TestBezier, 0));
+//
+//	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
+//
+//	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
+//	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
+//
+//	MatrixIdentity(local);
+//	MatrixTranslate(0.0f, 10.0f, 0.0f, local);
+//	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
+//
+//	glBindVertexArray(BezierVAO);
+//	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves*4);
+//}
 
 void Render(void)
 {
@@ -494,7 +480,7 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-	DrawBezier();
+//	DrawBezier();
 
 	///// Line chart for frame time
 	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
@@ -505,10 +491,10 @@ void Render(void)
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-		Font_Print(0.0f, 16.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
+		Font_Print(0.0f, 18.0f, "FPS: %0.1f\nFrame time: %0.4fms", fps, fFrameTime);
 		//if(collide)
 		//	Font_Print(0.0f, (float)Height-16.0f, "Ran into hellknight");
-		Font_Print(0.0f, (float)Height-16.0f, "Number of emitters: %d\nNumber of lights: %d\n\nPress \"enter\" for explosion", List_GetCount(&ParticleSystem.Emitters), List_GetCount(&Lights.Lights));
+		Font_Print(0.0f, (float)576.0f*0.9f-16.0f, "Number of emitters: %d\nNumber of lights: %d\n\nPress \"\x1B[92menter\x1B[97m\" for \x1B[91mexplosion", List_GetCount(&ParticleSystem.Emitters), List_GetCount(&Lights.Lights));
 		glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -785,6 +771,8 @@ void Destroy(void)
 	DestroyBeam();
 
 	CameraDeletePath(&CameraPath);
+
+	Font_Destroy();
 
 //	FreeOBJ(&Level);
 	DestroyQ2BSP(&Q2Model);

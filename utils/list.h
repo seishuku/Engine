@@ -15,6 +15,7 @@ bool List_Del(List_t *List, const size_t Index);
 void *List_GetPointer(List_t *List, const size_t Index);
 void List_GetCopy(List_t *List, const size_t Index, void *Data);
 size_t List_GetCount(List_t *List);
+void *List_GetBufferPointer(List_t *List);
 bool List_ShrinkFit(List_t *List);
 void List_Clear(List_t *List);
 void List_Destroy(List_t *List);

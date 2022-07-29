@@ -1,10 +1,3 @@
-/*
-	Copyright 2016 Matt Williams/NitroGL
-	Simple (?) OpenGL 3.3+ (CORE) Font/Text printing function
-	Uses two VBOs, one for a single triangle strip making up
-	a quad, the other contains instancing data for character
-	position, texture altas lookup and color.
-*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -13,63 +6,66 @@
 #include <string.h>
 #include "../opengl/opengl.h"
 #include "../math/math.h"
+#include "../utils/list.h"
 #include "font.h"
-
-// Font texture data, this does bloat the EXE quite a bit.
-// This can also be external data.
-#include "fontdata.h"
+#include "../gl_objects.h"
 
 // Various shader/texture/VBO object IDs
-GLuint Font_Texture=0;
-GLuint Font_Shader=0;
-GLuint Font_Shader_Texture=0;
-GLuint Font_Shader_Viewport=0;
-GLuint Font_VAO=0, Font_VBO=0;
-GLuint Font_Instanced=0;
+GLuint FontVAO=0, FontVBO=0;
+
+// List for storing current string vectors
+List_t FontVectors;
 
 // Initialization flag
-bool Font_Init=true;
+bool FontInit=true;
 
-// Window width/height from main app.
-extern int32_t Width, Height;
-
-// Fragment shader source
-// This is real simple, just sample texture into alpha channel with instance color
-const char *FragmentSrc[]=
+typedef struct
 {
-	"#version 330\n"
-	"in vec2 UV;\n"
-	"in vec3 Color;\n"
-	"uniform sampler2D Texture;\n"
-	"layout(location=0) out vec4 Output;\n"
-	"void main()\n"
-	"{\n"
-		"Output=vec4(Color, texture(Texture, UV));\n"
-	"}\n\0"
-};
+	uint32_t Advance;
+	uint32_t numPath;
+	vec2 *Path;
+} Gylph_t;
 
-// Vertex shader source
-const char *VertexSrc[]=
+uint32_t GylphSize=0;
+Gylph_t Gylphs[256];
+
+bool LoadFontGylphs(Gylph_t *Gylphs, const char *Filename)
 {
-	"#version 330\n"
-	"layout(location=0) in vec4 vVert;\n"			// Incoming vertex position
-	"layout(location=1) in vec4 InstancePos;\n"		// Instanced data position
-	"layout(location=2) in vec3 InstanceColor;\n"	// Instanced data color
-	"uniform ivec2 Viewport;\n"		// Window width/height
-	"out vec2 UV;\n"		// Output texture coords
-	"out vec3 Color;\n"		// Output color
-	"void main()\n"
-	"{\n"
-		"gl_Position=vec4((vVert.xy+InstancePos.xy)/(Viewport*0.5)-1, -1.0, 1.0);\n"	// Transform vertex from window coords to NDC
-		"UV=vVert.zw+InstancePos.zw;\n"		// Offset texture coords to position in texture atlas
-		"Color=InstanceColor;\n"			// Pass color
-	"}\n\0"
-};
+	FILE *Stream=NULL;
+
+	Stream=fopen(Filename, "rb");
+
+	if(!Stream)
+		return false;
+
+	// Vertical size?
+	fread(&GylphSize, sizeof(uint32_t), 1, Stream);
+	GylphSize-=2;
+
+	// Read in all chars
+	for(uint32_t i=0;i<255;i++)
+	{
+		// Advancement spacing for char
+		fread(&Gylphs[i].Advance, sizeof(uint32_t), 1, Stream);
+		// Number of bezier curves in this char
+		fread(&Gylphs[i].numPath, sizeof(uint32_t), 1, Stream);
+
+		// Allocate memory and read in the paths
+		Gylphs[i].Path=malloc(sizeof(vec2)*Gylphs[i].numPath);
+
+		if(!Gylphs[i].Path)
+			return false;
+
+		fread(Gylphs[i].Path, sizeof(vec2), Gylphs[i].numPath, Stream);
+	}
+
+	fclose(Stream);
+
+	return true;
+}
 
 void Font_Print(float x, float y, char *string, ...)
 {
-	// float pointer for VBO mappings (both vertex and instance data)
-	float *verts=NULL;
 	// pointer and buffer for formatted text
 	char *ptr, text[4096];
 	// variable arguments list
@@ -92,124 +88,34 @@ void Font_Print(float x, float y, char *string, ...)
 	numchar=(int32_t)strlen(text);
 
 	// Generate texture, shaders, etc once
-	if(Font_Init)
+	if(FontInit)
 	{
-		GLuint vertex, fragment;
-		GLint status;
-
-		// Upload font texture data, single 8bit red, no longer have alpha texture support :(
-		glGenTextures(1, &Font_Texture);
-		glBindTexture(GL_TEXTURE_2D, Font_Texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, _FontData);
-
-		// Load and compile GLSL shaders, get uniform locations
-		Font_Shader=glCreateProgram();
-
-		vertex=glCreateShader(GL_VERTEX_SHADER);
-
-		glShaderSource(vertex, 1, (const char **)&VertexSrc, NULL);
-
-		glCompileShader(vertex);
-		glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
-
-		if(status)
-			glAttachShader(Font_Shader, vertex);
-
-		glDeleteShader(vertex);
-
-		fragment=glCreateShader(GL_FRAGMENT_SHADER);
-
-		glShaderSource(fragment, 1, (const char **)&FragmentSrc, NULL);
-
-		glCompileShader(fragment);
-		glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
-
-		if(status)
-			glAttachShader(Font_Shader, fragment);
-
-		glDeleteShader(fragment);
-
-		glLinkProgram(Font_Shader);
-		glGetProgramiv(Font_Shader, GL_LINK_STATUS, &status);
-
-		if(!status)
+		if(!LoadFontGylphs(Gylphs, "./assets/font.gylph"))
 			return;
 
-		glUseProgram(Font_Shader);
-		Font_Shader_Texture=glGetUniformLocation(Font_Shader, "Texture");
-		Font_Shader_Viewport=glGetUniformLocation(Font_Shader, "Viewport");
+		// Create the vertex array
+		glCreateVertexArrays(1, &FontVAO);
 
-		glGenVertexArrays(1, &Font_VAO);
-		glBindVertexArray(Font_VAO);
+		// Set vertex layout
 
-		// Build triangle strip for the font quad
-		// 4 floats per vertex, 4 vertices
-		glGenBuffers(1, &Font_VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, Font_VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4, NULL, GL_STATIC_DRAW);
+		// Control point vertices
+		glVertexArrayAttribFormat(FontVAO, 0, 4, GL_FLOAT, GL_FALSE, 0);
+		glVertexArrayAttribBinding(FontVAO, 0, 0);
+		glEnableVertexArrayAttrib(FontVAO, 0);
 
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
-		glEnableVertexAttribArray(0);
+		// Color
+		glVertexArrayAttribFormat(FontVAO, 1, 4, GL_FLOAT, GL_FALSE, sizeof(vec4));
+		glVertexArrayAttribBinding(FontVAO, 1, 0);
+		glEnableVertexArrayAttrib(FontVAO, 1);
 
-		// Map the buffer to avoid system memory transfers
-		verts=(float *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		glCreateBuffers(1, &FontVBO);
+		glVertexArrayVertexBuffer(FontVAO, 0, FontVBO, 0, sizeof(vec4)*2);
 
-		if(verts==NULL)
-			return;
-
-		// Since this is only 2D data, just using a single attrib with 4 floats is enough
-		*verts++=4.0f;		// X
-		*verts++=16.0f;		// Y
-		*verts++=0.0125f;	// U
-		*verts++=0.0f;		// V
-
-		*verts++=4.0f;
-		*verts++=0.0f;
-		*verts++=0.0125f;
-		*verts++=-0.0625f;
-
-		*verts++=12.0f;
-		*verts++=16.0f;
-		*verts++=0.05f;
-		*verts++=0.0f;
-
-		*verts++=12.0f;
-		*verts++=0.0f;
-		*verts++=0.05f;
-		*verts++=-0.0625f;
-
-		// Unmap buffer
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-
-		// Allocate buffer for instance data
-		glGenBuffers(1, &Font_Instanced);
-		glBindBuffer(GL_ARRAY_BUFFER, Font_Instanced);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_STREAM_DRAW);
-
-		// Set instance data
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float)*7, (char *)0);
-		glVertexAttribDivisor(1, 1);
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, (char *)(0+sizeof(float)*4));
-		glVertexAttribDivisor(2, 1);
-		glEnableVertexAttribArray(2);
+		List_Init(&FontVectors, sizeof(vec4)*2, 4, NULL);
 
 		// Done with init
-		Font_Init=false;
+		FontInit=false;
 	}
-
-	// Update instance data
-	glBindBuffer(GL_ARRAY_BUFFER, Font_Instanced);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*7*numchar, NULL, GL_STREAM_DRAW);
-	verts=(float *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-
-	if(verts==NULL)
-		return;
 
 	// Loop through the text string until EOL
 	for(ptr=text;*ptr!='\0';ptr++)
@@ -218,14 +124,14 @@ void Font_Print(float x, float y, char *string, ...)
 		if(*ptr=='\n')
 		{
 			x=(float)sx;
-			y-=12;
+			y-=GylphSize;
 			continue;
 		}
 
 		// Just advance spaces instead of rendering empty quads
 		if(*ptr==' ')
 		{
-			x+=8;
+			x+=Gylphs[*ptr].Advance;
 			numchar--;
 			continue;
 		}
@@ -256,41 +162,49 @@ void Font_Print(float x, float y, char *string, ...)
 		}
 
 		// Emit position, atlas offset, and color for this character
-		*verts++=x;
-		*verts++=y;
-		*verts++=     (float)(*ptr%16)*0.0625f;
-		*verts++=1.0f-(float)(*ptr/16)*0.0625f;
-		*verts++=r;
-		*verts++=g;
-		*verts++=b;
+		for(uint32_t i=0;i<Gylphs[*ptr].numPath;i++)
+		{
+			float vert[]={ Gylphs[*ptr].Path[i][0]+x, Gylphs[*ptr].Path[i][1]+y, -1.0f, 1.0f, r, g, b, 1.0f};
+			List_Add(&FontVectors, vert);
+		}
 
 		// Advance one character
-		x+=8;
+		x+=Gylphs[*ptr].Advance;
 	}
 
-	// Unmap instance data buffer
-	glUnmapBuffer(GL_ARRAY_BUFFER);
+	glNamedBufferData(FontVBO, sizeof(vec4)*2*List_GetCount(&FontVectors), List_GetPointer(&FontVectors, 0), GL_DYNAMIC_DRAW);
 
 	// Set program and uniforms
-	glUseProgram(Font_Shader);
-	glUniform1i(Font_Shader_Texture, 0);
-	glUniform2i(Font_Shader_Viewport, Width, Height);
+	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
 
-	// Bind texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, Font_Texture);
+	matrix Projection, ModelView;
+
+	MatrixIdentity(Projection);
+	MatrixOrtho(0.0f, 1024.0f*0.9f, 0.0f, 576.0f*0.9f, 0.001f, 100.0f, Projection);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_PROJ], 1, GL_FALSE, Projection);
+
+	MatrixIdentity(ModelView);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_MV], 1, GL_FALSE, ModelView);
+
+	matrix local;
+	MatrixIdentity(local);
+//	MatrixTranslate(0.0f, 10.0f, 0.0f, local);
+	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
 
 	// Draw characters!
-	glBindVertexArray(Font_VAO);
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, numchar);
+	glBindVertexArray(FontVAO);
+	glDrawArrays(GL_LINES_ADJACENCY, 0, (GLsizei)List_GetCount(&FontVectors));
+
+	List_Clear(&FontVectors);
 }
 
 void Font_Destroy(void)
 {
-	glDeleteTextures(1, &Font_Texture);
+	for(uint32_t i=0;i<255;i++)
+		free(Gylphs[i].Path);
 
-	glDeleteBuffers(1, &Font_VBO);
-	glDeleteBuffers(1, &Font_Instanced);
+	List_Destroy(&FontVectors);
 
-	glDeleteProgram(Font_Shader);
+	glDeleteBuffers(1, &FontVBO);
+	glDeleteVertexArrays(1, &FontVAO);
 }
