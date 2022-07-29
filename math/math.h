@@ -76,6 +76,7 @@ inline float rad2deg(float x)
 
 float fact(const int32_t n);
 
+uint32_t IsPower2(uint32_t value);
 uint32_t NextPower2(uint32_t value);
 int32_t ComputeLog(uint32_t value);
 

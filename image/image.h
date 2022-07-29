@@ -1,11 +1,6 @@
 #ifndef __IMAGE_H__
 #define __IMAGE_H__
 
-// Special image format 'fourcc'
-#define IMAGE_DXT1										('D'|('X'<<8)|('T'<<16)|('1'<<24))
-#define IMAGE_DXT3										('D'|('X'<<8)|('T'<<16)|('3'<<24))
-#define IMAGE_DXT5										('D'|('X'<<8)|('T'<<16)|('5'<<24))
-
 // Image flags
 #define IMAGE_NONE										0x00000000
 #define IMAGE_AUTOMIPMAP								0x00000001
@@ -20,10 +15,12 @@
 #define IMAGE_RECTANGLE									0x00000200
 #define IMAGE_CLAMP_U									0x00000400
 #define IMAGE_CLAMP_V									0x00000800
-#define IMAGE_CLAMP										(IMAGE_CLAMP_U|IMAGE_CLAMP_V)
+#define IMAGE_CLAMP_W									0x00001000
+#define IMAGE_CLAMP										(IMAGE_CLAMP_U|IMAGE_CLAMP_V|IMAGE_CLAMP_W)
 #define IMAGE_REPEAT_U									0x00004000
 #define IMAGE_REPEAT_V									0x00008000
-#define IMAGE_REPEAT									(IMAGE_REPEAT_U|IMAGE_REPEAT_V)
+#define IMAGE_REPEAT_W									0x00010000
+#define IMAGE_REPEAT									(IMAGE_REPEAT_U|IMAGE_REPEAT_V|IMAGE_REPEAT_W)
 
 typedef struct
 {
@@ -32,10 +29,10 @@ typedef struct
 	uint8_t *Data;
 } Image_t;
 
-bool DDS_Load(const char *Filename, Image_t *Image);
 bool TGA_Load(const char *Filename, Image_t *Image);
 bool TGA_Write(const char *filename, Image_t *Image, bool rle);
 bool QOI_Load(const char *Filename, Image_t *Image);
+bool QOI_Write(const char *Filename, Image_t *Image);
 
 uint32_t Image_Upload(const char *Filename, uint32_t Flags);
 

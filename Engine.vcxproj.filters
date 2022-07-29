@@ -4,9 +4,6 @@
     <ClCompile Include="engine.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="image\dds.c">
-      <Filter>Source\image</Filter>
-    </ClCompile>
     <ClCompile Include="image\image.c">
       <Filter>Source\image</Filter>
     </ClCompile>

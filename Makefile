@@ -11,7 +11,6 @@ OBJS+=q2bsp.o
 
 # image loading
 OBJS+=image/qoi.o
-OBJS+=image/dds.o
 OBJS+=image/tga.o
 OBJS+=image/image.o
 

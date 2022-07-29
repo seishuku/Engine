@@ -187,7 +187,7 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 			// Texture was not found, load the texture and add it to the list
 
 			snprintf(buf, 512, "./assets/%s.qoi", texInfo->Texture_Name);
-			Model->Mesh[i].TexBaseID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+			Model->Mesh[i].TexBaseID=Image_Upload(buf, IMAGE_AUTOMIPMAP|IMAGE_TRILINEAR);
 
 			snprintf(buf, 512, "./assets/%s_s.qoi", texInfo->Texture_Name);
 			Model->Mesh[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);

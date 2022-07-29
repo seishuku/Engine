@@ -339,72 +339,6 @@ void _Resample(Image_t *Src, Image_t *Dst)
 	}
 }
 
-void _BuildMipmaps(Image_t *Image, uint32_t Target)
-{
-	int32_t i=0, levels;
-	uint32_t MaxSize;
-	Image_t Dst;
-
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxSize);
-
-	Dst.Depth=Image->Depth;
-	Dst.Width=min(MaxSize, NextPower2(Image->Width));
-	Dst.Height=min(MaxSize, NextPower2(Image->Height));
-
-	if(Dst.Height>Dst.Width)
-		levels=ComputeLog(Dst.Height);
-	else
-		levels=ComputeLog(Dst.Width);
-
-	while(i<=levels)
-	{
-		Dst.Data=(uint8_t *)malloc(Dst.Width*Dst.Height*(Dst.Depth>>3));
-
-		_Resample(Image, &Dst);
-
-		switch(Dst.Depth)
-		{
-			case 128:
-				glTexImage2D(Target, i, GL_RGBA16, Dst.Width, Dst.Height, 0, GL_RGBA, GL_FLOAT, Dst.Data);
-				break;
-
-			case 96:
-				glTexImage2D(Target, i, GL_RGB16, Dst.Width, Dst.Height, 0, GL_RGB, GL_FLOAT, Dst.Data);
-				break;
-
-			case 64:
-				glTexImage2D(Target, i, GL_RGBA16, Dst.Width, Dst.Height, 0, GL_RGBA, GL_UNSIGNED_SHORT, Dst.Data);
-				break;
-
-			case 48:
-				glTexImage2D(Target, i, GL_RGB16, Dst.Width, Dst.Height, 0, GL_RGB, GL_UNSIGNED_SHORT, Dst.Data);
-				break;
-
-			case 32:
-				glTexImage2D(Target, i, GL_RGBA8, Dst.Width, Dst.Height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, Dst.Data);
-				break;
-
-			case 24:
-				glTexImage2D(Target, i, GL_RGB8, Dst.Width, Dst.Height, 0, GL_BGR, GL_UNSIGNED_BYTE, Dst.Data);
-				break;
-
-			case 16:
-				glTexImage2D(Target, i, GL_RGB5, Dst.Width, Dst.Height, 0, GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, Dst.Data);
-				break;
-
-			case 8:
-				glTexImage2D(Target, i, GL_R8, Dst.Width, Dst.Height, 0, GL_RED, GL_UNSIGNED_BYTE, Dst.Data);
-				break;
-		}
-
-		FREE(Dst.Data);
-
-		Dst.Width=(Dst.Width>1)?Dst.Width>>1:Dst.Width;
-		Dst.Height=(Dst.Height>1)?Dst.Height>>1:Dst.Height;
-		i++;
-	}
-}
-
 void _GetPixelBilinear(Image_t *Image, float x, float y, uint8_t *Out)
 {
 	int32_t ix=(int32_t)x, iy=(int32_t)y;
@@ -559,11 +493,267 @@ void _GetXYZFace(float uv[2], float *xyz, int32_t face)
 
 void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
 {
-	Image_t Out;
-	int32_t x, y;
-	uint32_t Internal, External, Type;
+	//Image_t Out;
+	//int32_t x, y;
+	//uint32_t Internal, External, Type;
 
-	switch(In->Depth)
+	//switch(In->Depth)
+	//{
+	//	case 128:
+	//		Internal=GL_RGBA16;
+	//		External=GL_RGBA;
+	//		Type=GL_FLOAT;
+	//		break;
+
+	//	case 96:
+	//		Internal=GL_RGB16;
+	//		External=GL_RGB;
+	//		Type=GL_FLOAT;
+	//		break;
+
+	//	case 64:
+	//		Internal=GL_RGBA16;
+	//		External=GL_BGRA;
+	//		Type=GL_UNSIGNED_SHORT;
+	//		break;
+
+	//	case 48:
+	//		Internal=GL_RGB16;
+	//		External=GL_BGR;
+	//		Type=GL_UNSIGNED_SHORT;
+	//		break;
+
+	//	case 32:
+	//		Internal=GL_RGBA8;
+	//		External=GL_BGRA;
+	//		Type=GL_UNSIGNED_INT_8_8_8_8_REV;
+	//		break;
+
+	//	case 24:
+	//		Internal=GL_RGB8;
+	//		External=GL_BGR;
+	//		Type=GL_UNSIGNED_BYTE;
+	//		break;
+
+ //		case 16:
+	//		Internal=GL_RGB5;
+	//		External=GL_BGRA;
+	//		Type=GL_UNSIGNED_SHORT_1_5_5_5_REV;
+	//		break;
+
+	//	case 8:
+	//		Internal=GL_R8;
+	//		External=GL_RED;
+	//		Type=GL_UNSIGNED_BYTE;
+	//		break;
+
+	//	default:
+	//		return;
+	//}
+
+	//Out.Depth=In->Depth;
+	//Out.Width=NextPower2(In->Width>>1);
+	//Out.Height=NextPower2(In->Height>>1);
+	//Out.Data=(uint8_t *)malloc(Out.Width*Out.Height*(Out.Depth>>3));
+
+	//for(y=0;y<Out.Height;y++)
+	//{
+	//	float fy=(float)y/(Out.Height-1);
+
+	//	for(x=0;x<Out.Width;x++)
+	//	{
+	//		float fx=(float)x/(Out.Width-1);
+	//		float uv[2]={ fx, fy }, xyz[3];
+
+	//		_GetXYZFace(uv, xyz, Face);
+	//		_GetUVAngularMap(xyz, uv);
+
+	//		_GetPixelBilinear(In, uv[0]*In->Width, uv[1]*In->Height, &Out.Data[(Out.Depth>>3)*(y*Out.Width+x)]);
+	//	}
+	//}
+
+	//if(Mipmap)
+	//	_BuildMipmaps(&Out, GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face);
+	//else
+	//	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face, 0, Internal, Out.Width, Out.Height, 0, External, Type, Out.Data);
+
+	//FREE(Out.Data);
+}
+
+uint32_t Image_Upload(const char *Filename, uint32_t Flags)
+{
+	uint32_t TextureID=0;
+	uint32_t Target=GL_TEXTURE_2D;
+	uint32_t Internal, External, Type, Levels=1;
+	Image_t Src, Dst;
+	char *Extension=strrchr(Filename, '.');
+
+	if(Extension!=NULL)
+	{
+		if(!strcmp(Extension, ".tga"))
+		{
+			if(!TGA_Load(Filename, &Src))
+				return 0;
+		}
+		else
+		if(!strcmp(Extension, ".qoi"))
+		{
+			if(!QOI_Load(Filename, &Src))
+				return 0;
+		}
+		else
+			return 0;
+	}
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	if(Flags&IMAGE_CUBEMAP_ANGULAR)
+		Target=GL_TEXTURE_CUBE_MAP;
+
+	if(Flags&IMAGE_RECTANGLE)
+	{
+		Target=GL_TEXTURE_RECTANGLE;
+
+		if(Flags&IMAGE_AUTOMIPMAP)
+			Flags^=IMAGE_AUTOMIPMAP;
+
+		if(Flags&IMAGE_MIPMAP)
+			Flags^=IMAGE_MIPMAP;
+
+		if(Flags&IMAGE_REPEAT)
+		{
+			Flags^=IMAGE_REPEAT;
+			Flags|=IMAGE_CLAMP;
+		}
+	}
+
+	// Image converions need to happen before other operations
+
+	// Convert from 32 bit RGBE encoded image to 32 bit floating point RGB image
+	if(Flags&IMAGE_RGBE)
+		_RGBE2Float(&Src);
+
+	// Convert an 8bit greyscale image to a 16 bit unsigned integer "RGB" image
+	if(Flags&IMAGE_NORMALMAP)
+		_MakeNormalMap(&Src);
+
+	// Renormalize a normal map, outputs as 16 bit unsigned integer "RGB" image
+	if(Flags&IMAGE_NORMALIZE)
+		_Normalize(&Src);
+
+	uint32_t MaxSize=0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxSize);
+
+	// Check if image is power of 2, clamping to max texture size.
+	if(!IsPower2(Src.Width))
+		Dst.Width=min(MaxSize, NextPower2(Src.Width));
+	else
+		Dst.Width=Src.Width;
+
+	if(!IsPower2(Src.Height))
+		Dst.Height=min(MaxSize, NextPower2(Src.Height));
+	else
+		Dst.Height=Src.Height;
+
+	// Carry over original color depth
+	Dst.Depth=Src.Depth;
+
+	// If destination image doesn't match source image dimensions, resize it
+	// to power of 2, otherwise set the destination data pointer to the original data.
+	if(Dst.Width!=Src.Width&&Dst.Height!=Src.Height)
+	{
+		Dst.Data=(uint8_t *)malloc(Dst.Width*Dst.Height*(Dst.Depth>>3));
+
+		if(Dst.Data==NULL)
+		{
+			FREE(Src.Data);
+			return 0;
+		}
+
+		_Resample(&Src, &Dst);
+		FREE(Src.Data);
+	}
+	else
+		Dst.Data=Src.Data;
+
+	// Get the number of mipmaps needed
+	Levels=ComputeLog(max(Dst.Width, Dst.Height))+1;
+
+	glCreateTextures(Target, 1, &TextureID);
+
+	// Default parameters
+	glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	if(Flags&IMAGE_NEAREST)
+	{
+		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		if(Flags&IMAGE_MIPMAP)
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		else
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+
+	if(Flags&IMAGE_BILINEAR)
+	{
+		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		if(Flags&IMAGE_MIPMAP)
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		else
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	if(Flags&IMAGE_TRILINEAR)
+	{
+		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		if(Flags&IMAGE_MIPMAP)
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		else
+			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	if(Flags&IMAGE_CLAMP_U)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+	if(Flags&IMAGE_CLAMP_V)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	if(Flags&IMAGE_CLAMP_W)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	if(Flags&IMAGE_REPEAT_U)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+	if(Flags&IMAGE_REPEAT_V)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	if(Flags&IMAGE_REPEAT_W)
+		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_R, GL_REPEAT);
+
+	/// TO-DO:
+	///		MAKE THIS WORK!
+	if(Flags&IMAGE_CUBEMAP_ANGULAR)
+	{
+		//_AngularMapFace(&Src, 0, Flags&IMAGE_MIPMAP);
+		//_AngularMapFace(&Src, 1, Flags&IMAGE_MIPMAP);
+		//_AngularMapFace(&Src, 2, Flags&IMAGE_MIPMAP);
+		//_AngularMapFace(&Src, 3, Flags&IMAGE_MIPMAP);
+		//_AngularMapFace(&Src, 4, Flags&IMAGE_MIPMAP);
+		//_AngularMapFace(&Src, 5, Flags&IMAGE_MIPMAP);
+
+		FREE(Src.Data);
+
+		//return TextureID;
+		return 0;
+	}
+
+	// Select internal format, external format, and data type from image depth bits
+	switch(Dst.Depth)
 	{
 		case 128:
 			Internal=GL_RGBA16;
@@ -601,7 +791,7 @@ void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
 			Type=GL_UNSIGNED_BYTE;
 			break;
 
- 		case 16:
+		case 16:
 			Internal=GL_RGB5;
 			External=GL_BGRA;
 			Type=GL_UNSIGNED_SHORT_1_5_5_5_REV;
@@ -614,263 +804,52 @@ void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
 			break;
 
 		default:
-			return;
+			FREE(Dst.Data);
+			glDeleteTextures(1, &TextureID);
+			return 0;
 	}
 
-	Out.Depth=In->Depth;
-	Out.Width=NextPower2(In->Width>>1);
-	Out.Height=NextPower2(In->Height>>1);
-	Out.Data=(uint8_t *)malloc(Out.Width*Out.Height*(Out.Depth>>3));
-
-	for(y=0;y<Out.Height;y++)
+	// If requesting mipmaps and not using auto mipmap generation
+	if(Flags&IMAGE_MIPMAP&&!(Flags&IMAGE_AUTOMIPMAP))
 	{
-		float fy=(float)y/(Out.Height-1);
+		uint32_t i=0;
+		Image_t Mipmap;
 
-		for(x=0;x<Out.Width;x++)
+		Mipmap.Width=Dst.Width;
+		Mipmap.Height=Dst.Height;
+		Mipmap.Depth=Dst.Depth;
+
+		glTextureStorage2D(TextureID, Levels, Internal, Dst.Width, Dst.Height);
+
+		while(i<Levels)
 		{
-			float fx=(float)x/(Out.Width-1);
-			float uv[2]={ fx, fy }, xyz[3];
+			Mipmap.Data=(uint8_t *)malloc(Mipmap.Width*Mipmap.Height*(Mipmap.Depth>>3));
 
-			_GetXYZFace(uv, xyz, Face);
-			_GetUVAngularMap(xyz, uv);
+			_Resample(&Dst, &Mipmap);
 
-			_GetPixelBilinear(In, uv[0]*In->Width, uv[1]*In->Height, &Out.Data[(Out.Depth>>3)*(y*Out.Width+x)]);
+			glTextureSubImage2D(TextureID, i, 0, 0, Mipmap.Width, Mipmap.Height, External, Type, Mipmap.Data);
+
+			FREE(Mipmap.Data);
+
+			Mipmap.Width=(Mipmap.Width>1)?Mipmap.Width>>1:Mipmap.Width;
+			Mipmap.Height=(Mipmap.Height>1)?Mipmap.Height>>1:Mipmap.Height;
+			i++;
 		}
 	}
-
-	if(Mipmap)
-		_BuildMipmaps(&Out, GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face);
+	// No mipmaps, or auto mipmap generation
 	else
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face, 0, Internal, Out.Width, Out.Height, 0, External, Type, Out.Data);
-
-	FREE(Out.Data);
-}
-
-uint32_t Image_Upload(const char *Filename, uint32_t Flags)
-{
-	uint32_t TextureID=0;
-	uint32_t Target=GL_TEXTURE_2D;
-	Image_t Image;
-	char *Extension=strrchr(Filename, '.');
-
-	if(Extension!=NULL)
 	{
-		if(!strcmp(Extension, ".dds"))
-		{
-			if(!DDS_Load(Filename, &Image))
-				return 0;
-		}
-		else
-		if(!strcmp(Extension, ".tga"))
-		{
-			if(!TGA_Load(Filename, &Image))
-				return 0;
-		}
-		else
-		if(!strcmp(Extension, ".qoi"))
-		{
-			if(!QOI_Load(Filename, &Image))
-				return 0;
-		}
-		else
-			return 0;
+		glTextureStorage2D(TextureID, Flags&IMAGE_AUTOMIPMAP?Levels:1, Internal, Dst.Width, Dst.Height);
+		glTextureSubImage2D(TextureID, 0, 0, 0, Dst.Width, Dst.Height, External, Type, Dst.Data);
 	}
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	// Done with image data
+	FREE(Dst.Data);
 
-	if(Flags&IMAGE_CUBEMAP_ANGULAR)
-		Target=GL_TEXTURE_CUBE_MAP;
+	// Auto generate mipmaps, if needed.
+	if(Flags&IMAGE_AUTOMIPMAP)
+		glGenerateTextureMipmap(TextureID);
 
-	if(Flags&IMAGE_RECTANGLE)
-	{
-		Target=GL_TEXTURE_RECTANGLE;
-
-		if(Flags&IMAGE_AUTOMIPMAP)
-			Flags^=IMAGE_AUTOMIPMAP;
-
-		if(Flags&IMAGE_MIPMAP)
-			Flags^=IMAGE_MIPMAP;
-
-		if(Flags&IMAGE_REPEAT)
-		{
-			Flags^=IMAGE_REPEAT;
-			Flags|=IMAGE_CLAMP;
-		}
-	}
-
-	glGenTextures(1, &TextureID);
-	glBindTexture(Target, TextureID);
-
-//	if(Flags&IMAGE_AUTOMIPMAP)
-//	{
-//		if(GL_SGIS_generate_mipmap_Flag)
-//			glTexParameteri(Target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-//	}
-
-	glTexParameteri(Target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(Target, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	if(Flags&IMAGE_NEAREST)
-	{
-		glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		if(Flags&IMAGE_MIPMAP)
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-		else
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	}
-
-	if(Flags&IMAGE_BILINEAR)
-	{
-		glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		if(Flags&IMAGE_MIPMAP)
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		else
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
-
-	if(Flags&IMAGE_TRILINEAR)
-	{
-		glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		if(Flags&IMAGE_MIPMAP)
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		else
-			glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
-
-	if(Flags&IMAGE_CLAMP_U)
-		glTexParameteri(Target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-
-	if(Flags&IMAGE_CLAMP_V)
-		glTexParameteri(Target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	if(Flags&IMAGE_REPEAT_U)
-		glTexParameteri(Target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-
-	if(Flags&IMAGE_REPEAT_V)
-		glTexParameteri(Target, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	if(Flags&IMAGE_RGBE)
-		_RGBE2Float(&Image);
-
-	if(Flags&IMAGE_NORMALMAP)
-		_MakeNormalMap(&Image);
-
-	if(Flags&IMAGE_NORMALIZE)
-		_Normalize(&Image);
-
-	if(Flags&IMAGE_CUBEMAP_ANGULAR)
-	{
-		_AngularMapFace(&Image, 0, Flags&IMAGE_MIPMAP);
-		_AngularMapFace(&Image, 1, Flags&IMAGE_MIPMAP);
-		_AngularMapFace(&Image, 2, Flags&IMAGE_MIPMAP);
-		_AngularMapFace(&Image, 3, Flags&IMAGE_MIPMAP);
-		_AngularMapFace(&Image, 4, Flags&IMAGE_MIPMAP);
-		_AngularMapFace(&Image, 5, Flags&IMAGE_MIPMAP);
-
-		FREE(Image.Data);
-
-		return TextureID;
-	}
-
-	switch(Image.Depth)
-	{
-		case IMAGE_DXT5:
-			if(Flags&IMAGE_MIPMAP)
-			{
-//				if(GL_SGIS_generate_mipmap_Flag)
-//					glTexParameteri(Target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-			}
-
-			glCompressedTexImage2D(Target, 0, GL_COMPRESSED_RGBA, Image.Width, Image.Height, 0, ((Image.Width+3)/4)*((Image.Height+3)/4)*16, Image.Data);
-			break;
-
-		case IMAGE_DXT3:
-			if(Flags&IMAGE_MIPMAP)
-			{
-//				if(GL_SGIS_generate_mipmap_Flag)
-//					glTexParameteri(Target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-			}
-
-			glCompressedTexImage2D(Target, 0, GL_COMPRESSED_RGBA, Image.Width, Image.Height, 0, ((Image.Width+3)/4)*((Image.Height+3)/4)*16, Image.Data);
-			break;
-
-		case IMAGE_DXT1:
-			if(Flags&IMAGE_MIPMAP)
-			{
-//				if(GL_SGIS_generate_mipmap_Flag)
-//					glTexParameteri(Target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-			}
-
-			glCompressedTexImage2D(Target, 0, GL_COMPRESSED_RGBA, Image.Width, Image.Height, 0, ((Image.Width+3)/4)*((Image.Height+3)/4)*8, Image.Data);
-			break;
-
-		case 128:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGBA16, Image.Width, Image.Height, 0, GL_RGBA, GL_FLOAT, Image.Data);
-			break;
-
-		case 96:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGB16, Image.Width, Image.Height, 0, GL_RGB, GL_FLOAT, Image.Data);
-			break;
-
-		case 64:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGBA16, Image.Width, Image.Height, 0, GL_RGBA, GL_UNSIGNED_SHORT, Image.Data);
-			break;
-
-		case 48:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGB16, Image.Width, Image.Height, 0, GL_RGB, GL_UNSIGNED_SHORT, Image.Data);
-			break;
-
-		case 32:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGBA8, Image.Width, Image.Height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, Image.Data);
-			break;
-
-		case 24:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGB8, Image.Width, Image.Height, 0, GL_BGR, GL_UNSIGNED_BYTE, Image.Data);
-			break;
-
-		case 16:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_RGB5, Image.Width, Image.Height, 0, GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, Image.Data);
-			break;
-
-		case 8:
-			if(Flags&IMAGE_MIPMAP)
-				_BuildMipmaps(&Image, Target);
-			else
-				glTexImage2D(Target, 0, GL_R8, Image.Width, Image.Height, 0, GL_RED, GL_UNSIGNED_BYTE, Image.Data);
-			break;
-
-		default:
-			FREE(Image.Data);
-			return 0;
-	}
-
-	FREE(Image.Data);
-
+	// Return the texture handle
 	return TextureID;
 }

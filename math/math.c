@@ -56,6 +56,11 @@ float fact(const int32_t n)
 	return j;
 }
 
+uint32_t IsPower2(uint32_t value)
+{
+	return (!!value)&!((value+~1+1)&value);
+}
+
 uint32_t NextPower2(uint32_t value)
 {
 	value--;

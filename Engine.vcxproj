@@ -307,7 +307,6 @@
     </ClCompile>
     <ClCompile Include="fluid\fluid3d.c" />
     <ClCompile Include="font\font.c" />
-    <ClCompile Include="image\dds.c" />
     <ClCompile Include="image\image.c" />
     <ClCompile Include="image\qoi.c" />
     <ClCompile Include="image\tga.c" />
