@@ -365,6 +365,8 @@
     <None Include="shaders\particle_f.glsl" />
     <None Include="shaders\particle_g.glsl" />
     <None Include="shaders\particle_v.glsl" />
+    <None Include="shaders\skybox_f.glsl" />
+    <None Include="shaders\skybox_v.glsl" />
     <None Include="shaders\vol_f.glsl" />
     <None Include="shaders\vol_v.glsl" />
     <None Include="shaders\distance_f.glsl" />

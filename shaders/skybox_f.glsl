@@ -1,6 +1,6 @@
 #version 430
 
-layout(binding=0) uniform sampler2D Texture;
+layout(binding=0) uniform samplerCube Texture;
 
 in vec3 UVW;
 
@@ -56,5 +56,5 @@ void main()
     irradiance = PI * irradiance * (1.0 / float(nrSamples));
     
 //    Output=vec4(irradiance, 1.0);//pow(pow(2.0, 0.0)*texture(Texture, getUVLatLon(UVW)),  vec4(0.45, 0.45, 0.45, 0.0));*/
-    Output=texture(Texture, getUVAngularMap(UVW));
+    Output=pow(2.0, 5.0)*texture(Texture, -UVW);
 }

@@ -425,8 +425,6 @@ void Render(void)
 
 	DrawQ2BSP(&Q2Model);
 
-	DrawSkybox();
-
 	///// Particle system stuff
 
 	// Hellknight's local transform matrix
@@ -500,6 +498,16 @@ void Render(void)
 	/////
 
 	DrawBezier();
+
+	///// Skybox
+	glUseProgram(Objects[GLSL_SKYBOX_SHADER]);
+	glUniformMatrix4fv(Objects[GLSL_SKYBOX_PROJ], 1, GL_FALSE, Projection);
+	glUniformMatrix4fv(Objects[GLSL_SKYBOX_MV], 1, GL_FALSE, ModelView);
+
+	glBindTextureUnit(0, Objects[TEXTURE_SKYBOX]);
+
+	DrawSkybox();
+	/////
 
 	///// Line chart for frame time
 	glUseProgram(Objects[GLSL_GENERIC_SHADER]);
@@ -746,6 +754,12 @@ bool Init(void)
 	Objects[GLSL_DISTANCE_LOCAL]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "local");
 	Objects[GLSL_DISTANCE_LIGHTPOS]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "Light_Pos");
 	Objects[GLSL_DISTANCE_INDEX]=glGetUniformLocation(Objects[GLSL_DISTANCE_SHADER], "index");
+
+	Objects[GLSL_SKYBOX_SHADER]=CreateShaderProgram((ProgNames_t) { "./shaders/skybox_v.glsl", "./shaders/skybox_f.glsl", NULL, NULL });
+	Objects[GLSL_SKYBOX_PROJ]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "proj");
+	Objects[GLSL_SKYBOX_MV]=glGetUniformLocation(Objects[GLSL_SKYBOX_SHADER], "mv");
+
+	Objects[TEXTURE_SKYBOX]=Image_Upload("./assets/rnl.qoi", IMAGE_RGBE|IMAGE_CUBEMAP_ANGULAR|IMAGE_MIPMAP|IMAGE_BILINEAR|IMAGE_CLAMP);
 
 	// Genereate texture and frame buffer for the depth cube map
 	glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &Objects[TEXTURE_DISTANCE]);

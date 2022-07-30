@@ -10,7 +10,6 @@
 
 void _MakeNormalMap(Image_t *Image)
 {
-	int32_t x, y, xx, yy;
 	int32_t Channels=Image->Depth>>3;
 	uint16_t *Buffer=NULL;
 	const float OneOver255=1.0f/255.0f;
@@ -25,17 +24,17 @@ void _MakeNormalMap(Image_t *Image)
 	if(Buffer==NULL)
 		return;
 
-	for(y=0;y<Image->Height;y++)
+	for(uint32_t y=0;y<Image->Height;y++)
 	{
-		for(x=0;x<Image->Width;x++)
+		for(uint32_t x=0;x<Image->Width;x++)
 		{
 			float n[3]={ 0.0f, 0.0f, 1.0f }, mag;
 
-			for(yy=0;yy<3;yy++)
+			for(uint32_t yy=0;yy<3;yy++)
 			{
 				int32_t oy=min(Image->Height-1, y+yy);
 
-				for(xx=0;xx<3;xx++)
+				for(uint32_t xx=0;xx<3;xx++)
 				{
 					int32_t ox=min(Image->Width-1, x+xx);
 
@@ -68,7 +67,7 @@ void _MakeNormalMap(Image_t *Image)
 
 void _Normalize(Image_t *Image)
 {
-	int32_t i, Channels=Image->Depth>>3;
+	int32_t Channels=Image->Depth>>3;
 	uint16_t *Buffer=NULL;
 	const float OneOver255=1.0f/255.0f;
 
@@ -80,7 +79,7 @@ void _Normalize(Image_t *Image)
 	if(Buffer==NULL)
 		return;
 
-	for(i=0;i<Image->Width*Image->Height;i++)
+	for(uint32_t i=0;i<Image->Width*Image->Height;i++)
 	{
 		float n[3], mag;
 
@@ -111,15 +110,12 @@ void _Normalize(Image_t *Image)
 
 void _RGBE2Float(Image_t *Image)
 {
-	int32_t i;
-	float *Buffer=NULL;
-
-	Buffer=(float *)malloc(sizeof(float)*Image->Width*Image->Height*3);
+	float *Buffer=(float *)malloc(sizeof(float)*Image->Width*Image->Height*3);
 
 	if(Buffer==NULL)
 		return;
 
-	for(i=0;i<Image->Width*Image->Height;i++)
+	for(uint32_t i=0;i<Image->Width*Image->Height;i++)
 	{
 		uint8_t *rgbe=&Image->Data[4*i];
 		float *rgb=&Buffer[3*i];
@@ -159,7 +155,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 	float fx, fy, hx, hy, lx, ly, sx, sy;
 	float xPercent, yPercent, Percent;
 	float Total[4], Sum;
-	int32_t x, y, iy, ix, Index;
+	uint32_t iy, ix, Index;
 
 	if(Dst->Data==NULL)
 		return;
@@ -167,7 +163,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 	sx=(float)Src->Width/Dst->Width;
 	sy=(float)Src->Height/Dst->Height;
 
-	for(y=0;y<Dst->Height;y++)
+	for(uint32_t y=0;y<Dst->Height;y++)
 	{
 		if(Src->Height>Dst->Height)
 		{
@@ -182,7 +178,7 @@ void _Resample(Image_t *Src, Image_t *Dst)
 			ly=fy-0.5f;
 		}
 
-		for(x=0;x<Dst->Width;x++)
+		for(uint32_t x=0;x<Dst->Width;x++)
 		{
 			if(Src->Width>Dst->Width)
 			{
@@ -341,8 +337,8 @@ void _Resample(Image_t *Src, Image_t *Dst)
 
 void _GetPixelBilinear(Image_t *Image, float x, float y, uint8_t *Out)
 {
-	int32_t ix=(int32_t)x, iy=(int32_t)y;
-	int32_t ox=ix+1, oy=iy+1;
+	uint32_t ix=max(0, (uint32_t)x), iy=max(0, (uint32_t)y);
+	uint32_t ox=ix+1, oy=iy+1;
 	float fx=x-ix, fy=y-iy;
 	float w00, w01, w10, w11;
 
@@ -491,93 +487,38 @@ void _GetXYZFace(float uv[2], float *xyz, int32_t face)
 	}
 }
 
-void _AngularMapFace(Image_t *In, int32_t Face, int32_t Mipmap)
+bool _AngularMapFace(Image_t *In, int32_t Face, Image_t *Out)
 {
-	//Image_t Out;
-	//int32_t x, y;
-	//uint32_t Internal, External, Type;
+	// Match output depth to input depth
+	Out->Depth=In->Depth;
 
-	//switch(In->Depth)
-	//{
-	//	case 128:
-	//		Internal=GL_RGBA16;
-	//		External=GL_RGBA;
-	//		Type=GL_FLOAT;
-	//		break;
+	// Half the angular map size seems to work well for a cube face size
+	Out->Width=In->Width>>1;
+	Out->Height=In->Height>>1;
 
-	//	case 96:
-	//		Internal=GL_RGB16;
-	//		External=GL_RGB;
-	//		Type=GL_FLOAT;
-	//		break;
+	// Allocate memory for the destination buffer
+	Out->Data=(uint8_t *)malloc(Out->Width*Out->Height*(Out->Depth>>3));
 
-	//	case 64:
-	//		Internal=GL_RGBA16;
-	//		External=GL_BGRA;
-	//		Type=GL_UNSIGNED_SHORT;
-	//		break;
+	if(Out->Data==NULL)
+		return false;
 
-	//	case 48:
-	//		Internal=GL_RGB16;
-	//		External=GL_BGR;
-	//		Type=GL_UNSIGNED_SHORT;
-	//		break;
+	for(uint32_t y=0;y<Out->Height;y++)
+	{
+		float fy=(float)y/(Out->Height-1);
 
-	//	case 32:
-	//		Internal=GL_RGBA8;
-	//		External=GL_BGRA;
-	//		Type=GL_UNSIGNED_INT_8_8_8_8_REV;
-	//		break;
+		for(uint32_t x=0;x<Out->Width;x++)
+		{
+			float fx=(float)x/(Out->Width-1);
+			float uv[2]={ fx, fy }, xyz[3];
 
-	//	case 24:
-	//		Internal=GL_RGB8;
-	//		External=GL_BGR;
-	//		Type=GL_UNSIGNED_BYTE;
-	//		break;
+			_GetXYZFace(uv, xyz, Face);
+			_GetUVAngularMap(xyz, uv);
 
- //		case 16:
-	//		Internal=GL_RGB5;
-	//		External=GL_BGRA;
-	//		Type=GL_UNSIGNED_SHORT_1_5_5_5_REV;
-	//		break;
+			_GetPixelBilinear(In, uv[0]*In->Width, uv[1]*In->Height, &Out->Data[(Out->Depth>>3)*(y*Out->Width+x)]);
+		}
+	}
 
-	//	case 8:
-	//		Internal=GL_R8;
-	//		External=GL_RED;
-	//		Type=GL_UNSIGNED_BYTE;
-	//		break;
-
-	//	default:
-	//		return;
-	//}
-
-	//Out.Depth=In->Depth;
-	//Out.Width=NextPower2(In->Width>>1);
-	//Out.Height=NextPower2(In->Height>>1);
-	//Out.Data=(uint8_t *)malloc(Out.Width*Out.Height*(Out.Depth>>3));
-
-	//for(y=0;y<Out.Height;y++)
-	//{
-	//	float fy=(float)y/(Out.Height-1);
-
-	//	for(x=0;x<Out.Width;x++)
-	//	{
-	//		float fx=(float)x/(Out.Width-1);
-	//		float uv[2]={ fx, fy }, xyz[3];
-
-	//		_GetXYZFace(uv, xyz, Face);
-	//		_GetUVAngularMap(xyz, uv);
-
-	//		_GetPixelBilinear(In, uv[0]*In->Width, uv[1]*In->Height, &Out.Data[(Out.Depth>>3)*(y*Out.Width+x)]);
-	//	}
-	//}
-
-	//if(Mipmap)
-	//	_BuildMipmaps(&Out, GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face);
-	//else
-	//	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+Face, 0, Internal, Out.Width, Out.Height, 0, External, Type, Out.Data);
-
-	//FREE(Out.Data);
+	return true;
 }
 
 uint32_t Image_Upload(const char *Filename, uint32_t Flags)
@@ -676,9 +617,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 	else
 		Dst.Data=Src.Data;
 
-	// Get the number of mipmaps needed
-	Levels=ComputeLog(max(Dst.Width, Dst.Height))+1;
-
+	// Create the texture object
 	glCreateTextures(Target, 1, &TextureID);
 
 	// Default parameters
@@ -691,7 +630,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 	{
 		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		if(Flags&IMAGE_MIPMAP)
+		if(Flags&IMAGE_MIPMAP||Flags&IMAGE_AUTOMIPMAP)
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 		else
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -701,7 +640,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 	{
 		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		if(Flags&IMAGE_MIPMAP)
+		if(Flags&IMAGE_MIPMAP||Flags&IMAGE_AUTOMIPMAP)
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 		else
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -711,7 +650,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 	{
 		glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		if(Flags&IMAGE_MIPMAP)
+		if(Flags&IMAGE_MIPMAP||Flags&IMAGE_AUTOMIPMAP)
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		else
 			glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -734,23 +673,6 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 
 	if(Flags&IMAGE_REPEAT_W)
 		glTextureParameteri(TextureID, GL_TEXTURE_WRAP_R, GL_REPEAT);
-
-	/// TO-DO:
-	///		MAKE THIS WORK!
-	if(Flags&IMAGE_CUBEMAP_ANGULAR)
-	{
-		//_AngularMapFace(&Src, 0, Flags&IMAGE_MIPMAP);
-		//_AngularMapFace(&Src, 1, Flags&IMAGE_MIPMAP);
-		//_AngularMapFace(&Src, 2, Flags&IMAGE_MIPMAP);
-		//_AngularMapFace(&Src, 3, Flags&IMAGE_MIPMAP);
-		//_AngularMapFace(&Src, 4, Flags&IMAGE_MIPMAP);
-		//_AngularMapFace(&Src, 5, Flags&IMAGE_MIPMAP);
-
-		FREE(Src.Data);
-
-		//return TextureID;
-		return 0;
-	}
 
 	// Select internal format, external format, and data type from image depth bits
 	switch(Dst.Depth)
@@ -808,6 +730,74 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 			glDeleteTextures(1, &TextureID);
 			return 0;
 	}
+
+	/// TO-DO:
+	///		MAKE THIS WORK!
+	if(Flags&IMAGE_CUBEMAP_ANGULAR)
+	{
+		Image_t Face;
+
+		// Half the angular map size seems to work well for a cube face size
+		// This is also done in _AngularMapFace, but I need it again here to get mip levels
+		Face.Width=Dst.Width>>1;
+		Face.Height=Dst.Height>>1;
+
+		// Get the number of mipmaps needed
+		Levels=ComputeLog(max(Face.Width, Face.Height))+1;
+
+		if(Flags&IMAGE_AUTOMIPMAP||Flags&IMAGE_MIPMAP)
+			glTextureStorage2D(TextureID, Levels, Internal, Face.Width, Face.Height);
+		else
+			glTextureStorage2D(TextureID, 1, Internal, Face.Width, Face.Height);
+
+		for(uint32_t i=0;i<6;i++)
+		{
+			_AngularMapFace(&Dst, i, &Face);
+
+			// If requesting mipmaps and not using auto mipmap generation
+			if(Flags&IMAGE_MIPMAP&&!(Flags&IMAGE_AUTOMIPMAP))
+			{
+				uint32_t j=0;
+				Image_t Mipmap;
+
+				Mipmap.Width=Face.Width;
+				Mipmap.Height=Face.Height;
+				Mipmap.Depth=Face.Depth;
+
+				while(j<Levels)
+				{
+					Mipmap.Data=(uint8_t *)malloc(Mipmap.Width*Mipmap.Height*(Mipmap.Depth>>3));
+
+					_Resample(&Face, &Mipmap);
+
+					glTextureSubImage3D(TextureID, j, 0, 0, i, Mipmap.Width, Mipmap.Height, 1, External, Type, Mipmap.Data);
+
+					FREE(Mipmap.Data);
+
+					Mipmap.Width=(Mipmap.Width>1)?Mipmap.Width>>1:Mipmap.Width;
+					Mipmap.Height=(Mipmap.Height>1)?Mipmap.Height>>1:Mipmap.Height;
+					j++;
+				}
+			}
+			// No mipmaps, or auto mipmap generation
+			else
+				glTextureSubImage3D(TextureID, 0, 0, 0, i, Face.Width, Face.Height, 1, External, Type, Face.Data);
+
+			// Done with this face, free the memory
+			FREE(Face.Data);
+		}
+
+		FREE(Dst.Data);
+
+		// Auto generate mipmaps, if needed.
+		if(Flags&IMAGE_AUTOMIPMAP)
+			glGenerateTextureMipmap(TextureID);
+
+		return TextureID;
+	}
+
+	// Get the number of mipmaps needed
+	Levels=ComputeLog(max(Dst.Width, Dst.Height))+1;
 
 	// If requesting mipmaps and not using auto mipmap generation
 	if(Flags&IMAGE_MIPMAP&&!(Flags&IMAGE_AUTOMIPMAP))

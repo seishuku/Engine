@@ -307,5 +307,11 @@
     <None Include="shaders\bezier_g.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\skybox_f.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\skybox_v.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

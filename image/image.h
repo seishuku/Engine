@@ -24,7 +24,7 @@
 
 typedef struct
 {
-	int32_t Width, Height;
+	uint32_t Width, Height;
 	uint32_t Depth;
 	uint8_t *Data;
 } Image_t;
