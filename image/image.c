@@ -731,8 +731,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 			return 0;
 	}
 
-	/// TO-DO:
-	///		MAKE THIS WORK!
+	// Cube map special case, loads from angular map, like HDR light probe maps
 	if(Flags&IMAGE_CUBEMAP_ANGULAR)
 	{
 		Image_t Face;
@@ -742,13 +741,11 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 		Face.Width=Dst.Width>>1;
 		Face.Height=Dst.Height>>1;
 
-		// Get the number of mipmaps needed
-		Levels=ComputeLog(max(Face.Width, Face.Height))+1;
-
+		// Get the number of mip levels, if needed
 		if(Flags&IMAGE_AUTOMIPMAP||Flags&IMAGE_MIPMAP)
-			glTextureStorage2D(TextureID, Levels, Internal, Face.Width, Face.Height);
-		else
-			glTextureStorage2D(TextureID, 1, Internal, Face.Width, Face.Height);
+			Levels=ComputeLog(max(Face.Width, Face.Height))+1;
+
+		glTextureStorage2D(TextureID, Levels, Internal, Face.Width, Face.Height);
 
 		for(uint32_t i=0;i<6;i++)
 		{
@@ -796,8 +793,11 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 		return TextureID;
 	}
 
-	// Get the number of mipmaps needed
-	Levels=ComputeLog(max(Dst.Width, Dst.Height))+1;
+	// Get the number of mip levels, if needed
+	if(Flags&IMAGE_AUTOMIPMAP||Flags&IMAGE_MIPMAP)
+		Levels=ComputeLog(max(Dst.Width, Dst.Height))+1;
+
+	glTextureStorage2D(TextureID, Levels, Internal, Dst.Width, Dst.Height);
 
 	// If requesting mipmaps and not using auto mipmap generation
 	if(Flags&IMAGE_MIPMAP&&!(Flags&IMAGE_AUTOMIPMAP))
@@ -808,8 +808,6 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 		Mipmap.Width=Dst.Width;
 		Mipmap.Height=Dst.Height;
 		Mipmap.Depth=Dst.Depth;
-
-		glTextureStorage2D(TextureID, Levels, Internal, Dst.Width, Dst.Height);
 
 		while(i<Levels)
 		{
@@ -828,10 +826,7 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 	}
 	// No mipmaps, or auto mipmap generation
 	else
-	{
-		glTextureStorage2D(TextureID, Flags&IMAGE_AUTOMIPMAP?Levels:1, Internal, Dst.Width, Dst.Height);
 		glTextureSubImage2D(TextureID, 0, 0, 0, Dst.Width, Dst.Height, External, Type, Dst.Data);
-	}
 
 	// Done with image data
 	FREE(Dst.Data);
