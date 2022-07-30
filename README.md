@@ -5,3 +5,7 @@ Kind of a code blog of my ever on-going project, actually a collection of graphi
 Some code dates back to the early 2000's.
 
 Enjoy?
+
+Required library deps:
+	PortAudio
+	OpenCL
