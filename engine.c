@@ -243,23 +243,10 @@ void UpdateShadow(GLuint buffer)
 bool retrigger=true;
 
 GLuint BezierVAO=0, BezierVBO=0;
+uint32_t numCurves=0;
 
 void DrawBezier(void)
 {
-	float ControlPoints[]=
-	{
-		-50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 0.0f, 1.0f,
-		-50.0f, 100.0f, 50.0f, 1.0f,	0.0f, 1.0f, 0.0f, 1.0f,
-		50.0f, 100.0f, -50.0f, 1.0f,	0.0f, 0.0f, 1.0f, 1.0f,
-		50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 1.0f, 1.0f, 1.0f,
-
-		-50.0f, 0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 0.0f, 1.0f,
-		-50.0f, 50.0f, 75.0f, 1.0f,		0.0f, 0.0f, 0.0f, 1.0f,
-		50.0f, 50.0f, -75.0f, 1.0f,		0.0f, 0.0f, 1.0f, 1.0f,
-		50.0f, 0.0f, 0.0f, 1.0f,		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	const int numCurves=sizeof(ControlPoints)/(sizeof(vec4)*2);
-
 	if(!BezierVAO)
 	{
 		glCreateVertexArrays(1, &BezierVAO);
@@ -274,10 +261,62 @@ void DrawBezier(void)
 
 	if(!BezierVBO)
 	{
+		FILE *stream=NULL;
+		char buff[512];
+		vec4 p0, p1, p2, p3, color;
+		List_t Path;
+
+		Vec4_Set(p0, 0.0f, 0.0f, 0.0f, 1.0f);
+		Vec4_Set(p1, 0.0f, 0.0f, 0.0f, 1.0f);
+		Vec4_Set(p2, 0.0f, 0.0f, 0.0f, 1.0f);
+		Vec4_Set(p3, 0.0f, 0.0f, 0.0f, 1.0f);
+		Vec4_Set(color, 1.0f, 1.0f, 1.0f, 1.0f);
+
+		stream=fopen("test.vector", "rt");
+
+		if(stream==NULL)
+			return;
+
+		List_Init(&Path, sizeof(vec4), 0, NULL);
+
+		while(!feof(stream))
+		{
+			fgets(buff, sizeof(buff), stream);
+
+			if(sscanf(buff, "Line (%f, %f) (%f, %f)", &p0[0], &p0[1], &p1[0], &p1[1])==4)
+			{
+				List_Add(&Path, p0);
+				List_Add(&Path, color);
+				List_Add(&Path, p0);
+				List_Add(&Path, color);
+				List_Add(&Path, p1);
+				List_Add(&Path, color);
+				List_Add(&Path, p1);
+				List_Add(&Path, color);
+			}
+			else if(sscanf(buff, "Cubic (%f, %f) (%f, %f) (%f, %f) (%f, %f)", &p0[0], &p0[1], &p1[0], &p1[1], &p2[0], &p2[1], &p3[0], &p3[1])==8)
+			{
+				List_Add(&Path, p0);
+				List_Add(&Path, color);
+				List_Add(&Path, p1);
+				List_Add(&Path, color);
+				List_Add(&Path, p2);
+				List_Add(&Path, color);
+				List_Add(&Path, p3);
+				List_Add(&Path, color);
+			}
+		}
+
+		numCurves=List_GetCount(&Path);
+
+		fclose(stream);
+
 		glCreateBuffers(1, &BezierVBO);
-		glNamedBufferData(BezierVBO, sizeof(vec4)*2*numCurves, ControlPoints, GL_DYNAMIC_DRAW);
+		glNamedBufferData(BezierVBO, Path.Size, Path.Buffer, GL_DYNAMIC_DRAW);
 
 		glVertexArrayVertexBuffer(BezierVAO, 0, BezierVBO, 0, sizeof(vec4)*2);
+
+		List_Destroy(&Path);
 	}
 
 	glUseProgram(Objects[GLSL_BEZIER_SHADER]);
@@ -287,11 +326,13 @@ void DrawBezier(void)
 
 	matrix local;
 	MatrixIdentity(local);
+	MatrixTranslate(-20.0f, 75.0f, -100.0f, local);
+	MatrixScale(0.1f, -0.1f, 0.1f, local);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
 
 	glUniform1ui(Objects[GLSL_BEZIER_NUMSEGMENTS], 100);
 
-	glLineWidth(10.0f);
+	glLineWidth(1.0f);
 	glEnable(GL_LINE_SMOOTH);
 	glBindVertexArray(BezierVAO);
 	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves);

@@ -19,21 +19,19 @@ List_t FontVectors;
 // Initialization flag
 bool FontInit=true;
 
-#define GYLP ('G'|('Y'<<8)|('L'<<16)|('P'<<24))
-
-typedef struct
+struct
 {
 	uint32_t Advance;
 	uint32_t numPath;
 	vec2 *Path;
-} Gylph_t;
+} Gylphs[256];
 
 uint32_t GylphSize=0;
-Gylph_t Gylphs[256];
 
-bool LoadFontGylphs(Gylph_t *Gylphs, const char *Filename)
+bool LoadFontGylphs(const char *Filename)
 {
 	FILE *Stream=NULL;
+	const uint32_t GYLP=('G'|('Y'<<8)|('L'<<16)|('P'<<24));
 
 	Stream=fopen(Filename, "rb");
 
@@ -96,10 +94,10 @@ void Font_Print(float x, float y, char *string, ...)
 	// Find how many characters were need to deal with
 	numchar=(int32_t)strlen(text);
 
-	// Generate texture, shaders, etc once
+	// One time init, loads font paths, set up buffers and list
 	if(FontInit)
 	{
-		if(!LoadFontGylphs(Gylphs, "./assets/font.gylph"))
+		if(!LoadFontGylphs("./assets/font.gylph"))
 			return;
 
 		// Create the vertex array
@@ -117,9 +115,11 @@ void Font_Print(float x, float y, char *string, ...)
 		glVertexArrayAttribBinding(FontVAO, 1, 0);
 		glEnableVertexArrayAttrib(FontVAO, 1);
 
+		// Create the vertex buffer and assign it to the vertex array
 		glCreateBuffers(1, &FontVBO);
 		glVertexArrayVertexBuffer(FontVAO, 0, FontVBO, 0, sizeof(vec4)*2);
 
+		// Initalize a list for building a list of control points to feed to the Bezier shader
 		List_Init(&FontVectors, sizeof(vec4)*2, 4, NULL);
 
 		// Done with init
@@ -137,11 +137,10 @@ void Font_Print(float x, float y, char *string, ...)
 			continue;
 		}
 
-		// Just advance spaces instead of rendering empty quads
+		// Just advance spaces instead of rendering empty character
 		if(*ptr==' ')
 		{
 			x+=Gylphs[*ptr].Advance;
-			numchar--;
 			continue;
 		}
 
@@ -170,7 +169,7 @@ void Font_Print(float x, float y, char *string, ...)
 			ptr+=4;
 		}
 
-		// Emit position, atlas offset, and color for this character
+		// Push the current character gylph path with offset and color on to the list
 		for(uint32_t i=0;i<Gylphs[*ptr].numPath;i++)
 		{
 			float vert[]={ Gylphs[*ptr].Path[i][0]+x, Gylphs[*ptr].Path[i][1]+y, -1.0f, 1.0f, r, g, b, 1.0f};
@@ -181,6 +180,7 @@ void Font_Print(float x, float y, char *string, ...)
 		x+=Gylphs[*ptr].Advance;
 	}
 
+	// Done building the list, upload the data to the GPU.
 	glNamedBufferData(FontVBO, sizeof(vec4)*2*List_GetCount(&FontVectors), List_GetPointer(&FontVectors, 0), GL_DYNAMIC_DRAW);
 
 	// Set program and uniforms
@@ -205,16 +205,20 @@ void Font_Print(float x, float y, char *string, ...)
 	glBindVertexArray(FontVAO);
 	glDrawArrays(GL_LINES_ADJACENCY, 0, (GLsizei)List_GetCount(&FontVectors));
 
+	// Clear the list for next time
 	List_Clear(&FontVectors);
 }
 
 void Font_Destroy(void)
 {
+	// Loop through gylphs to free memory
 	for(uint32_t i=0;i<255;i++)
 		free(Gylphs[i].Path);
 
+	// Destroy the control point list
 	List_Destroy(&FontVectors);
 
+	// Delete OpenGL objects
 	glDeleteBuffers(1, &FontVBO);
 	glDeleteVertexArrays(1, &FontVAO);
 }
