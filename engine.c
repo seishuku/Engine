@@ -307,7 +307,7 @@ void DrawBezier(void)
 			}
 		}
 
-		numCurves=List_GetCount(&Path);
+		numCurves=(uint32_t)List_GetCount(&Path);
 
 		fclose(stream);
 
@@ -330,13 +330,10 @@ void DrawBezier(void)
 	MatrixScale(0.1f, -0.1f, 0.1f, local);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
 
-	glUniform1ui(Objects[GLSL_BEZIER_NUMSEGMENTS], 100);
+	glUniform1ui(Objects[GLSL_BEZIER_NUMSEGMENTS], 30);
 
-	glLineWidth(1.0f);
-	glEnable(GL_LINE_SMOOTH);
 	glBindVertexArray(BezierVAO);
 	glDrawArrays(GL_LINES_ADJACENCY, 0, numCurves);
-	glLineWidth(1.0f);
 }
 
 void Render(void)
