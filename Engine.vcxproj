@@ -330,6 +330,7 @@
     <ClCompile Include="particle\particle.c" />
     <ClCompile Include="q2bsp.c" />
     <ClCompile Include="system\win32.c" />
+    <ClCompile Include="utils\genid.c" />
     <ClCompile Include="utils\list.c" />
   </ItemGroup>
   <ItemGroup>
@@ -356,6 +357,7 @@
     <ClInclude Include="particle\particle.h" />
     <ClInclude Include="q2bsp.h" />
     <ClInclude Include="system\system.h" />
+    <ClInclude Include="utils\genid.h" />
     <ClInclude Include="utils\list.h" />
   </ItemGroup>
   <ItemGroup>

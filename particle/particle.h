@@ -11,7 +11,7 @@ typedef void (*ParticleInitCallback)(uint32_t Index, uint32_t NumParticles, Part
 
 typedef struct
 {
-	int32_t ID;
+	uint32_t ID;
 	bool Burst;
 	vec3 Position;
 	vec3 StartColor, EndColor;
@@ -24,18 +24,16 @@ typedef struct
 
 typedef struct
 {
-	int32_t NextEmitterID;
-
 	List_t Emitters;
 
 	uint32_t PartVAO, PartVBO;
 	float *ParticleArray;
 } ParticleSystem_t;
 
-int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, float ParticleSize, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback);
-void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID);
-void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID);
-void ParticleSystem_SetEmitterPosition(ParticleSystem_t *System, int32_t ID, vec3 Position);
+uint32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, float ParticleSize, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback);
+void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, uint32_t ID);
+void ParticleSystem_ResetEmitter(ParticleSystem_t *System, uint32_t ID);
+void ParticleSystem_SetEmitterPosition(ParticleSystem_t *System, uint32_t ID, vec3 Position);
 
 bool ParticleSystem_Init(ParticleSystem_t *System);
 void ParticleSystem_Step(ParticleSystem_t *System, float dt);

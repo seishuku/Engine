@@ -6,6 +6,7 @@
 #include "../image/image.h"
 #include "../math/math.h"
 #include "../utils/list.h"
+#include "../utils/genid.h"
 #include "../camera/camera.h"
 #include "particle.h"
 
@@ -28,11 +29,8 @@ bool ParticleSystem_ResizeBuffer(ParticleSystem_t *System)
 	{
 		ParticleEmitter_t *Emitter=List_GetPointer(&System->Emitters, i);
 
-		if(Emitter->ID>=0)
-		{
-			for(uint32_t j=0;j<Emitter->NumParticles;j++)
-				Count++;
-		}
+		for(uint32_t j=0;j<Emitter->NumParticles;j++)
+			Count++;
 	}
 
 	// Resize vertex buffer
@@ -50,16 +48,13 @@ bool ParticleSystem_ResizeBuffer(ParticleSystem_t *System)
 }
 
 // Adds a particle emitter to the system
-int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, float ParticleSize, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
+uint32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 StartColor, vec3 EndColor, float ParticleSize, uint32_t NumParticles, bool Burst, ParticleInitCallback InitCallback)
 {
 	if(System==NULL)
 		return false;
 
-	// Pull an ID from the global counter
-	int32_t ID=System->NextEmitterID++;
-
-	// Index for new emitter = Current number of emitters
-	int32_t Index=(int32_t)List_GetCount(&System->Emitters);
+	// Pull the next ID from the global ID count
+	uint32_t ID=GenID();
 
 	// Increment emitter count and resize emitter memory
 
@@ -95,18 +90,15 @@ int32_t ParticleSystem_AddEmitter(ParticleSystem_t *System, vec3 Position, vec3 
 
 	// Resize vertex buffers (both system memory and OpenGL buffer)
 	if(!ParticleSystem_ResizeBuffer(System))
-		return -1;
+		return UINT32_MAX;
 
 	return ID;
 }
 
 // Removes a particle emitter from the system
-void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
+void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, uint32_t ID)
 {
-	bool found=false;
-
-	// Return if ID isn't valid
-	if(ID<0||System==NULL)
+	if(System==NULL&&ID!=UINT32_MAX)
 		return;
 
 	for(uint32_t i=0;i<List_GetCount(&System->Emitters);i++)
@@ -116,24 +108,18 @@ void ParticleSystem_DeleteEmitter(ParticleSystem_t *System, int32_t ID)
 		if(Emitter->ID==ID)
 		{
 			List_Del(&System->Emitters, i);
-			found=true;
-			break;
+
+			// Resize vertex buffers (both system memory and OpenGL buffer)
+			ParticleSystem_ResizeBuffer(System);
+			return;
 		}
 	}
-
-	// ID wasn't found, return out of function
-	if(!found)
-		return;
-
-	// Resize vertex buffers (both system memory and OpenGL buffer)
-	ParticleSystem_ResizeBuffer(System);
 }
 
 // Resets the emitter to the initial parameters (mostly for a "burst" trigger)
-void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
+void ParticleSystem_ResetEmitter(ParticleSystem_t *System, uint32_t ID)
 {
-	// Return if ID isn't valid
-	if(ID<0||System==NULL)
+	if(System==NULL&&ID!=UINT32_MAX)
 		return;
 
 	for(uint32_t i=0;i<List_GetCount(&System->Emitters);i++)
@@ -178,10 +164,9 @@ void ParticleSystem_ResetEmitter(ParticleSystem_t *System, int32_t ID)
 	}
 }
 
-void ParticleSystem_SetEmitterPosition(ParticleSystem_t *System, int32_t ID, vec3 Position)
+void ParticleSystem_SetEmitterPosition(ParticleSystem_t *System, uint32_t ID, vec3 Position)
 {
-	// Return if ID isn't valid
-	if(ID<0||System==NULL)
+	if(System==NULL&&ID!=UINT32_MAX)
 		return;
 
 	for(uint32_t i=0;i<List_GetCount(&System->Emitters);i++)
@@ -200,8 +185,6 @@ bool ParticleSystem_Init(ParticleSystem_t *System)
 {
 	if(System==NULL)
 		return false;
-
-	System->NextEmitterID=0;
 
 	List_Init(&System->Emitters, sizeof(ParticleEmitter_t), 10, NULL);
 
@@ -241,55 +224,51 @@ void ParticleSystem_Step(ParticleSystem_t *System, float dt)
 	{
 		ParticleEmitter_t *Emitter=List_GetPointer(&System->Emitters, i);
 
-		// Only if an active ID
-		if(Emitter->ID>=0)
+		for(uint32_t j=0;j<Emitter->NumParticles;j++)
 		{
-			for(uint32_t j=0;j<Emitter->NumParticles;j++)
+			Emitter->Particles[j].life-=dt*0.75f;
+
+			// If the particle is dead and isn't a one shot (burst), restart it...
+			// Otherwise run the math for the particle system motion.
+			if(Emitter->Particles[j].life<0.0f&&!Emitter->Burst)
 			{
-				Emitter->Particles[j].life-=dt*0.75f;
-
-				// If the particle is dead and isn't a one shot (burst), restart it...
-				// Otherwise run the math for the particle system motion.
-				if(Emitter->Particles[j].life<0.0f&&!Emitter->Burst)
+				// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
+				if(Emitter->InitCallback)
 				{
-					// If a velocity/life callback was set, use it... Otherwise use default "fountain" style
-					if(Emitter->InitCallback)
-					{
-						Emitter->InitCallback(j, Emitter->NumParticles, &Emitter->Particles[j]);
+					Emitter->InitCallback(j, Emitter->NumParticles, &Emitter->Particles[j]);
 
-						// Add particle emitter position to the calculated position
-						Vec3_Addv(Emitter->Particles[j].pos, Emitter->Position);
-					}
-					else
-					{
-						float SeedRadius=30.0f;
-						float theta=((float)rand()/RAND_MAX)*2.0f*PI;
-						float r=((float)rand()/RAND_MAX)*SeedRadius;
-
-						// Set particle start position to emitter position
-						Vec3_Setv(Emitter->Particles[j].pos, Emitter->Position);
-
-						Emitter->Particles[j].vel[0]=r*sinf(theta);
-						Emitter->Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
-						Emitter->Particles[j].vel[2]=r*cosf(theta);
-
-						Emitter->Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
-					}
+					// Add particle emitter position to the calculated position
+					Vec3_Addv(Emitter->Particles[j].pos, Emitter->Position);
 				}
 				else
 				{
-					if(Emitter->Particles[j].life>0.0f)
-					{
-						vec3 temp;
+					float SeedRadius=30.0f;
+					float theta=((float)rand()/RAND_MAX)*2.0f*PI;
+					float r=((float)rand()/RAND_MAX)*SeedRadius;
 
-						Vec3_Setv(temp, PartGrav);
-						Vec3_Muls(temp, dt);
-						Vec3_Addv(Emitter->Particles[j].vel, temp);
+					// Set particle start position to emitter position
+					Vec3_Setv(Emitter->Particles[j].pos, Emitter->Position);
 
-						Vec3_Setv(temp, Emitter->Particles[j].vel);
-						Vec3_Muls(temp, dt);
-						Vec3_Addv(Emitter->Particles[j].pos, temp);
-					}
+					Emitter->Particles[j].vel[0]=r*sinf(theta);
+					Emitter->Particles[j].vel[1]=((float)rand()/RAND_MAX)*100.0f;
+					Emitter->Particles[j].vel[2]=r*cosf(theta);
+
+					Emitter->Particles[j].life=((float)rand()/RAND_MAX)*0.999f+0.001f;
+				}
+			}
+			else
+			{
+				if(Emitter->Particles[j].life>0.0f)
+				{
+					vec3 temp;
+
+					Vec3_Setv(temp, PartGrav);
+					Vec3_Muls(temp, dt);
+					Vec3_Addv(Emitter->Particles[j].vel, temp);
+
+					Vec3_Setv(temp, Emitter->Particles[j].vel);
+					Vec3_Muls(temp, dt);
+					Vec3_Addv(Emitter->Particles[j].pos, temp);
 				}
 			}
 		}
@@ -315,27 +294,24 @@ void ParticleSystem_Draw(ParticleSystem_t *System)
 	{
 		ParticleEmitter_t *Emitter=List_GetPointer(&System->Emitters, i);
 
-		if(Emitter->ID>=0)
+		for(uint32_t j=0;j<Emitter->NumParticles;j++)
 		{
-			for(uint32_t j=0;j<Emitter->NumParticles;j++)
+			// Only draw ones that are alive still
+			if(Emitter->Particles[j].life>0.0f)
 			{
-				// Only draw ones that are alive still
-				if(Emitter->Particles[j].life>0.0f)
-				{
-					vec3 Color;
+				vec3 Color;
 
-					*Array++=Emitter->Particles[j].pos[0];
-					*Array++=Emitter->Particles[j].pos[1];
-					*Array++=Emitter->Particles[j].pos[2];
-					*Array++=Emitter->ParticleSize;
-					Vec3_Lerp(Emitter->StartColor, Emitter->EndColor, Emitter->Particles[j].life, Color);
-					*Array++=Color[0];
-					*Array++=Color[1];
-					*Array++=Color[2];
-					*Array++=Emitter->Particles[j].life;
+				*Array++=Emitter->Particles[j].pos[0];
+				*Array++=Emitter->Particles[j].pos[1];
+				*Array++=Emitter->Particles[j].pos[2];
+				*Array++=Emitter->ParticleSize;
+				Vec3_Lerp(Emitter->StartColor, Emitter->EndColor, Emitter->Particles[j].life, Color);
+				*Array++=Color[0];
+				*Array++=Color[1];
+				*Array++=Color[2];
+				*Array++=Emitter->Particles[j].life;
 
-					Count++;
-				}
+				Count++;
 			}
 		}
 	}
@@ -369,8 +345,7 @@ void ParticleSystem_Destroy(ParticleSystem_t *System)
 	{
 		ParticleEmitter_t *Emitter=List_GetPointer(&System->Emitters, i);
 
-		if(Emitter->ID>=0)
-			FREE(Emitter->Particles);
+		FREE(Emitter->Particles);
 	}
 
 	List_Destroy(&System->Emitters);

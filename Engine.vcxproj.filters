@@ -82,6 +82,9 @@
     <ClCompile Include="q2bsp.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="utils\genid.c">
+      <Filter>Source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_objects.h">
@@ -155,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="q2bsp.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\genid.h">
+      <Filter>Headers\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

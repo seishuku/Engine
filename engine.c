@@ -283,6 +283,14 @@ void DrawBezier(void)
 		{
 			fgets(buff, sizeof(buff), stream);
 
+			char *ptr=strstr(buff, "rgb");
+
+			if(ptr)
+			{
+				if(sscanf(ptr, "rgb(%f%%,%f%%,%f%%)", &color[0], &color[1], &color[2])==3)
+					Vec3_Muls(color, 1.0f/100.0f);
+			}
+
 			if(sscanf(buff, "Line (%f, %f) (%f, %f)", &p0[0], &p0[1], &p1[0], &p1[1])==4)
 			{
 				List_Add(&Path, p0);
@@ -326,7 +334,8 @@ void DrawBezier(void)
 
 	matrix local;
 	MatrixIdentity(local);
-	MatrixTranslate(-20.0f, 75.0f, -100.0f, local);
+	MatrixRotate(PI, 0.0f, 1.0f, 0.0f, local);
+	MatrixTranslate(-20.0f, 150.0f, -50.0f, local);
 	MatrixScale(0.1f, -0.1f, 0.1f, local);
 	glUniformMatrix4fv(Objects[GLSL_BEZIER_LOCAL], 1, GL_FALSE, local);
 
