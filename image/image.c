@@ -691,13 +691,13 @@ uint32_t Image_Upload(const char *Filename, uint32_t Flags)
 
 		case 64:
 			Internal=GL_RGBA16;
-			External=GL_BGRA;
+			External=GL_RGBA;
 			Type=GL_UNSIGNED_SHORT;
 			break;
 
 		case 48:
 			Internal=GL_RGB16;
-			External=GL_BGR;
+			External=GL_RGB;
 			Type=GL_UNSIGNED_SHORT;
 			break;
 

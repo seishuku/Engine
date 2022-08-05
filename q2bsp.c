@@ -193,7 +193,7 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 			Model->Mesh[i].TexSpecularID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
 
 			snprintf(buf, 512, "./assets/%s_n.qoi", texInfo->Texture_Name);
-			Model->Mesh[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR);
+			Model->Mesh[i].TexNormalID=Image_Upload(buf, IMAGE_MIPMAP|IMAGE_TRILINEAR|IMAGE_NORMALIZE);
 
 			if(!Model->Mesh[i].TexNormalID)
 			{
