@@ -10,6 +10,12 @@ typedef struct
 	vec3 Position;
 	float Radius;
 	vec4 Kd;
+
+	vec4 SpotDirection;
+	float SpotOuterCone;
+	float SpotInnerCone;
+	float SpotExponent;
+	float SpotPad;
 } Light_t;
 
 typedef struct
@@ -26,6 +32,7 @@ void Lights_Update(Lights_t *Lights, uint32_t ID, vec3 Position, float Radius, v
 void Lights_UpdatePosition(Lights_t *Lights, uint32_t ID, vec3 Position);
 void Lights_UpdateRadius(Lights_t *Lights, uint32_t ID, float Radius);
 void Lights_UpdateKd(Lights_t *Lights, uint32_t ID, vec4 Kd);
+void Lights_UpdateSpotlight(Lights_t *Lights, uint32_t ID, vec3 Direction, float OuterCone, float InnerCone, float Exponent);
 
 void Lights_UpdateSSBO(Lights_t *Lights);
 bool Lights_Init(Lights_t *Lights);

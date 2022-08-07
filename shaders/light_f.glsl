@@ -21,6 +21,9 @@ struct Light_t
 
 	vec4 Position;
 	vec4 Kd;
+
+	vec4 SpotDirection;
+	vec4 SpotParams;
 };
 
 layout(std430, binding=0) readonly buffer layoutLights
@@ -54,15 +57,20 @@ vec3 ClosestPointOnSegment(vec3 point, vec3 start, vec3 end)
 
 float SpotLight(vec3 pos, vec3 dir, float innerCutOff, float outerCutOff, float exponent)
 {
-	float outerCutOffAngle=cos(radians(outerCutOff));
-	float innercutOffAngle=cos(radians(innerCutOff));
+	if(outerCutOff>0.0)
+	{
+		float outerCutOffAngle=cos(radians(outerCutOff));
+		float innercutOffAngle=cos(radians(innerCutOff));
 
-	float spot=dot(normalize(dir), -pos);
+		float spot=dot(normalize(dir), -pos);
 
-	if(spot<outerCutOffAngle)
-		return 0.0;
-	else
-		return pow(smoothstep(outerCutOffAngle, innercutOffAngle, spot), exponent);
+		if(spot<outerCutOffAngle)
+			return 0.0;
+		else
+			return pow(smoothstep(outerCutOffAngle, innercutOffAngle, spot), exponent);
+	}
+
+	return 1.0;
 }
 
 void main()
@@ -95,7 +103,7 @@ void main()
 		float lAtten=max(0.0, 1.0-length(lPos*Lights[i].Position.w));
 
 		// Shadow map compare, divide the light distance by the radius to match the depth map distance space
-		float Shadow=texture(TexDistance, vec4(-lPos, i), (length(lPos)*Lights[i].Position.w)+0.001);
+		float Shadow=texture(TexDistance, vec4(-lPos, i), (length(lPos)*Lights[i].Position.w)-0.01);
 
 		// Now we can normalize the light position vector
 		lPos=normalize(lPos);
@@ -106,13 +114,12 @@ void main()
 		// Specular = Ks*((R.L)^n)*(N.L)*Gloss
 		vec3 lSpecular=Lights[i].Kd.rgb*max(0.0, pow(dot(lPos, r), 16.0)*dot(lPos, n));
 
-		// Light 0 is the only that is a spotlight
-		// Multiply it with attenuation, so it mixes in with everything else correctly
-//		if(i==0)
-//			lAtten*=SpotLight(lPos, vec3(0.0, -0.5, -0.5), 22.5, 90.0, 64.0);
+		// Multiply spotlight with attenuation, so it mixes in with everything else correctly
+		// The light is only a spotlight if the outer cone is greater than 0
+		lAtten*=SpotLight(lPos, Lights[i].SpotDirection.xyz, Lights[i].SpotParams.x, Lights[i].SpotParams.y, Lights[i].SpotParams.z);
 
 		// I=(base*diffuse+specular)*shadow*attenuation*lightvolumeatten+volumelight
-		temp+=(Base.xyz*lDiffuse+(lSpecular*Base.w))*Shadow*lAtten*(1.0-lVolume.w)+(lVolume.w*Lights[i].Kd.xyz);
+		temp+=(Base.xyz*lDiffuse+(lSpecular*Specular))*Shadow*lAtten*(1.0-lVolume.w)+(lVolume.w*Lights[i].Kd.xyz);
 	}
 /*
 	// Beam area light stuff

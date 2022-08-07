@@ -142,6 +142,7 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 	// NumMesh = number of TextureInfo struct, geometry is grouped by texture
 	Model->NumMesh=Header.TextureInfo.Length/sizeof(Q2BSP_TextureInfo_t);
 	Model->Mesh=(Q2BSP_Mesh_t *)malloc(sizeof(Q2BSP_Mesh_t)*Model->NumMesh);
+	memset(Model->Mesh, 0, sizeof(Q2BSP_Mesh_t)*Model->NumMesh);
 
 	uint32_t NumFaces=Header.Faces.Length/sizeof(Q2BSP_Face_t);
 
@@ -357,6 +358,10 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 			vec4 color2={ 1.0f, 1.0f, 1.0f, 1.0f };
 			float angle=0.0f, size=1.0f;
 			uint32_t numParticles=1000;
+			vec3 direction={ 0.0f, 0.0f, 0.0f };
+			float spotOuterCone=0.0f;
+			float spotInnerCone=0.0f;
+			float spotExponent=0.0f;
 
 			while((buff[0]!='}')&&!feof(Stream))
 			{
@@ -401,13 +406,30 @@ bool LoadQ2BSP(Q2BSP_Model_t *Model, const char *Filename)
 
 				if(sscanf(buff, "\"numParticles\" \"%d\"", &numParticles)==1)
 					continue;
+
+				if(sscanf(buff, "\"spotDirection\" \"%f %f %f\"", &direction[0], &direction[1], &direction[2])==3)
+					continue;
+
+				if(sscanf(buff, "\"spotOuterCone\" \"%f\"", &spotOuterCone)==1)
+					continue;
+
+				if(sscanf(buff, "\"spotInnerCone\" \"%f\"", &spotInnerCone)==1)
+					continue;
+
+				if(sscanf(buff, "\"spotExponent\" \"%f\"", &spotExponent)==1)
+					continue;
 			}
 
 			if(IsEmitter)
 				ParticleSystem_AddEmitter(&ParticleSystem, origin, color, color2, size, numParticles, false, NULL);
 
 			if(IsLight)
-				Lights_Add(&Lights, origin, radius*2, color);
+			{
+				uint32_t ID=Lights_Add(&Lights, origin, radius*2, color);
+
+				if(spotOuterCone>0.0f)
+					Lights_UpdateSpotlight(&Lights, ID, direction, spotOuterCone, spotInnerCone, spotExponent);
+			}
 
 			if(IsPlayerStart)
 			{

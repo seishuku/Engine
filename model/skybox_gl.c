@@ -13,7 +13,7 @@ void DrawSkybox(void)
 
 void BuildSkyboxVBO(void)
 {
-	float scale=500.0f, w=1.0f, tex_scale=1.0f;
+	float scale=1.0f, w=0.0f, tex_scale=1.0f;
 	vec4 SkyboxVerts[]=
 	{
 		{ +scale, -scale, -scale, w }, { +tex_scale, -tex_scale, -tex_scale, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, //0 Right

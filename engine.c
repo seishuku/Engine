@@ -38,8 +38,6 @@ uint32_t Objects[NUM_OBJECTS];
 
 //Fluid3D_t Fluid;
 
-ModelOBJ_t Level;
-
 Model_t Hellknight;
 Model_t Fatty;
 Model_t Pinky;
@@ -161,7 +159,7 @@ void UpdateShadow(GLuint buffer)
 	matrix proj, mv[6], local;
 	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 
-	glCullFace(GL_FRONT);
+//	glCullFace(GL_FRONT);
 
 	glViewport(0, 0, DynSize, DynSize);
 	MatrixIdentity(proj);
@@ -231,7 +229,6 @@ void UpdateShadow(GLuint buffer)
 		MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 		MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 		glUniformMatrix4fv(Objects[GLSL_DISTANCE_LOCAL], 1, GL_FALSE, local);
-//		DrawModelOBJ(&Level);
 		DrawQ2BSP(&Q2Model);
 	}
 
@@ -457,19 +454,9 @@ void Render(void)
 	//DrawModelMD5(&Fatty.Model);
 
 	MatrixIdentity(local);
-	//MatrixTranslate(700.0f, -100.0f, -700.0f, local);
 	MatrixRotate(-PI/2.0f, 1.0f, 0.0f, 0.0f, local);
 	MatrixRotate(-PI/2.0f, 0.0f, 0.0f, 1.0f, local);
 	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-	//glBindTextureUnit(0, Pinky.Base);
-	//glBindTextureUnit(1, Pinky.Specular);
-	//glBindTextureUnit(2, Pinky.Normal);
-	//DrawModelMD5(&Pinky.Model);
-
-//	MatrixIdentity(local);
-//	glUniformMatrix4fv(Objects[GLSL_LIGHT_LOCAL], 1, GL_FALSE, local);
-//	DrawModelOBJ(&Level);
-
 	DrawQ2BSP(&Q2Model);
 
 	///// Particle system stuff
@@ -544,7 +531,7 @@ void Render(void)
 	//glDisable(GL_BLEND);
 	/////
 
-	DrawBezier();
+	//DrawBezier();
 
 	///// Skybox
 	glUseProgram(Objects[GLSL_SKYBOX_SHADER]);
@@ -607,70 +594,14 @@ void ExplosionEmitterCallback(uint32_t Index, uint32_t NumParticles, Particle_t 
 
 bool Init(void)
 {
-	if(Lights_Init(&Lights))
-	{
-		//LightIDs[0]=Lights_Add(&Lights, (vec3) { 0.0f, 50.0f, 200.0f }, 500.0f, (vec4) { 1.0f, 1.0f, 1.0f, 1.0f });
-		//LightIDs[1]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 0.75f, 1.0f, 1.0f });
-		//LightIDs[2]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, 800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 1.0f, 1.0f });
-		//LightIDs[3]=Lights_Add(&Lights, (vec3) { -800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 0.75f, 1.0f, 0.75f, 1.0f });
-		//LightIDs[4]=Lights_Add(&Lights, (vec3) { 800.0f, 80.0f, -800.0f }, 1000.0f, (vec4) { 1.0f, 0.75f, 0.75f, 1.0f });
+	if(!Lights_Init(&Lights))
+		return false;
 
-		//LightIDs[5]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 100.0f, (vec4) { 0.12f, 0.03f, 0.0f, 1.0f });
-		//LightIDs[6]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
-		//LightIDs[7]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 75.0f, (vec4) { 0.0f, 1.0f, 0.0f, 1.0f });
+	if(!ParticleSystem_Init(&ParticleSystem))
+		return false;
 
-		//LightIDs[8]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
-		//LightIDs[9]=Lights_Add(&Lights, (vec3) { 0.0f, 0.0f, 0.0f }, 250.0f, (vec4) { 0.1f, 0.1f, 1.0f, 1.0f });
-	}
-
-	if(ParticleSystem_Init(&ParticleSystem))
-	{
-		//EmitterIDs[0]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 0.0f },	// Position of emitter
-		//(vec3) { 0.1f, 0.1f, 0.1f },	// Starting color
-		//(vec3) { 0.12f, 0.03f, 0.0f },	// Ending color
-		//8.0f,							// Particle size
-		//5000,							// Number of particles
-		//false,							// "burst" (ResetEmitter triggers)
-		//NULL);							// Emitter particle rebirth callback (NULL = use build-in default)
-
-		//EmitterIDs[1]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 100.0f },
-		//(vec3) { 0.0f, 0.0f, 1.0f },
-		//(vec3) { 0.05f, 0.05f, 0.05f },
-		//8.0f,
-		//10000, true, ExplosionEmitterCallback);
-
-		//EmitterIDs[2]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 0.0f },
-		//(vec3) { 1.0f, 1.0f, 1.0f },
-		//(vec3) { 0.0f, 1.0f, 0.0f },
-		//4.0f,
-		//1000, false, HandEmitterCallback);
-
-		//EmitterIDs[3]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 0.0f },
-		//(vec3) { 1.0f, 1.0f, 1.0f },
-		//(vec3) { 0.0f, 1.0f, 0.0f },
-		//4.0f,
-		//1000, false, HandEmitterCallback);
-
-		//EmitterIDs[4]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 0.0f },
-		//(vec3) { 1.0f, 1.0f, 1.0f },
-		//(vec3) { 0.1f, 0.1f, 1.0f },
-		//8.0f,
-		//1000, false, NULL);
-
-		//EmitterIDs[5]=ParticleSystem_AddEmitter(&ParticleSystem,
-		//(vec3) { 0.0f, 0.0f, 0.0f },
-		//(vec3) { 1.0f, 1.0f, 1.0f },
-		//(vec3) { 0.1f, 0.1f, 1.0f },
-		//8.0f,
-		//1000, false, HandEmitterCallback);
-	}
-
-	LoadQ2BSP(&Q2Model, "assets/test.bsp");
+	if(!LoadQ2BSP(&Q2Model, "assets/test.bsp"))
+		return false;
 
 	if(Audio_Init())
 	{
@@ -679,8 +610,6 @@ bool Init(void)
 
 		Vec3_Set(Hellknight_Idle.xyz, 0.0f, 0.0f, 0.0f);
 	}
-	else
-		return false;
 
 	glDebugMessageCallback(error_callback, NULL);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -712,21 +641,11 @@ bool Init(void)
 		return false;
 
 	// Set up camera structs
-//	CameraInit(&Camera, CameraPath.Position, (vec3) { -1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 1.0f, 0.0f });
 	CameraInit(&Camera,
 		Q2Model.PlayerOrigin,
 		(vec3) { cosf(Q2Model.PlayerDirection), sinf(Q2Model.PlayerDirection), 0.0f },
 		(vec3) { 0.0f, 1.0f, 0.0f });
 #endif
-
-	// Load the "level" Alias/Wavefront model
-	//if(LoadOBJ(&Level, "./assets/room.obj"))
-	//{
-	//	BuildVBOOBJ(&Level);
-	//	LoadMaterialsOBJ(&Level);
-	//}
-	//else
-	//	return false;
 
 	// Compile/link MD5 skinning compute program
 	Objects[GLSL_MD5_GENVERTS_COMPUTE]=CreateShaderProgram((ProgNames_t) { NULL, NULL, NULL, "./shaders/md5_genverts_c.glsl" });

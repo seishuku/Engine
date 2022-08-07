@@ -24,6 +24,11 @@ uint32_t Lights_Add(Lights_t *Lights, vec3 Position, float Radius, vec4 Kd)
 	Light.Radius=1.0f/Radius;
 	Vec4_Setv(Light.Kd, Kd);
 
+	Vec4_Sets(Light.SpotDirection, 0.0f);
+	Light.SpotOuterCone=0.0f;
+	Light.SpotInnerCone=0.0f;
+	Light.SpotExponent=0.0f;
+
 	List_Add(&Lights->Lights, (void *)&Light);
 
 	return ID;
@@ -112,6 +117,26 @@ void Lights_UpdateKd(Lights_t *Lights, uint32_t ID, vec4 Kd)
 		if(Light->ID==ID)
 		{
 			Vec4_Setv(Light->Kd, Kd);
+			return;
+		}
+	}
+}
+
+void Lights_UpdateSpotlight(Lights_t *Lights, uint32_t ID, vec3 Direction, float OuterCone, float InnerCone, float Exponent)
+{
+	if(Lights==NULL&&ID!=UINT32_MAX)
+		return;
+
+	for(uint32_t i=0;i<List_GetCount(&Lights->Lights);i++)
+	{
+		Light_t *Light=List_GetPointer(&Lights->Lights, i);
+
+		if(Light->ID==ID)
+		{
+			Vec3_Setv(Light->SpotDirection, Direction);
+			Light->SpotOuterCone=OuterCone;
+			Light->SpotInnerCone=InnerCone;
+			Light->SpotExponent=Exponent;
 			return;
 		}
 	}

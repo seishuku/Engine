@@ -151,27 +151,33 @@ int paCallback(const void *inputBuffer, void *outputBuffer, unsigned long frames
 // Add a sound to first open channel.
 void Audio_PlaySample(Sample_t *Sample, bool looping)
 {
-    int32_t index;
+    // Check if the sample structure is there
+    // and if there's valid data on it.
+    if(Sample)
+    {
+        if(Sample->data==NULL)
+            return;
+    }
 
     // Look for an empty sound channel slot.
-    for(index=0;index<MAX_CHANNELS;index++)
+    for(int32_t index=0;index<MAX_CHANNELS;index++)
     {
         // If it's either done playing or is still the initial zero.
         if(channels[index].pos==channels[index].len)
-            break;
+        {
+            // otherwise set the channel's data pointer to this sample's pointer
+            // and set the length, reset play position, and loop flag.
+            channels[index].data=Sample->data;
+            channels[index].len=Sample->len;
+            channels[index].pos=0;
+            channels[index].looping=looping;
+            channels[index].xyz=Sample->xyz;
+
+            return;
+        }
     }
 
-    // return if there aren't any channels available.
-    if(index>=MAX_CHANNELS)
-        return;
-
-    // otherwise set the channel's data pointer to this sample's pointer
-    // and set the length, reset play position, and loop flag.
-    channels[index].data=Sample->data;
-    channels[index].len=Sample->len;
-    channels[index].pos=0;
-    channels[index].looping=looping;
-    channels[index].xyz=Sample->xyz;
+    // Falls through if there aren't any available channels
 }
 
 int Audio_Init(void)
